@@ -10,11 +10,12 @@
 #include <QImage>
 #include <QRadialGradient>
 #include <QMouseEvent>
+#include <QKeyEvent>
 #include <QFile>
 #include <QFileInfo>
 #include <cstring>
 #include <vector>
-#include "font8x16.h"   // the exact VGA 8x16 bitmap the firmware renders with
+#include "font8x16.h"
 
 // ---------------------------------------------------------------------------
 // Colour helpers (ui.c stores 0x00RRGGBB; ui_lerp blends with t in 0..256).
@@ -606,4 +607,48 @@ void PreviewWidget::mousePressEvent(QMouseEvent *e) {
     for (int i=0;i<entryRects.size();++i)
         if(entryRects[i].contains(np)){ emit elementClicked("entry",i); return; }
     if(panelRect.contains(np)){ emit elementClicked("panel",-1); return; }
+}
+
+void PreviewWidget::zoomIn() {
+    zoomLevel = qMin(zoomLevel * 1.25, 4.0);
+    update();
+}
+
+void PreviewWidget::zoomOut() {
+    zoomLevel = qMax(zoomLevel / 1.25, 0.25);
+    update();
+}
+
+void PreviewWidget::zoomReset() {
+    zoomLevel = 1.0;
+    update();
+}
+
+void PreviewWidget::selectEntry(int idx) {
+    if (idx >= 0 && idx < entryRects.size()) {
+        selectedEntry = idx;
+        update();
+    }
+}
+
+void PreviewWidget::keyPressEvent(QKeyEvent *e) {
+    int count = model->roots.size();
+    if (count == 0) { QWidget::keyPressEvent(e); return; }
+    switch (e->key()) {
+    case Qt::Key_Plus: case Qt::Key_Equal: zoomIn(); break;
+    case Qt::Key_Minus:                    zoomOut(); break;
+    case Qt::Key_0:                        zoomReset(); break;
+    case Qt::Key_Up:
+        selectedEntry = qMax(0, selectedEntry - 1);
+        update();
+        emit elementClicked("entry", selectedEntry);
+        break;
+    case Qt::Key_Down:
+        selectedEntry = qMin(count - 1, selectedEntry + 1);
+        if (selectedEntry < 0) selectedEntry = 0;
+        update();
+        emit elementClicked("entry", selectedEntry);
+        break;
+    default: QWidget::keyPressEvent(e); break;
+    }
 }

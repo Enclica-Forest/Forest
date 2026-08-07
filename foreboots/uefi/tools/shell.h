@@ -21,8 +21,8 @@
 #ifndef FOREB_UEFI_SHELL_H
 #define FOREB_UEFI_SHELL_H
 
-#include "efi.h"
-#include "../include/forebo_cfg.h"
+#include "../efi.h"
+#include "../../include/forebo_cfg.h"
 
 /* shell_run() return values. A value >= 0 is a menu-entry index to boot. */
 #define FOREB_SHELL_BACK    (-1)   /* leave shell, return to the menu       */

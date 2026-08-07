@@ -10,4 +10,10 @@ CompileFlags:
     - -std=c11
     - -Iinclude
     - -Iuefi
+    - -Iuefi/core
+    - -Iuefi/boot
+    - -Iuefi/fs
+    - -Iuefi/tools
+    - -Iuefi/recovery
+    - -Iuefi/standalone
   Compiler: clang

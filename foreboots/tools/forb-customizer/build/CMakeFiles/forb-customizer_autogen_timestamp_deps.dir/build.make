@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/bluet/Forest-OS/foreboots/tools/forb-customizer
+CMAKE_SOURCE_DIR = /home/bluet/forest/foreboots/tools/forb-customizer
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build
+CMAKE_BINARY_DIR = /home/bluet/forest/foreboots/tools/forb-customizer/build
 
 # Utility rule file for forb-customizer_autogen_timestamp_deps.
 
@@ -81,6 +81,6 @@ CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/clean:
 .PHONY : CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/clean
 
 CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/depend:
-	cd /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/bluet/Forest-OS/foreboots/tools/forb-customizer /home/bluet/Forest-OS/foreboots/tools/forb-customizer /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/DependInfo.cmake "--color=$(COLOR)" forb-customizer_autogen_timestamp_deps
+	cd /home/bluet/forest/foreboots/tools/forb-customizer/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/bluet/forest/foreboots/tools/forb-customizer /home/bluet/forest/foreboots/tools/forb-customizer /home/bluet/forest/foreboots/tools/forb-customizer/build /home/bluet/forest/foreboots/tools/forb-customizer/build /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/DependInfo.cmake "--color=$(COLOR)" forb-customizer_autogen_timestamp_deps
 .PHONY : CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/depend
 

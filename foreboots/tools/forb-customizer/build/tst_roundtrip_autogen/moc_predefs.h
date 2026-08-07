@@ -4,7 +4,7 @@
 #define __UINT_LEAST16_MAX__ 0xffff
 #define __FLT16_HAS_QUIET_NAN__ 1
 #define __ATOMIC_ACQUIRE 2
-#define QT_TESTCASE_BUILDDIR "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build"
+#define QT_TESTCASE_BUILDDIR "/home/bluet/forest/foreboots/tools/forb-customizer/build"
 #define __FLT128_MAX_10_EXP__ 4932
 #define __FLT_MIN__ 1.17549435082228750796873653722224568e-38F
 #define __GCC_IEC_559_COMPLEX 2
@@ -63,7 +63,6 @@
 #define __BFLT16_MAX_10_EXP__ 38
 #define __BFLT16_MAX_EXP__ 128
 #define __LDBL_IS_IEC_60559__ 1
-#define QT_NO_DEBUG 1
 #define __FLT64X_HAS_QUIET_NAN__ 1
 #define QT_TESTLIB_LIB 1
 #define __UINT_LEAST8_MAX__ 0xff
@@ -183,7 +182,7 @@
 #define __SIZEOF_WINT_T__ 4
 #define __FLT32X_DIG__ 15
 #define __LONG_LONG_WIDTH__ 64
-#define QT_TESTCASE_SOURCEDIR "/home/bluet/Forest-OS/foreboots/tools/forb-customizer"
+#define QT_TESTCASE_SOURCEDIR "/home/bluet/forest/foreboots/tools/forb-customizer"
 #define __cpp_initializer_lists 200806L
 #define __FLT32_MAX_EXP__ 128
 #define ABI_ID "ELF"
@@ -221,7 +220,7 @@
 #define __DEC_EVAL_METHOD__ 2
 #define __FLT_MANT_DIG__ 24
 #define __LDBL_DECIMAL_DIG__ 21
-#define __VERSION__ "16.1.1 20260625"
+#define __VERSION__ "16.1.1 20260728"
 #define __UINT64_C(c) c ## UL
 #define __cpp_unicode_characters 201411L
 #define __DEC64X_MIN__ 1E-6143D64x

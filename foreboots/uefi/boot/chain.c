@@ -9,9 +9,9 @@
  * =============================================================================
  */
 #include "chain.h"
-#include "efi_ext.h"
-#include "config.h"
-#include "ui.h"
+#include "../efi_ext.h"
+#include "../core/config.h"
+#include "../ui.h"
 
 static EFI_GUID dp_guid  = EFI_DEVICE_PATH_PROTOCOL_GUID;
 static EFI_GUID sfs_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
@@ -27,6 +27,8 @@ static const CHAR16 *const CHAIN_CANDIDATES[] = {
     L"\\EFI\\fedora\\grubx64.efi",
     L"\\EFI\\arch\\grubx64.efi",
     L"\\EFI\\Microsoft\\Boot\\bootmgfw.efi",
+    L"\\EFI\\ubuntu\\shimx64.efi",
+    L"\\EFI\\fedora\\shimx64.efi",
 };
 #define CHAIN_NCAND (int)(sizeof(CHAIN_CANDIDATES)/sizeof(CHAIN_CANDIDATES[0]))
 
@@ -148,13 +150,11 @@ static EFI_STATUS launch_on(EFI_HANDLE image, EFI_BOOT_SERVICES *bs,
                         if (!EFI_ERROR(bs->AllocatePool(EfiLoaderData, fsize, &buf)) && buf) {
                             UINTN got = fsize;
                             EFI_STATUS ls = EFI_LOAD_ERROR;
-                            if (!EFI_ERROR(f->Read(f, &got, buf)))
+                            if (!EFI_ERROR(f->Read(f, &got, buf))) {
                                 ls = foreb_LoadImage(bs, FALSE, image, NULL, buf, got, &img);
-                            /* buf is owned by firmware ONLY if LoadImage succeeded;
-                             * otherwise free it - this fallback is retried from the
-                             * resident menu, so a leak here accumulates. */
-                            if (!EFI_ERROR(ls) && img) s = ls;
-                            else bs->FreePool(buf);
+                                if (!EFI_ERROR(ls) && img) s = ls;
+                            }
+                            if (EFI_ERROR(s) || !img) bs->FreePool(buf);
                         }
                     }
                     f->Close(f);
@@ -210,11 +210,12 @@ EFI_STATUS chainload(EFI_HANDLE image, EFI_BOOT_SERVICES *bs,
         for (int c = 0; c < CHAIN_NCAND; c++) {
             if (file_exists_on_root(root, CHAIN_CANDIDATES[c])) {
                 s = launch_on(image, bs, handles[i], CHAIN_CANDIDATES[c]);
-                /* if it returns, that candidate failed; keep scanning */
+                if (!EFI_ERROR(s)) { root->Close(root); goto done; }
             }
         }
         root->Close(root);
     }
+done:
     bs->FreePool(handles);
     ui_status("Chainload: no bootable EFI loader found"); ui_present();
     return EFI_NOT_FOUND;

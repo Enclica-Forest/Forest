@@ -5,6 +5,7 @@
 #ifndef FORB_FORB_HPP
 #define FORB_FORB_HPP
 
+#include <chrono>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -31,19 +32,64 @@ struct Extra { std::string title, type, icon; };
 extern const std::vector<Extra> EXTRAS;
 
 // ---------------------------------------------------------------------------
+//  Progress reporting
+// ---------------------------------------------------------------------------
+class Progress {
+public:
+    bool enabled = true;
+    int total_steps = 0;
+    int current_step = 0;
+    std::chrono::steady_clock::time_point start_time_;
+    bool started_ = false;
+
+    explicit Progress(bool en = true) : enabled(en) {}
+    void start(int total, const std::string& title = "");
+    void step(const std::string& message);
+    void finish(const std::string& message = "");
+    void error(const std::string& message);
+    std::string elapsed_str() const;
+
+private:
+    void print_prefix() const;
+};
+
+// ---------------------------------------------------------------------------
+//  Color support
+// ---------------------------------------------------------------------------
+class Color {
+public:
+    static bool enabled;
+    static bool detect();
+    static void set(bool on);
+    
+    static const char* red;
+    static const char* green;
+    static const char* yellow;
+    static const char* cyan;
+    static const char* bold;
+    static const char* reset;
+};
+
+// ---------------------------------------------------------------------------
 //  Diagnostics
 // ---------------------------------------------------------------------------
 class Reporter {
 public:
     bool verbose = false;
+    bool force = false;
     std::vector<std::string> warnings;
     std::vector<std::string> notes;
-    explicit Reporter(bool v = false) : verbose(v) {}
+    explicit Reporter(bool v = false, bool f = false) : verbose(v), force(f) {}
     void warn(const std::string& msg);
     void note(const std::string& msg);
+    void error(const std::string& msg);
+    void success(const std::string& msg);
+    void verbose_out(const std::string& msg);
 };
 
 int die(const std::string& msg);  // prints error, returns 1
+int die(const std::string& msg, const std::string& hint);  // prints error + hint
+int die_with_context(const std::string& context, const std::string& msg);
 
 // ---------------------------------------------------------------------------
 //  Small helpers (util.cpp)
@@ -170,6 +216,34 @@ struct BuildResult {
 };
 
 // ---------------------------------------------------------------------------
+//  Config validation (lint)
+// ---------------------------------------------------------------------------
+struct LintMessage {
+    enum Level { Error, Warning, Info } level = Info;
+    std::string text;
+};
+
+struct LintResult {
+    std::vector<LintMessage> messages;
+    int errors() const;
+    int warnings() const;
+    int infos() const;
+    bool has_errors() const { return errors() > 0; }
+    bool has_warnings() const { return warnings() > 0; }
+    void error(const std::string& msg);
+    void warn(const std::string& msg);
+    void info(const std::string& msg);
+};
+
+// Validate a forebo.cfg text.  If esp is non-empty, check that referenced
+// files exist on disk.  If cfg is already parsed, pass it directly.
+LintResult validate_config(const std::string& text,
+                           const std::string& esp = "");
+LintResult validate_config(const ParsedConfig& parsed,
+                           const std::string& esp = "",
+                           const std::string& text = "");
+
+// ---------------------------------------------------------------------------
 //  Parsers
 // ---------------------------------------------------------------------------
 std::string resolve_limine_path(const std::string& value, EspContext& ctx,
@@ -180,6 +254,14 @@ ParsedConfig parse_grub(const std::string& path, EspContext& ctx,
                         Reporter& rep);
 ParsedConfig parse_systemd_boot(const std::string& esp_dir,
                                 const std::string& conf_path, Reporter& rep);
+ParsedConfig parse_clover(const std::string& path, EspContext& ctx,
+                          Reporter& rep);
+ParsedConfig parse_syslinux(const std::string& path, EspContext& ctx,
+                            Reporter& rep);
+ParsedConfig parse_zfsbootmenu(const std::string& path, EspContext& ctx,
+                               Reporter& rep);
+ParsedConfig parse_refind(const std::string& path, EspContext& ctx,
+                          Reporter& rep);
 
 // ---------------------------------------------------------------------------
 //  Image (image.cpp)
@@ -203,6 +285,8 @@ find_path(const std::vector<OutNode>& roots,
 std::vector<OutNode> cap_entries(std::vector<OutNode> roots, int max_entries,
                                  Reporter& rep);
 void validate_entry(OutEntry& e, Reporter& rep);
+void detect_duplicate_entries(
+    const std::vector<std::shared_ptr<OutEntry>>& entries, Reporter& rep);
 std::string resolve_default(const ParsedConfig& cfg,
                             const std::vector<OutNode>& roots,
                             std::optional<int> override_idx, Reporter& rep);
@@ -213,10 +297,39 @@ std::string emit_config(const ParsedConfig& cfg,
                         bool extras);
 
 // ---------------------------------------------------------------------------
+//  Bootloader detection + migration
+// ---------------------------------------------------------------------------
+struct BootloaderInfo {
+    std::string name;            // "grub", "limine", "systemd-boot", etc.
+    double confidence = 0.0;     // 0.0 – 1.0
+    std::string config_path;     // path to the detected config file
+    std::vector<std::string> features;   // what can be migrated
+    std::vector<std::string> warnings;   // incompatible features
+    std::string migration_path;  // best migration suggestion
+};
+
+std::vector<BootloaderInfo> detect_bootloader(const std::string& dir);
+
+// ---------------------------------------------------------------------------
 //  Build pipeline + commands (build.cpp / commands.cpp)
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+//  Batch manifest
+// ---------------------------------------------------------------------------
+struct BatchEntry {
+    std::string type;    // "foreb", "grub", "limine", "systemd-boot", etc.
+    std::string config;  // source config path (absolute or ESP-relative)
+    std::string esp;     // ESP mount point
+};
+
+struct BatchManifest {
+    std::vector<BatchEntry> bootloaders;
+};
+
+BatchManifest parse_batch_manifest(const std::string& path);
+
 struct Args {
-    std::string command;          // "", scan, generate, install
+    std::string command;          // "", scan, generate, install, migrate, export
     bool selftest = false;
     std::string esp;
     std::string config;
@@ -225,10 +338,16 @@ struct Args {
     int max_entries = DEFAULT_MAX_ENTRIES;
     bool no_extras = false;
     bool verbose = false;
-    std::string output;           // generate
+    bool strict = false;          // fail on warnings
+    std::string output;           // generate, export
     bool no_nvram = false;        // install
     bool make_default = false;    // install
-    bool dry_run = false;         // install
+    bool dry_run = false;         // install / migrate
+    std::string source;           // migrate: source path to scan
+    bool backup = false;          // migrate: back up original config
+    std::string export_format;    // export: grub|limine|systemd-boot|syslinux
+    bool yes = false;             // uninstall: skip confirmation
+    bool keep_nvram = false;      // uninstall: keep NVRAM entry
 };
 
 std::vector<std::pair<std::string, std::string>> autodetect_config(
@@ -239,6 +358,11 @@ std::optional<BuildResult> build_config(const Args& args, Reporter& rep);
 int cmd_scan(const Args& args, Reporter& rep);
 int cmd_generate(const Args& args, Reporter& rep);
 int cmd_install(const Args& args, Reporter& rep);
+int cmd_lint(const Args& args, Reporter& rep);
+int cmd_uninstall(const Args& args, Reporter& rep);
+int cmd_list(const Args& args, Reporter& rep);
+int cmd_backup(const Args& args, Reporter& rep);
+int cmd_batch(const Args& args, Reporter& rep);
 std::string safe_rel_path(const std::string& rel);  // throws std::runtime_error
 
 // ---------------------------------------------------------------------------

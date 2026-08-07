@@ -15,6 +15,7 @@
 #include <sstream>
 
 #include <fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -23,6 +24,34 @@
 namespace fs = std::filesystem;
 
 namespace forb {
+
+// ===========================================================================
+//  Color support
+// ===========================================================================
+bool Color::enabled = false;
+
+const char* Color::red = "\033[0;31m";
+const char* Color::green = "\033[0;32m";
+const char* Color::yellow = "\033[0;33m";
+const char* Color::cyan = "\033[0;36m";
+const char* Color::bold = "\033[1m";
+const char* Color::reset = "\033[0m";
+
+bool Color::detect() {
+    if (!isatty(STDERR_FILENO)) return false;
+    const char* term = std::getenv("TERM");
+    if (!term) return false;
+    std::string t(term);
+    return t != "dumb";
+}
+
+void Color::set(bool on) {
+    enabled = on;
+    if (on) {
+        const char* no_color = std::getenv("NO_COLOR");
+        if (no_color && no_color[0] != '\0') enabled = false;
+    }
+}
 
 // ===========================================================================
 //  Icon tables
@@ -67,17 +96,119 @@ const std::vector<Extra> EXTRAS = {
 // ===========================================================================
 void Reporter::warn(const std::string& msg) {
     warnings.push_back(msg);
-    std::cerr << "warning: " << msg << "\n";
+    if (Color::enabled)
+        std::cerr << Color::yellow << "warning: " << Color::reset << msg << "\n";
+    else
+        std::cerr << "warning: " << msg << "\n";
 }
 
 void Reporter::note(const std::string& msg) {
     notes.push_back(msg);
-    if (verbose) std::cerr << "note: " << msg << "\n";
+    if (verbose) {
+        if (Color::enabled)
+            std::cerr << Color::cyan << "note: " << Color::reset << msg << "\n";
+        else
+            std::cerr << "note: " << msg << "\n";
+    }
+}
+
+void Reporter::error(const std::string& msg) {
+    if (Color::enabled)
+        std::cerr << Color::red << "error: " << Color::reset << msg << "\n";
+    else
+        std::cerr << "error: " << msg << "\n";
+}
+
+void Reporter::success(const std::string& msg) {
+    if (Color::enabled)
+        std::cerr << Color::green << "success: " << Color::reset << msg << "\n";
+    else
+        std::cerr << "success: " << msg << "\n";
+}
+
+void Reporter::verbose_out(const std::string& msg) {
+    if (verbose) {
+        if (Color::enabled)
+            std::cerr << Color::cyan << "[verbose] " << Color::reset << msg << "\n";
+        else
+            std::cerr << "[verbose] " << msg << "\n";
+    }
 }
 
 int die(const std::string& msg) {
-    std::cerr << TOOL << ": error: " << msg << "\n";
+    if (Color::enabled)
+        std::cerr << Color::red << Color::bold << TOOL << ": error: " 
+                  << Color::reset << Color::red << msg << Color::reset << "\n";
+    else
+        std::cerr << TOOL << ": error: " << msg << "\n";
     return 1;
+}
+
+int die(const std::string& msg, const std::string& hint) {
+    if (Color::enabled)
+        std::cerr << Color::red << Color::bold << TOOL << ": error: " 
+                  << Color::reset << Color::red << msg << Color::reset << "\n"
+                  << Color::yellow << "Hint: " << Color::reset << hint << "\n";
+    else
+        std::cerr << TOOL << ": error: " << msg << "\n"
+                  << "Hint: " << hint << "\n";
+    return 1;
+}
+
+int die_with_context(const std::string& context, const std::string& msg) {
+    if (Color::enabled)
+        std::cerr << Color::red << Color::bold << TOOL << ": error: " 
+                  << Color::reset << Color::red << context << ": " << msg 
+                  << Color::reset << "\n";
+    else
+        std::cerr << TOOL << ": error: " << context << ": " << msg << "\n";
+    return 1;
+}
+
+// ===========================================================================
+//  Progress
+// ===========================================================================
+void Progress::start(int total, const std::string& title) {
+    if (!enabled) return;
+    total_steps = total;
+    current_step = 0;
+    start_time_ = std::chrono::steady_clock::now();
+    started_ = true;
+    if (!title.empty())
+        std::cerr << "\033[1;36m" << title << "\033[0m\n";
+}
+
+void Progress::step(const std::string& message) {
+    if (!enabled || !started_) return;
+    ++current_step;
+    std::cerr << "\r\033[2K[" << current_step << "/" << total_steps << "] "
+              << "\033[33m" << message << "\033[0m "
+              << "(" << elapsed_str() << ")" << std::flush;
+}
+
+void Progress::finish(const std::string& message) {
+    if (!enabled || !started_) return;
+    std::string msg = message.empty() ? "done" : message;
+    std::cerr << "\r\033[2K[" << current_step << "/" << total_steps << "] "
+              << "\033[32m" << msg << "\033[0m "
+              << "(" << elapsed_str() << ")\n" << std::flush;
+}
+
+void Progress::error(const std::string& message) {
+    if (!enabled || !started_) return;
+    std::cerr << "\r\033[2K[" << current_step << "/" << total_steps << "] "
+              << "\033[31merror: " << message << "\033[0m "
+              << "(" << elapsed_str() << ")\n" << std::flush;
+}
+
+std::string Progress::elapsed_str() const {
+    if (!started_) return "0.0s";
+    auto now = std::chrono::steady_clock::now();
+    double secs =
+        std::chrono::duration<double>(now - start_time_).count();
+    char buf[32];
+    std::snprintf(buf, sizeof(buf), "%.1fs", secs);
+    return buf;
 }
 
 // ===========================================================================

@@ -31,7 +31,7 @@
 #ifndef FOREB_UEFI_UNDELETE_H
 #define FOREB_UEFI_UNDELETE_H
 
-#include "efi.h"
+#include "../efi.h"
 
 /*
  * One-time init: caches the loader image handle (for opening the ESP) and the

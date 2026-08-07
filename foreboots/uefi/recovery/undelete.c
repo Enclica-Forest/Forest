@@ -29,18 +29,18 @@
  * ========================================================================== */
 
 #include "undelete.h"
-#include "efi.h"
-#include "efi_ext.h"
-#include "wm.h"
-#include "ui.h"
-#include "input.h"
-#include "diskio.h"
-#include "config.h"
-#include "image.h"
-#include "fs_ext.h"
-#include "fs_btrfs.h"
-#include "../include/forebo_cfg.h"
-#include "../include/forebo_theme.h"
+#include "../efi.h"
+#include "../efi_ext.h"
+#include "../core/wm.h"
+#include "../ui.h"
+#include "../core/input.h"
+#include "../core/diskio.h"
+#include "../core/config.h"
+#include "../core/image.h"
+#include "../fs/fs_ext.h"
+#include "../fs/fs_btrfs.h"
+#include "../../include/forebo_cfg.h"
+#include "../../include/forebo_theme.h"
 
 /* ==========================================================================
  * Cached services (this codebase has no ambient gST; each module caches it).

@@ -13,8 +13,8 @@
 #ifndef FOREB_DISKIO_H
 #define FOREB_DISKIO_H
 
-#include "efi.h"
-#include "efi_ext.h"
+#include "../efi.h"
+#include "../efi_ext.h"
 
 /* Maximum characters (incl. NUL) in a device's human label. */
 #define DISKIO_LABEL_MAX 40

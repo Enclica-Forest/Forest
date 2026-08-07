@@ -18,7 +18,7 @@
 #ifndef FOREB_UEFI_SYSMON_H
 #define FOREB_UEFI_SYSMON_H
 
-#include "efi.h"
+#include "../efi.h"
 
 /* One-time init: caches gST/gBS/gRT and (idempotently) inits diskio. Call once
  * during startup alongside tools_init() / tool_clone_init(). NULL-safe. */

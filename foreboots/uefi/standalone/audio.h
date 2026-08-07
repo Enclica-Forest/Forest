@@ -16,7 +16,7 @@
 #ifndef FOREB_UEFI_AUDIO_H
 #define FOREB_UEFI_AUDIO_H
 
-#include "efi.h"
+#include "../efi.h"
 
 /* Logical UI events that map to a tone. */
 enum audio_event {

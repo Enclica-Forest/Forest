@@ -1,7 +1,7 @@
 CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o: \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/MainWindow.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/MainWindow.cpp \
  /usr/include/stdc-predef.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/MainWindow.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/MainWindow.h \
  /usr/include/qt6/QtWidgets/QMainWindow \
  /usr/include/qt6/QtWidgets/qmainwindow.h \
  /usr/include/qt6/QtWidgets/qtwidgetsglobal.h \
@@ -330,20 +330,22 @@ CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o: \
  /usr/include/qt6/QtGui/qcursor.h /usr/include/qt6/QtGui/qbitmap.h \
  /usr/include/qt6/QtWidgets/qtabwidget.h /usr/include/qt6/QtCore/QVector \
  /usr/include/qt6/QtCore/qvector.h /usr/include/qt6/QtCore/QPair \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/ConfigModel.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/ConfigModel.h \
  /usr/include/qt6/QtCore/QObject /usr/include/qt6/QtCore/QString \
  /usr/include/qt6/QtGui/QRgb \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Opt.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Schema.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/Opt.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/Schema.h \
  /usr/include/qt6/QtCore/QStringList /usr/include/qt6/QtCore/QMap \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Bound.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/Bound.h \
  /usr/include/qt6/QtWidgets/QWidget \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/PreviewWidget.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/PreviewWidget.h \
  /usr/include/qt6/QtCore/QRect /usr/include/qt6/QtCore/QHash \
  /usr/include/qt6/QtGui/QImage \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/EntriesTab.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/PresetGallery.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Inspector.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/EntriesTab.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/PresetGallery.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/Inspector.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/DiffDialog.h \
+ /usr/include/qt6/QtWidgets/QDialog /usr/include/qt6/QtWidgets/qdialog.h \
  /usr/include/qt6/QtWidgets/QTabWidget \
  /usr/include/qt6/QtWidgets/QDockWidget \
  /usr/include/qt6/QtWidgets/qdockwidget.h \
@@ -410,7 +412,7 @@ CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o: \
  /usr/include/c++/16/bits/fs_dir.h /usr/include/c++/16/bits/fs_ops.h \
  /usr/include/qt6/QtCore/qdatetime.h /usr/include/qt6/QtCore/qcalendar.h \
  /usr/include/qt6/QtCore/qfile.h /usr/include/qt6/QtCore/qfileinfo.h \
- /usr/include/qt6/QtCore/qtimezone.h /usr/include/qt6/QtWidgets/qdialog.h \
+ /usr/include/qt6/QtCore/qtimezone.h \
  /usr/include/qt6/QtWidgets/QMessageBox \
  /usr/include/qt6/QtWidgets/qmessagebox.h \
  /usr/include/qt6/QtWidgets/qdialogbuttonbox.h \
@@ -422,4 +424,38 @@ CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o: \
  /usr/include/qt6/QtCore/QTemporaryDir \
  /usr/include/qt6/QtCore/qtemporarydir.h \
  /usr/include/qt6/QtCore/QFileInfo /usr/include/qt6/QtCore/QFile \
- /usr/include/qt6/QtCore/QDir /usr/include/qt6/QtCore/QSet
+ /usr/include/qt6/QtCore/QDir /usr/include/qt6/QtCore/QSet \
+ /usr/include/qt6/QtGui/QShortcut /usr/include/qt6/QtGui/qshortcut.h \
+ /usr/include/qt6/QtGui/QKeySequence \
+ /usr/include/qt6/QtWidgets/QInputDialog \
+ /usr/include/qt6/QtWidgets/qinputdialog.h \
+ /usr/include/qt6/QtWidgets/qlineedit.h \
+ /usr/include/qt6/QtGui/qtextcursor.h \
+ /usr/include/qt6/QtGui/qtextformat.h /usr/include/qt6/QtGui/qpen.h \
+ /usr/include/qt6/QtGui/qtextoption.h \
+ /usr/include/qt6/QtCore/QFileSystemWatcher \
+ /usr/include/qt6/QtCore/qfilesystemwatcher.h \
+ /usr/include/qt6/QtWidgets/QHBoxLayout \
+ /usr/include/qt6/QtWidgets/QPushButton \
+ /usr/include/qt6/QtWidgets/qpushbutton.h \
+ /usr/include/qt6/QtWidgets/qabstractbutton.h \
+ /usr/include/qt6/QtGui/QCloseEvent /usr/include/qt6/QtGui/qevent.h \
+ /usr/include/qt6/QtCore/qcoreevent.h \
+ /usr/include/qt6/QtCore/qbasictimer.h \
+ /usr/include/qt6/QtCore/qabstracteventdispatcher.h \
+ /usr/include/qt6/QtCore/qeventloop.h \
+ /usr/include/qt6/QtCore/qdeadlinetimer.h \
+ /usr/include/qt6/QtGui/qeventpoint.h /usr/include/qt6/QtGui/qvector2d.h \
+ /usr/include/qt6/QtGui/qvectornd.h \
+ /usr/include/qt6/QtGui/qpointingdevice.h \
+ /usr/include/qt6/QtGui/qinputdevice.h /usr/include/qt6/QtGui/qscreen.h \
+ /usr/include/qt6/QtCore/QList /usr/include/qt6/QtCore/QObject \
+ /usr/include/qt6/QtCore/QRect /usr/include/qt6/QtCore/QSize \
+ /usr/include/qt6/QtCore/QSizeF /usr/include/qt6/QtGui/QTransform \
+ /usr/include/qt6/QtCore/qnativeinterface.h \
+ /usr/include/qt6/QtGui/qscreen_platform.h \
+ /usr/include/qt6/QtGui/qguiapplication.h \
+ /usr/include/qt6/QtCore/qcoreapplication.h \
+ /usr/include/qt6/QtCore/qcoreapplication_platform.h \
+ /usr/include/qt6/QtGui/qinputmethod.h \
+ /usr/include/qt6/QtGui/qguiapplication_platform.h

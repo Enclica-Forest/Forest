@@ -7,7 +7,7 @@
  * matches the rest of the UEFI UI.
  */
 #include "image.h"
-#include "ui.h"                 /* ui_mark_dirty: feed blits into partial present */
+#include "../ui.h"                 /* ui_mark_dirty: feed blits into partial present */
 
 /* ------------------------------------------------------------------ */
 /*  Module state (framebuffer geometry + BootServices for allocation)  */

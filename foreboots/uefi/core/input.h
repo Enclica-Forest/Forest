@@ -28,7 +28,7 @@
 #ifndef FOREB_UEFI_INPUT_H
 #define FOREB_UEFI_INPUT_H
 
-#include "efi.h"
+#include "../efi.h"
 
 /* Maximum pointer instances of each class we bind. Under OVMF the same
  * protocol GUID is typically installed on several handles (the real USB device

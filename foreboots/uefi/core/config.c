@@ -22,8 +22,8 @@
  */
 
 #include "config.h"
-#include "../include/boot_protocol.h"
-#include "audio.h"                 /* struct audio_cfg + AUDIO_EV_* for audio_ keys */
+#include "../../include/boot_protocol.h"
+#include "../standalone/audio.h"   /* struct audio_cfg + AUDIO_EV_* for audio_ keys */
 
 /* =============================================================================
  * Local GUIDs (file-scope copies; each TU that touches the ESP keeps its own,
@@ -193,6 +193,7 @@ static int entry_type_from_str(const char *v)
     if (ieq(v, "tools"))     return FOREB_ENTRY_TOOLS;
     if (ieq(v, "setup") || ieq(v, "firmware")) return FOREB_ENTRY_FWSETUP;
     if (ieq(v, "settings") || ieq(v, "theme")) return FOREB_ENTRY_SETTINGS;
+    if (ieq(v, "uefi_settings")) return FOREB_ENTRY_UEFI_SETTINGS;
     return FOREB_ENTRY_FOREST;
 }
 

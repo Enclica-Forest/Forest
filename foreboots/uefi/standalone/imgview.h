@@ -19,7 +19,7 @@
 #ifndef FOREB_UEFI_IMGVIEW_H
 #define FOREB_UEFI_IMGVIEW_H
 
-#include "efi.h"
+#include "../efi.h"
 
 /*
  * Capture the loader image handle + system table the viewer needs to open the

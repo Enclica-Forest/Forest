@@ -24,7 +24,7 @@
 #ifndef FOREB_UEFI_ANIM_H
 #define FOREB_UEFI_ANIM_H
 
-#include "efi.h"
+#include "../efi.h"
 
 /*
  * One-time init. Pass the same framebuffer parameters given to ui_init() plus

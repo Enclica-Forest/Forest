@@ -35,32 +35,34 @@
  *   shell.h   - interactive framebuffer shell ('c' at the menu)
  *   anim.h    - fade-in, particle layer, spinner, eased progress
  */
-#include "config.h"
-#include "image.h"
-#include "modules.h"
-#include "shell.h"
-#include "anim.h"
-#include "audio.h"
+#include "core/config.h"
+#include "core/image.h"
+#include "core/modules.h"
+#include "tools/shell.h"
+#include "core/anim.h"
+#include "core/statusbar.h"
+#include "standalone/audio.h"
 
 /* This upgrade: arch abstraction, pointer input, window manager, and the two
  * pure-UEFI boot methods (Linux EFI-stub + chainload). */
 #include "arch.h"
-#include "input.h"
-#include "wm.h"
-#include "linux.h"
-#include "chain.h"
-#include "tools.h"       /* GUI Tools launcher (FOREB_ENTRY_TOOLS)             */
-#include "fwsetup.h"     /* reboot into firmware setup (FOREB_ENTRY_FWSETUP)   */
-#include "clone.h"       /* Clone Drive tool init (diskio-backed)              */
-#include "undelete.h"    /* Undelete / Carve tool init                         */
-#include "settings_nv.h" /* durable NV persistence of Settings/Theme edits     */
+#include "core/input.h"
+#include "core/wm.h"
+#include "boot/linux.h"
+#include "boot/chain.h"
+#include "tools/tools.h"       /* GUI Tools launcher (FOREB_ENTRY_TOOLS)             */
+#include "recovery/fwsetup.h"     /* reboot into firmware setup (FOREB_ENTRY_FWSETUP)   */
+#include "recovery/clone.h"       /* Clone Drive tool init (diskio-backed)              */
+#include "recovery/undelete.h"    /* Undelete / Carve tool init                         */
+#include "recovery/settings_nv.h" /* durable NV persistence of Settings/Theme edits     */
+#include "recovery/uefi_settings.h" /* UEFI firmware settings panel (view/edit vars)    */
 
 /* Interaction upgrade (this build): a pointer/cursor layer (input.h) and a tiny
  * window manager (wm.h) composite onto the same double-buffered back buffer as
  * ui.c, so the menu gains a mouse cursor and draggable windows (About, and later
  * Shell/Recovery) while the keyboard path keeps working unchanged. */
-#include "input.h"
-#include "wm.h"
+#include "core/input.h"
+#include "core/wm.h"
 #include "arch.h"     /* FOREB_ARCH_*, FOREB_MULTIBOOT_SUPPORTED, EFIAPI notes  */
 
 /* -----------------------------------------------------------------------------
@@ -850,7 +852,7 @@ static void scene_restore(void)
      * scene, so restore just those rows - a few KB - instead of a ~4 MB whole-
      * buffer memcpy every frame. With a window open the compositor can leave
      * damage outside those spans, so fall back to a full restore. */
-    if (wm_active_count() > 0 || !ui_restore_prev_spans(g_scenecache))
+    if (!ui_restore_prev_spans(g_scenecache))
         memcpy((void *)(UINTN)ui_backbuffer_base(), g_scenecache, g_scenecache_bytes);
 }
 
@@ -1113,6 +1115,9 @@ static int menu_activate(EFI_HANDLE image, int flat, int anim_on)
         case FOREB_ENTRY_FWSETUP:
             menu_enter_firmware_setup();
             return MENU_HANDLED;
+        case FOREB_ENTRY_UEFI_SETTINGS:
+            uefi_settings_open();
+            return MENU_HANDLED;
         case FOREB_ENTRY_FOREST:
         case FOREB_ENTRY_LINUX:
         case FOREB_ENTRY_CHAINLOAD:
@@ -1286,9 +1291,11 @@ static int run_menu_animated(EFI_HANDLE image)
     audio_init(gBS);   /* PC-speaker UI tones (silent until forebo.cfg enables) */
     audio_configure(forebo_cfg_audio());   /* apply pcspeaker / audio_* keys */
     wm_init(theme_init ? th : NULL);
+    statusbar_init(gBS, cin);
 
     /* First paint with a fade-in, then cache the background + seed particles. */
     paint_menu(labels, count, sel, secs, anim_on ? 1 : 0);
+    statusbar_draw(); ui_present();
     bgcache_build();
     if (anim_on) anim_particles_init(56, /*leaves*/0);
 
@@ -1354,6 +1361,7 @@ static int run_menu_animated(EFI_HANDLE image)
                 rescan_ms = 0;
                 input_rescan(gBS, &ms);
             }
+            statusbar_set_mouse(ms.present);
         }
 
         /* ---- dirty-frame tracking ----------------------------------------- *
@@ -1449,6 +1457,8 @@ static int run_menu_animated(EFI_HANDLE image)
                 } else if (key.UnicodeChar == 's' || key.UnicodeChar == 'S') {
                     audio_event(AUDIO_EV_OPEN);
                     tool_settings_open();   /* live customization editor */
+                } else if (key.UnicodeChar == 'u' || key.UnicodeChar == 'U') {
+                    uefi_settings_open();
                 } else if (key.UnicodeChar == 'c' || key.UnicodeChar == 'C') {
                     /* Enter the interactive shell; it may mutate g_cfg. */
                     int flat = (sel < g_view_count) ? g_view[sel] : 0;
@@ -1597,6 +1607,7 @@ static int run_menu_animated(EFI_HANDLE image)
                 anim_particles_step();
             }
         }
+        statusbar_draw();
         wm_draw();                                        /* windows over the menu */
         if (cursor_on && ms.present) draw_cursor_live(&ms);
         ui_present();                                     /* single flip to VRAM   */

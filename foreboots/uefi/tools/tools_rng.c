@@ -11,12 +11,12 @@
  * Draw callbacks only render + clip; actions run from the event callback.
  * ========================================================================== */
 #include "tools_rng.h"
-#include "efi.h"
-#include "wm.h"
-#include "ui.h"
-#include "input.h"
-#include "config.h"                    /* esp_ascii_to_char16 (file CRC path)   */
-#include "../include/forebo_theme.h"
+#include "../efi.h"
+#include "../core/wm.h"
+#include "../ui.h"
+#include "../core/input.h"
+#include "../core/config.h"                    /* esp_ascii_to_char16 (file CRC path)   */
+#include "../../include/forebo_theme.h"
 
 /* ==========================================================================
  * Captured firmware services (cat_rng_init).

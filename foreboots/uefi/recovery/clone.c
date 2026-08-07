@@ -23,14 +23,14 @@
  * ========================================================================== */
 
 #include "clone.h"
-#include "efi.h"
-#include "efi_ext.h"
-#include "wm.h"
-#include "ui.h"
-#include "input.h"
-#include "config.h"          /* esp_open_root / esp_ascii_to_char16 */
-#include "diskio.h"
-#include "../include/forebo_theme.h"
+#include "../efi.h"
+#include "../efi_ext.h"
+#include "../core/wm.h"
+#include "../ui.h"
+#include "../core/input.h"
+#include "../core/config.h"          /* esp_open_root / esp_ascii_to_char16 */
+#include "../core/diskio.h"
+#include "../../include/forebo_theme.h"
 
 /* ---- optional serial debug (0x3F8), off by default ----------------------- */
 #ifndef CLONE_DEBUG

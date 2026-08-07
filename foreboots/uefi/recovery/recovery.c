@@ -23,11 +23,11 @@
  * ========================================================================== */
 
 #include "recovery.h"
-#include "ui.h"          /* draw primitives + ui_present + ui_width/height/scale */
-#include "wm.h"          /* wm_init/open/run_frame/draw + wm_event               */
-#include "input.h"       /* mouse_state + input_poll + input_draw_cursor         */
-#include "shell.h"       /* shell_run + FOREB_SHELL_*                             */
-#include "chainload.h"   /* chain_list + chain_boot_first                         */
+#include "../ui.h"          /* draw primitives + ui_present + ui_width/height/scale */
+#include "../core/wm.h"          /* wm_init/open/run_frame/draw + wm_event               */
+#include "../core/input.h"       /* mouse_state + input_poll + input_draw_cursor         */
+#include "../tools/shell.h"       /* shell_run + FOREB_SHELL_*                             */
+#include "../boot/chainload.h"   /* chain_list + chain_boot_first                         */
 
 /* =============================================================================
  * Module-wide state (single modal instance at a time, mirroring shell.c).

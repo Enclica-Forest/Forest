@@ -19,27 +19,31 @@ public:
     explicit PreviewWidget(ConfigModel *m, QWidget *parent = nullptr);
     QSize sizeHint() const override { return QSize(560, 440); }
     void setFbSize(int w, int h) { fbW = w; fbH = h; update(); }
-    // Directory of the loaded forebo.cfg (the ESP /forebo dir) so ESP-relative
-    // image paths like /forebo/bg.bmp resolve to a real host file to preview.
     void setConfigDir(const QString &d) { configDir = d; imgCache.clear(); update(); }
-    // Resolve + load an image field (host path OR ESP-relative). BMP/PNG/JPG via
-    // Qt, plus a built-in TGA decoder. Cached by path.
     QImage loadImg(const QString &field);
+    void zoomIn();
+    void zoomOut();
+    void zoomReset();
+    int selectedEntryIndex() const { return selectedEntry; }
+    void selectEntry(int idx);
 
 signals:
-    void elementClicked(const QString &kind, int index); // "panel","entry","button","window"
+    void elementClicked(const QString &kind, int index);
 
 protected:
     void paintEvent(QPaintEvent *) override;
     void mousePressEvent(QMouseEvent *) override;
+    void keyPressEvent(QKeyEvent *) override;
 
 private:
     ConfigModel *model;
     int fbW = 1920, fbH = 1080;
     QRect panelRect, buttonRect, windowRect;
     QVector<QRect> entryRects;
-    double lastScale = 1.0; int lastOx = 0, lastOy = 0; // native<->widget transform
+    double lastScale = 1.0; int lastOx = 0, lastOy = 0;
     QString configDir;
+    int selectedEntry = -1;
+    double zoomLevel = 1.0;
     // Resolved host path -> image, validated by mtime so edited/re-staged files
     // reload. Failed lookups are NEVER cached (a missing file may appear later).
     struct ImgEnt { QImage img; qint64 mtime = 0; };

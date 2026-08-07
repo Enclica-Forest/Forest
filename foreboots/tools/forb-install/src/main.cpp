@@ -19,9 +19,15 @@ static void print_help() {
 "  scan       parse the ESP configs and print a report (read-only)\n"
 "  generate   print the translated forebo.cfg (--output FILE)\n"
 "  install    install ForeB alongside the current bootloader (needs root)\n"
+"  uninstall  remove ForeB from the ESP and NVRAM (needs root)\n"
+"  list       list all bootloaders detected on the ESP and in NVRAM\n"
+"  backup     create a tar.gz backup of the ESP configuration\n"
 "\n"
 "Global:\n"
 "  --selftest            run internal offline tests and exit\n"
+"  --force               bypass confirmation prompts, overwrite existing\n"
+"  --color               force colored output\n"
+"  --no-color            disable colored output\n"
 "\n"
 "Common options:\n"
 "  --esp PATH            ESP mount point (default: first vfat mount of\n"
@@ -41,6 +47,34 @@ static void print_help() {
 "  --no-nvram            skip efibootmgr NVRAM registration\n"
 "  --make-default        put ForeB first in BootOrder\n"
 "  --dry-run             print every action without doing it\n"
+"\n"
+"uninstall options:\n"
+"  --dry-run             print what would be removed without doing it\n"
+"  --keep-nvram          do not remove the NVRAM boot entry\n"
+"  --yes                 skip confirmation prompt\n"
+"\n"
+"list options:\n"
+"  (uses common --esp option)\n"
+"\n"
+"backup options:\n"
+"  --output FILE         save backup to FILE (default: forb-backup-TIMESTAMP.tar.gz)\n"
+"\n"
+"Environment variables:\n"
+"  FORB_ESP              override default ESP path\n"
+"  NO_COLOR              disable colored output (https://no-color.org/)\n"
+"  TERM                  terminal type (dumb terminals get no color)\n"
+"\n"
+"Common usage patterns:\n"
+"  " << TOOL << " scan                           # see what's on the ESP\n"
+"  " << TOOL << " generate -o forebo.cfg         # preview translated config\n"
+"  " << TOOL << " install --dry-run              # preview install actions\n"
+"  " << TOOL << " install --force                # overwrite existing install\n"
+"  " << TOOL << " install --make-default         # make ForeB the default\n"
+"\n"
+"Examples:\n"
+"  " << TOOL << " scan --esp /boot/efi\n"
+"  " << TOOL << " generate --config /boot/efi/grub/grub.cfg\n"
+"  " << TOOL << " install --esp /boot/efi --force --make-default\n"
 "\n"
 "exit codes: 0 ok, 1 error, 2 usage\n";
 }
@@ -81,7 +115,8 @@ int main(int argc, char** argv) {
     // subcommand is the first non-option token.
     for (; i < args.size(); ++i) {
         const std::string& s = args[i];
-        if (s == "scan" || s == "generate" || s == "install") {
+        if (s == "scan" || s == "generate" || s == "install" ||
+            s == "uninstall" || s == "list" || s == "backup" || s == "export") {
             a.command = s;
             ++i;
             break;
@@ -119,19 +154,33 @@ int main(int argc, char** argv) {
             }
         } else if (s == "--no-extras") {
             a.no_extras = true;
+        } else if (s == "--strict") {
+            a.strict = true;
         } else if (s == "-v" || s == "--verbose") {
             a.verbose = true;
-        } else if (s == "--output" && a.command == "generate") {
+        } else if (s == "-q" || s == "--quiet") {
+            a.quiet = true;
+        } else if (s == "--manifest" && a.command == "batch") {
+            if (!take_value(args, i, s, a.manifest)) return 2;
+        } else if (s == "--continue-on-error" && a.command == "batch") {
+            a.continue_on_error = true;
+        } else if (s == "--output" && (a.command == "generate" || a.command == "backup")) {
             if (!take_value(args, i, s, a.output)) return 2;
         } else if (s == "--no-nvram" && a.command == "install") {
             a.no_nvram = true;
         } else if (s == "--make-default" && a.command == "install") {
             a.make_default = true;
-        } else if (s == "--dry-run" && a.command == "install") {
+        } else if (s == "--dry-run" && (a.command == "install" || a.command == "uninstall")) {
             a.dry_run = true;
+        } else if (s == "--yes" && a.command == "uninstall") {
+            a.yes = true;
+        } else if (s == "--keep-nvram" && a.command == "uninstall") {
+            a.keep_nvram = true;
         } else if (s == "-h" || s == "--help") {
             print_help();
             return 0;
+        } else if (s[0] != '-' && a.command == "lint" && a.config.empty()) {
+            a.config = s;
         } else {
             std::cerr << TOOL << ": error: unrecognized option for "
                       << a.command << ": " << s << "\n";
@@ -140,9 +189,13 @@ int main(int argc, char** argv) {
     }
 
     Reporter rep(a.verbose);
+    rep.quiet = a.quiet;
     if (a.command == "scan") return cmd_scan(a, rep);
     if (a.command == "generate") return cmd_generate(a, rep);
     if (a.command == "install") return cmd_install(a, rep);
+    if (a.command == "lint") return cmd_lint(a, rep);
+    if (a.command == "batch") return cmd_batch(a, rep);
+    if (a.command == "migrate") return cmd_migrate(a, rep);
     print_help();
     return 2;
 }

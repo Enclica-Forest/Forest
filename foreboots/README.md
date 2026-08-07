@@ -1,6 +1,6 @@
 # ForeB - Forest Bootloader
 
-ForeB is the default bootloader for Forest OS on **both BIOS/CSM and native
+ForeB is the default bootloader for Forest-OS on **both BIOS/CSM and native
 UEFI** firmware. It replaces GRUB while remaining **fully Multiboot1-compatible**
 with the kernel: the kernel is handed `EAX=0x2BADB002`, `EBX=&multiboot_info_t`
 exactly as GRUB does, so no kernel changes are required.
@@ -54,7 +54,7 @@ EIP = kernel ELF entry (e.g. 0x100000)
 ```
 
 The kernel is entered in **32-bit protected mode** with flat segments. This
-matches the Forest OS kernel's `src/boot.asm` (ARCH=32) and `src/boot64.asm`
+matches the Fern kernel's `src/boot.asm` (ARCH=32) and `src/boot64.asm`
 (ARCH=64) entry: both begin in 32-bit PM and read `EAX`/`EBX`; the 64-bit
 kernel then performs its own long-mode transition. **ForeB does not need to
 switch to long mode for the current kernel.**
@@ -236,7 +236,7 @@ The chosen mode's `PhysBasePtr`, pitch, width, height, bpp are recorded in
 
 - **Default (FOREB_FORCE_LONG_MODE=0):** stage 3 enters the kernel in 32-bit
   PM with `EAX=0x2BADB002`, `EBX=&multiboot_info_t`, `EIP=e_entry`. This works
-  for both ARCH=32 and ARCH=64 Forest OS kernels, because the 64-bit kernel's
+  for both ARCH=32 and ARCH=64 Fern kernels, because the 64-bit kernel's
   `boot64.asm` performs its own CPUID/paging/long-mode transition after entry.
 - **Optional long-mode trampoline (FOREB_FORCE_LONG_MODE=1):** if the CPU
   supports long mode (detected in stage 2 via CPUID) and the kernel is ELF64,
@@ -259,7 +259,7 @@ needs inline.
 1. **Firmware entry** — `efi_main(EFI_HANDLE, EFI_SYSTEM_TABLE *)` runs in
    64-bit long mode with firmware paging on and boot services available.
 2. **Load the kernel** — open the ESP's Simple File System and read the kernel
-   ELF from `\forebo\kernel.elf` into an `AllocatePages` buffer. The same ELF is
+   ELF from `\forebo\fern.elf` into an `AllocatePages` buffer. The same ELF is
    used by BIOS and UEFI (ELF32 for ARCH=32, ELF64 for ARCH=64).
 3. **Framebuffer via GOP** — locate the Graphics Output Protocol and record
    `Mode->FrameBufferBase`, `HorizontalResolution`, `VerticalResolution`,
@@ -330,7 +330,7 @@ layouts, magic values, and flag bits are identical to the NASM side (which
 
 ```
 make uefi           # clang -target x86_64-unknown-windows ... -> BOOTX64.EFI
-make esp            # stage BOOTX64.EFI + kernel.elf into a FAT ESP image
+make esp            # stage BOOTX64.EFI + fern.elf into a FAT ESP image
 make qemu-uefi      # boot the ESP under OVMF (edk2) in QEMU
 make iso-hybrid     # hybrid ISO: El Torito (BIOS) + EFI System Partition (UEFI)
 make qemu-uefi-iso  # boot the hybrid ISO under OVMF in QEMU
@@ -347,7 +347,7 @@ gets a `\forebo\vmlinuz.README` placeholder).
 #### Cross-architecture UEFI (aarch64 + riscv64)
 
 ForeB's UEFI C tree compiles for three UEFI arches from one source (`uefi/arch.h`).
-The x86-only Forest Multiboot handoff is `#ifdef`-guarded, so the non-x86 builds
+The x86-only Fern Multiboot handoff is `#ifdef`-guarded, so the non-x86 builds
 link **without** the NASM trampoline and expose UI + shell + Linux boot +
 chainload + filesystems + recovery.
 
@@ -375,7 +375,7 @@ target. Producing `BOOTRISCV64.EFI` needs edk2 `GenFw` (BaseTools) or a binutils
 built with RISC-V PE support; `make uefi-riscv` prints these steps.
 
 `make esp` stages the loader to `\EFI\BOOT\BOOTX64.EFI`, the kernel to
-`\forebo\kernel.elf`, and (this upgrade) the config `\forebo\forebo.cfg`, the
+`\forebo\fern.elf`, and (this upgrade) the config `\forebo\forebo.cfg`, the
 background `\forebo\bg.bmp`, per-entry icons `\forebo\icons\*.tga`, and the
 sample module `\forebo\initrd.tar`. The background/icons are (re)generated from
 the theme by `tools/gen_assets.py` during the `esp`/`image` asset stage. The
@@ -594,7 +594,7 @@ entry contract is identical.
 | Firmware entry mode | 16-bit real mode                       | 64-bit long mode                         |
 | Framebuffer source  | VBE (INT 10h, `PhysBasePtr`)           | GOP (`FrameBufferBase`)                  |
 | Memory map source   | E820 (INT 15h `AX=E820h`)              | `GetMemoryMap` (EFI descriptors)         |
-| Kernel source       | raw disk sectors (48+)                 | ESP FAT file `\forebo\kernel.elf`        |
+| Kernel source       | raw disk sectors (48+)                 | ESP FAT file `\forebo\fern.elf`          |
 | Memory teardown     | none (real mode owns RAM)              | `ExitBootServices` before low-RAM writes |
 | Pre-handoff CPU     | already 32-bit PM                      | drop long mode -> 32-bit PM              |
 | **Kernel entry**    | 32-bit PM, `EAX=0x2BADB002`, `EBX=0x1800`, PICs masked | **identical** |
@@ -621,7 +621,7 @@ confirms the line is on.
 ```
 make all                 # stage1.bin, stage2.bin, stage3.bin
 make check               # verify sizes + MBR/stage2 signatures
-make image KERNEL=../build/32bit-bios-debug/boot/kernel.bin
+make image KERNEL=../build/32bit-bios-debug/boot/fern.bin
 make iso                 # El Torito no-emulation ISO (xorriso)
 make qemu                # test the disk image in QEMU
 make qemu-iso            # test the ISO in QEMU

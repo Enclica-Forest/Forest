@@ -8,10 +8,10 @@
  * NO firmware services -> NO cat_convert_init().
  * ========================================================================== */
 #include "tools_convert.h"
-#include "efi.h"
-#include "ui.h"
-#include "wm.h"
-#include "input.h"
+#include "../efi.h"
+#include "../ui.h"
+#include "../core/wm.h"
+#include "../core/input.h"
 
 /* ==========================================================================
  * Small freestanding helpers (file-local; no libc).

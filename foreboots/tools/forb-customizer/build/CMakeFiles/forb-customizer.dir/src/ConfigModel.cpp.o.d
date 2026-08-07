@@ -1,7 +1,7 @@
 CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.o: \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/ConfigModel.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/ConfigModel.cpp \
  /usr/include/stdc-predef.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/ConfigModel.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/ConfigModel.h \
  /usr/include/qt6/QtCore/QObject /usr/include/qt6/QtCore/qobject.h \
  /usr/include/qt6/QtCore/qobjectdefs.h \
  /usr/include/qt6/QtCore/qnamespace.h /usr/include/qt6/QtCore/qglobal.h \
@@ -288,8 +288,8 @@ CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.o: \
  /usr/include/qt6/QtGui/qtguiglobal.h \
  /usr/include/qt6/QtGui/qtgui-config.h \
  /usr/include/qt6/QtGui/qtguiexports.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Opt.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Schema.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/Opt.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/Schema.h \
  /usr/include/qt6/QtCore/QStringList /usr/include/qt6/QtCore/QMap \
  /usr/include/qt6/QtCore/qmap.h /usr/include/qt6/QtCore/qshareddata.h \
  /usr/include/qt6/QtCore/qshareddata_impl.h /usr/include/qt6/QtCore/QFile \

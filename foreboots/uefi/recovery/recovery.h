@@ -37,8 +37,8 @@
 #ifndef FOREB_UEFI_RECOVERY_H
 #define FOREB_UEFI_RECOVERY_H
 
-#include "efi.h"
-#include "../include/forebo_cfg.h"
+#include "../efi.h"
+#include "../../include/forebo_cfg.h"
 
 /* recovery_run() return values (mirror shell.h so bootx64 can treat them alike).
  * A value >= 0 is a menu-entry index to boot. */

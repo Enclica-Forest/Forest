@@ -8,9 +8,9 @@
  * =============================================================================
  */
 #include "linux.h"
-#include "efi_ext.h"
-#include "config.h"
-#include "ui.h"
+#include "../efi_ext.h"
+#include "../core/config.h"
+#include "../ui.h"
 
 static EFI_GUID li_guid     = EFI_LOADED_IMAGE_PROTOCOL_GUID;
 static EFI_GUID dp_guid     = EFI_DEVICE_PATH_PROTOCOL_GUID;

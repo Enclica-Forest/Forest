@@ -1,7 +1,7 @@
 CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.o: \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/PreviewWidget.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/PreviewWidget.cpp \
  /usr/include/stdc-predef.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/PreviewWidget.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/PreviewWidget.h \
  /usr/include/qt6/QtWidgets/QWidget /usr/include/qt6/QtWidgets/qwidget.h \
  /usr/include/qt6/QtWidgets/qtwidgetsglobal.h \
  /usr/include/qt6/QtGui/qtguiglobal.h /usr/include/qt6/QtCore/qglobal.h \
@@ -329,10 +329,10 @@ CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.o: \
  /usr/include/qt6/QtCore/QRect /usr/include/qt6/QtCore/QVector \
  /usr/include/qt6/QtCore/qvector.h /usr/include/qt6/QtCore/QHash \
  /usr/include/qt6/QtGui/QImage /usr/include/qt6/QtCore/QString \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/ConfigModel.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/ConfigModel.h \
  /usr/include/qt6/QtCore/QObject /usr/include/qt6/QtGui/QRgb \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Opt.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Schema.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/Opt.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/Schema.h \
  /usr/include/qt6/QtCore/QStringList /usr/include/qt6/QtCore/QMap \
  /usr/include/qt6/QtGui/QPainter /usr/include/qt6/QtGui/qpainter.h \
  /usr/include/qt6/QtGui/qtextoption.h /usr/include/qt6/QtGui/qpen.h \
@@ -358,12 +358,12 @@ CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.o: \
  /usr/include/qt6/QtCore/qcoreapplication_platform.h \
  /usr/include/qt6/QtGui/qinputmethod.h /usr/include/qt6/QtCore/qlocale.h \
  /usr/include/qt6/QtGui/qguiapplication_platform.h \
- /usr/include/qt6/QtCore/QFile /usr/include/qt6/QtCore/qfile.h \
- /usr/include/qt6/QtCore/qfiledevice.h /usr/include/c++/16/filesystem \
- /usr/include/c++/16/bits/fs_fwd.h /usr/include/c++/16/bits/fs_path.h \
- /usr/include/c++/16/locale /usr/include/c++/16/bits/locale_facets.h \
- /usr/include/c++/16/cwctype /usr/include/wctype.h \
- /usr/include/bits/wctype-wchar.h \
+ /usr/include/qt6/QtGui/QKeyEvent /usr/include/qt6/QtCore/QFile \
+ /usr/include/qt6/QtCore/qfile.h /usr/include/qt6/QtCore/qfiledevice.h \
+ /usr/include/c++/16/filesystem /usr/include/c++/16/bits/fs_fwd.h \
+ /usr/include/c++/16/bits/fs_path.h /usr/include/c++/16/locale \
+ /usr/include/c++/16/bits/locale_facets.h /usr/include/c++/16/cwctype \
+ /usr/include/wctype.h /usr/include/bits/wctype-wchar.h \
  /usr/include/c++/16/x86_64-pc-linux-gnu/bits/ctype_base.h \
  /usr/include/c++/16/x86_64-pc-linux-gnu/bits/ctype_inline.h \
  /usr/include/c++/16/bits/locale_facets.tcc \
@@ -386,4 +386,4 @@ CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.o: \
  /usr/include/qt6/QtCore/QFileInfo /usr/include/qt6/QtCore/qfileinfo.h \
  /usr/include/qt6/QtCore/qdatetime.h /usr/include/qt6/QtCore/qcalendar.h \
  /usr/include/qt6/QtCore/qtimezone.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/font8x16.h
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/font8x16.h

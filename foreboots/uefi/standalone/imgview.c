@@ -26,14 +26,14 @@
  * ========================================================================== */
 
 #include "imgview.h"
-#include "efi.h"
-#include "efi_ext.h"
-#include "wm.h"
-#include "ui.h"
-#include "input.h"
-#include "image.h"
-#include "config.h"
-#include "../include/forebo_cfg.h"
+#include "../efi.h"
+#include "../efi_ext.h"
+#include "../core/wm.h"
+#include "../ui.h"
+#include "../core/input.h"
+#include "../core/image.h"
+#include "../core/config.h"
+#include "../../include/forebo_cfg.h"
 
 /* ==========================================================================
  * Module state (captured at tool_imgview_init).

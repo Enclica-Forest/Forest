@@ -11,12 +11,12 @@
  * Every draw callback CLIPS to the client rect [cx,cx+cw) x [cy,cy+ch).
  * ========================================================================== */
 #include "tools_toys.h"
-#include "efi.h"
-#include "wm.h"
-#include "ui.h"
-#include "input.h"
-#include "audio.h"
-#include "../include/forebo_theme.h"
+#include "../efi.h"
+#include "../core/wm.h"
+#include "../ui.h"
+#include "../core/input.h"
+#include "../standalone/audio.h"
+#include "../../include/forebo_theme.h"
 
 /* ==========================================================================
  * Captured firmware services (for Stall + RTC).

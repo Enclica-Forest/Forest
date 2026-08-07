@@ -103,6 +103,13 @@ struct Theme {
     bool operator==(const Theme &o) const;
 };
 
+// ---- entry validation result -----------------------------------------------
+struct EntryValidation {
+    enum Level { Error, Warning, Info } level = Info;
+    QString field;    // which field: "title", "kernel", "cmdline", etc.
+    QString message;  // human-readable description
+};
+
 class ConfigModel : public QObject {
     Q_OBJECT
 public:
@@ -126,8 +133,18 @@ public:
     bool    loadFile(const QString &path, QString *err = nullptr);
     bool    saveFile(const QString &path, QString *err = nullptr); // timestamped .bak + atomic
 
+    // ---- templates ---------------------------------------------------------
+    bool    saveTemplate(const QString &path, const QString &name,
+                         const QString &description = QString(),
+                         const QString &author = QString());
+    bool    loadTemplate(const QString &path, bool themeOnly, QString *err = nullptr);
+
     // ---- Limine migration --------------------------------------------------
     bool    importLimine(const QString &path, QString *err = nullptr);
+
+    // ---- Syslinux / rEFInd migration --------------------------------------
+    bool    importSyslinux(const QString &path, QString *err = nullptr);
+    bool    importRefind(const QString &path, QString *err = nullptr);
 
     // ---- presets -----------------------------------------------------------
     void    applyPreset(int index);           // apply gallery preset i into the model
@@ -135,6 +152,10 @@ public:
     // flatten helper for the default= combo and preview
     struct FlatRef { QString label; const EntryNode *node; };
     QVector<FlatRef> flatten() const;
+
+    // ---- entry validation ---------------------------------------------------
+    static QVector<EntryValidation> validateEntry(const EntryNode &e);
+    QVector<EntryValidation> validateAll() const;
 
 signals:
     void changed();            // any edit (preview repaint)

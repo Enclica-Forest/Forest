@@ -1,7 +1,7 @@
 CMakeFiles/forb-customizer.dir/src/Bound.cpp.o: \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Bound.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/Bound.cpp \
  /usr/include/stdc-predef.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Bound.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/Bound.h \
  /usr/include/qt6/QtWidgets/QWidget /usr/include/qt6/QtWidgets/qwidget.h \
  /usr/include/qt6/QtWidgets/qtwidgetsglobal.h \
  /usr/include/qt6/QtGui/qtguiglobal.h /usr/include/qt6/QtCore/qglobal.h \
@@ -327,8 +327,8 @@ CMakeFiles/forb-customizer.dir/src/Bound.cpp.o: \
  /usr/include/qt6/QtWidgets/qsizepolicy.h \
  /usr/include/qt6/QtGui/qcursor.h /usr/include/qt6/QtGui/qbitmap.h \
  /usr/include/qt6/QtGui/QRgb \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Opt.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/ConfigModel.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/Opt.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/ConfigModel.h \
  /usr/include/qt6/QtCore/QObject /usr/include/qt6/QtCore/QString \
  /usr/include/qt6/QtCore/QVector /usr/include/qt6/QtCore/qvector.h \
  /usr/include/qt6/QtWidgets/QHBoxLayout \

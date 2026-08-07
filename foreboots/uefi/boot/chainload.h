@@ -31,7 +31,7 @@
 #ifndef FOREB_UEFI_CHAINLOAD_H
 #define FOREB_UEFI_CHAINLOAD_H
 
-#include "efi.h"
+#include "../efi.h"
 
 #ifdef __cplusplus
 extern "C" {

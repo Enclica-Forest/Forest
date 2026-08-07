@@ -47,11 +47,11 @@
 #ifndef FOREB_UEFI_TOOLS_H
 #define FOREB_UEFI_TOOLS_H
 
-#include "efi.h"
-#include "wm.h"
-#include "ui.h"
-#include "input.h"
-#include "../include/forebo_cfg.h"
+#include "../efi.h"
+#include "../core/wm.h"
+#include "../ui.h"
+#include "../core/input.h"
+#include "../../include/forebo_cfg.h"
 
 /* ------------------------------------------------------------------ */
 /*  One registered GUI tool                                           */

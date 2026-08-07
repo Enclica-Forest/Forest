@@ -20,9 +20,6 @@ events:
     names:
       - "uname"
     candidate_directories:
-      - "/usr/bin/"
-      - "/usr/sbin/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -37,13 +34,15 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/bin/"
+    searched_directories:
+      - "/home/bluet/.local/bin/uname"
+      - "/home/bluet/.cargo/bin/uname"
+      - "/home/bluet/.opencode/bin/uname"
+      - "/usr/local/sbin/uname"
+      - "/usr/local/bin/uname"
     found: "/usr/bin/uname"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -59,15 +58,13 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "message-v1"
     backtrace:
       - "/usr/share/cmake/Modules/CMakeDetermineSystem.cmake:218 (message)"
       - "CMakeLists.txt:2 (project)"
     message: |
-      The system is: Linux - 7.1.4-1-cachyos - x86_64
+      The system is: Linux - 7.1.5-1-cachyos - x86_64
   -
     kind: "find-v1"
     backtrace:
@@ -89,9 +86,6 @@ events:
       - "make"
       - "smake"
     candidate_directories:
-      - "/usr/bin/"
-      - "/usr/sbin/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -106,12 +100,7 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     searched_directories:
-      - "/usr/bin/gmake"
-      - "/usr/sbin/gmake"
-      - "/usr/gmake"
       - "/home/bluet/.local/bin/gmake"
       - "/home/bluet/.cargo/bin/gmake"
       - "/home/bluet/.opencode/bin/gmake"
@@ -126,12 +115,13 @@ events:
       - "/usr/bin/site_perl/gmake"
       - "/usr/bin/vendor_perl/gmake"
       - "/usr/bin/core_perl/gmake"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/gmake"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/gmake"
+      - "/home/bluet/.local/bin/make"
+      - "/home/bluet/.cargo/bin/make"
+      - "/home/bluet/.opencode/bin/make"
+      - "/usr/local/sbin/make"
+      - "/usr/local/bin/make"
     found: "/usr/bin/make"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -147,8 +137,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -178,9 +166,6 @@ events:
       - "icx"
       - "clang++"
     candidate_directories:
-      - "/usr/bin/"
-      - "/usr/sbin/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -195,12 +180,14 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+    searched_directories:
+      - "/home/bluet/.local/bin/c++"
+      - "/home/bluet/.cargo/bin/c++"
+      - "/home/bluet/.opencode/bin/c++"
+      - "/usr/local/sbin/c++"
+      - "/usr/local/bin/c++"
     found: "/usr/bin/c++"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -216,8 +203,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -244,8 +229,6 @@ events:
       - "/usr/share/cmake/Modules/"
     found: "/usr/share/cmake/Modules/CMakeCXXCompilerId.cpp.in"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -261,8 +244,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "message-v1"
     backtrace:
@@ -283,7 +264,7 @@ events:
       Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
       
       The CXX compiler identification is GNU, found in:
-        /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/4.4.0/CompilerIdCXX/a.out
+        /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/4.4.2/CompilerIdCXX/a.out
       
   -
     kind: "find-v1"
@@ -319,12 +300,8 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     found: "/usr/bin/ar"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -340,8 +317,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -376,12 +351,8 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     found: "/usr/bin/ranlib"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -397,8 +368,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -433,12 +402,8 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     found: "/usr/bin/strip"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -454,8 +419,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -490,12 +453,8 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     found: "/usr/bin/ld"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -511,8 +470,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -547,12 +504,8 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     found: "/usr/bin/nm"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -568,8 +521,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -604,12 +555,8 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     found: "/usr/bin/objdump"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -625,8 +572,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -661,12 +606,8 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     found: "/usr/bin/objcopy"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -682,8 +623,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -718,12 +657,8 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     found: "/usr/bin/readelf"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -739,8 +674,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -775,8 +708,6 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     searched_directories:
       - "/usr/bin/dlltool"
       - "/home/bluet/.local/bin/dlltool"
@@ -792,12 +723,8 @@ events:
       - "/usr/bin/site_perl/dlltool"
       - "/usr/bin/vendor_perl/dlltool"
       - "/usr/bin/core_perl/dlltool"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/dlltool"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/dlltool"
     found: false
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -813,8 +740,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -849,12 +774,8 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     found: "/usr/bin/addr2line"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -870,8 +791,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -906,8 +825,6 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     searched_directories:
       - "/usr/bin/tapi"
       - "/home/bluet/.local/bin/tapi"
@@ -923,12 +840,8 @@ events:
       - "/usr/bin/site_perl/tapi"
       - "/usr/bin/vendor_perl/tapi"
       - "/usr/bin/core_perl/tapi"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/tapi"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/tapi"
     found: false
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -944,8 +857,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -983,8 +894,6 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     searched_directories:
       - "/usr/bin/gcc-ar-16.1"
       - "/home/bluet/.local/bin/gcc-ar-16.1"
@@ -1000,8 +909,6 @@ events:
       - "/usr/bin/site_perl/gcc-ar-16.1"
       - "/usr/bin/vendor_perl/gcc-ar-16.1"
       - "/usr/bin/core_perl/gcc-ar-16.1"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/gcc-ar-16.1"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/gcc-ar-16.1"
       - "/usr/bin/gcc-ar-16"
       - "/home/bluet/.local/bin/gcc-ar-16"
       - "/home/bluet/.cargo/bin/gcc-ar-16"
@@ -1016,8 +923,6 @@ events:
       - "/usr/bin/site_perl/gcc-ar-16"
       - "/usr/bin/vendor_perl/gcc-ar-16"
       - "/usr/bin/core_perl/gcc-ar-16"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/gcc-ar-16"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/gcc-ar-16"
       - "/usr/bin/gcc-ar16"
       - "/home/bluet/.local/bin/gcc-ar16"
       - "/home/bluet/.cargo/bin/gcc-ar16"
@@ -1032,12 +937,8 @@ events:
       - "/usr/bin/site_perl/gcc-ar16"
       - "/usr/bin/vendor_perl/gcc-ar16"
       - "/usr/bin/core_perl/gcc-ar16"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/gcc-ar16"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/gcc-ar16"
     found: "/usr/bin/gcc-ar"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -1053,8 +954,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -1092,8 +991,6 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     searched_directories:
       - "/usr/bin/gcc-ranlib-16.1"
       - "/home/bluet/.local/bin/gcc-ranlib-16.1"
@@ -1109,8 +1006,6 @@ events:
       - "/usr/bin/site_perl/gcc-ranlib-16.1"
       - "/usr/bin/vendor_perl/gcc-ranlib-16.1"
       - "/usr/bin/core_perl/gcc-ranlib-16.1"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/gcc-ranlib-16.1"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/gcc-ranlib-16.1"
       - "/usr/bin/gcc-ranlib-16"
       - "/home/bluet/.local/bin/gcc-ranlib-16"
       - "/home/bluet/.cargo/bin/gcc-ranlib-16"
@@ -1125,8 +1020,6 @@ events:
       - "/usr/bin/site_perl/gcc-ranlib-16"
       - "/usr/bin/vendor_perl/gcc-ranlib-16"
       - "/usr/bin/core_perl/gcc-ranlib-16"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/gcc-ranlib-16"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/gcc-ranlib-16"
       - "/usr/bin/gcc-ranlib16"
       - "/home/bluet/.local/bin/gcc-ranlib16"
       - "/home/bluet/.cargo/bin/gcc-ranlib16"
@@ -1141,12 +1034,8 @@ events:
       - "/usr/bin/site_perl/gcc-ranlib16"
       - "/usr/bin/vendor_perl/gcc-ranlib16"
       - "/usr/bin/core_perl/gcc-ranlib16"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/gcc-ranlib16"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/gcc-ranlib16"
     found: "/usr/bin/gcc-ranlib"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -1162,8 +1051,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "try_compile-v1"
     backtrace:
@@ -1173,8 +1060,8 @@ events:
     checks:
       - "Detecting CXX compiler ABI info"
     directories:
-      source: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-zV7T5x"
-      binary: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-zV7T5x"
+      source: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-sJfjJk"
+      binary: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-sJfjJk"
     cmakeVariables:
       CMAKE_CXX_FLAGS: ""
       CMAKE_CXX_FLAGS_DEBUG: "-g"
@@ -1185,24 +1072,24 @@ events:
       variable: "CMAKE_CXX_ABI_COMPILED"
       cached: false
       stdout: |
-        Change Dir: '/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-zV7T5x'
+        Change Dir: '/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-sJfjJk'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_7c64e/fast
-        /usr/bin/make  -f CMakeFiles/cmTC_7c64e.dir/build.make CMakeFiles/cmTC_7c64e.dir/build
-        make[1]: Entering directory '/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-zV7T5x'
-        Building CXX object CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o
-        /usr/bin/c++   -v -o CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_f16e4/fast
+        /usr/bin/make  -f CMakeFiles/cmTC_f16e4.dir/build.make CMakeFiles/cmTC_f16e4.dir/build
+        make[1]: Entering directory '/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-sJfjJk'
+        Building CXX object CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o
+        /usr/bin/c++   -v -o CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp
         Using built-in specs.
         COLLECT_GCC=/usr/bin/c++
         Target: x86_64-pc-linux-gnu
         Configured with: ../gcc/configure --enable-languages=ada,c,c++,d,fortran,go,lto,m2,objc,obj-c++,rust,cobol --enable-bootstrap --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://github.com/CachyOS/CachyOS-PKGBUILDS/issues --with-build-config=bootstrap-lto --with-gcc-major-version-only --with-linker-hash-style=gnu --with-system-zlib --enable-cet=auto --enable-checking=release --enable-clocale=gnu --enable-default-pie --enable-default-ssp --enable-gnu-indirect-function --enable-gnu-unique-object --enable-libstdcxx-backtrace --enable-link-serialization=1 --enable-linker-build-id --enable-lto --enable-multilib --enable-plugin --enable-shared --enable-threads=posix --disable-fixincludes --disable-libssp --disable-libstdcxx-pch --disable-werror
         Thread model: posix
         Supported LTO compression algorithms: zlib zstd
-        gcc version 16.1.1 20260625 (GCC) 
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_7c64e.dir/'
-         /usr/lib/gcc/x86_64-pc-linux-gnu/16/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_7c64e.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -version -o /tmp/ccmSy96Z.s
-        GNU C++20 (GCC) version 16.1.1 20260625 (x86_64-pc-linux-gnu)
-        	compiled by GNU C version 16.1.1 20260625, GMP version 6.3.0, MPFR version 4.2.2, MPC version 1.4.1, isl version isl-0.28-GMP
+        gcc version 16.1.1 20260728 (GCC) 
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_f16e4.dir/'
+         /usr/lib/gcc/x86_64-pc-linux-gnu/16/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_f16e4.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -version -o /tmp/ccWylM7W.s
+        GNU C++20 (GCC) version 16.1.1 20260728 (x86_64-pc-linux-gnu)
+        	compiled by GNU C version 16.1.1 20260728, GMP version 6.3.0, MPFR version 4.2.2, MPC version 1.4.1, isl version isl-0.28-GMP
         
         GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
         ignoring nonexistent directory "/usr/lib/gcc/x86_64-pc-linux-gnu/16/include-fixed"
@@ -1216,15 +1103,15 @@ events:
          /usr/local/include
          /usr/include
         End of search list.
-        Compiler executable checksum: 27172de8836ea6b303b0014313024f2d
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_7c64e.dir/'
-         as -v --64 -o CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccmSy96Z.s
-        GNU assembler version 2.46.1 (x86_64-pc-linux-gnu) using BFD version (GNU Binutils) 2.46.1
+        Compiler executable checksum: e6b58163ceb7101a7203a46cfef09871
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_f16e4.dir/'
+         as -v --64 -o CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccWylM7W.s
+        GNU assembler version 2.47 (x86_64-pc-linux-gnu) using BFD version (GNU Binutils) 2.47
         COMPILER_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/
         LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/:/lib/../lib/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../:/lib/:/usr/lib/
-        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.'
-        Linking CXX executable cmTC_7c64e
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7c64e.dir/link.txt --verbose=1
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.'
+        Linking CXX executable cmTC_f16e4
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f16e4.dir/link.txt --verbose=1
         Using built-in specs.
         COLLECT_GCC=/usr/bin/c++
         COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper
@@ -1232,17 +1119,17 @@ events:
         Configured with: ../gcc/configure --enable-languages=ada,c,c++,d,fortran,go,lto,m2,objc,obj-c++,rust,cobol --enable-bootstrap --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://github.com/CachyOS/CachyOS-PKGBUILDS/issues --with-build-config=bootstrap-lto --with-gcc-major-version-only --with-linker-hash-style=gnu --with-system-zlib --enable-cet=auto --enable-checking=release --enable-clocale=gnu --enable-default-pie --enable-default-ssp --enable-gnu-indirect-function --enable-gnu-unique-object --enable-libstdcxx-backtrace --enable-link-serialization=1 --enable-linker-build-id --enable-lto --enable-multilib --enable-plugin --enable-shared --enable-threads=posix --disable-fixincludes --disable-libssp --disable-libstdcxx-pch --disable-werror
         Thread model: posix
         Supported LTO compression algorithms: zlib zstd
-        gcc version 16.1.1 20260625 (GCC) 
+        gcc version 16.1.1 20260728 (GCC) 
         COMPILER_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/
         LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/:/lib/../lib/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../:/lib/:/usr/lib/
-        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_7c64e' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_7c64e.'
-         /usr/lib/gcc/x86_64-pc-linux-gnu/16/collect2 -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/16/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper -plugin-opt=-fresolution=/tmp/cck8lvU5.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_7c64e /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/16 -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crtn.o
-        collect2 version 16.1.1 20260625
-        /usr/bin/ld -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/16/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper -plugin-opt=-fresolution=/tmp/cck8lvU5.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_7c64e /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/16 -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crtn.o
-        GNU ld (GNU Binutils) 2.46.1
-        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_7c64e' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_7c64e.'
-        /usr/bin/c++  -v -Wl,-v CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_7c64e
-        make[1]: Leaving directory '/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-zV7T5x'
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_f16e4' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_f16e4.'
+         /usr/lib/gcc/x86_64-pc-linux-gnu/16/collect2 -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/16/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper -plugin-opt=-fresolution=/tmp/ccLvh9LR.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_f16e4 /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/16 -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crtn.o
+        collect2 version 16.1.1 20260728
+        /usr/bin/ld -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/16/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper -plugin-opt=-fresolution=/tmp/ccLvh9LR.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_f16e4 /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/16 -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crtn.o
+        GNU ld (GNU Binutils) 2.47
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_f16e4' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_f16e4.'
+        /usr/bin/c++  -v -Wl,-v CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_f16e4
+        make[1]: Leaving directory '/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-sJfjJk'
         
       exitCode: 0
   -
@@ -1281,24 +1168,24 @@ events:
       Parsed CXX implicit link information:
         link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|wild|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
         linker tool regex: [^[ 	]*(->|"|[0-9]+>[ 	-]*Build:[ 	0-9]+ ms[ 	]*)?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|wild))("|,| |$)]
-        ignore line: [Change Dir: '/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-zV7T5x']
+        ignore line: [Change Dir: '/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-sJfjJk']
         ignore line: []
-        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_7c64e/fast]
-        ignore line: [/usr/bin/make  -f CMakeFiles/cmTC_7c64e.dir/build.make CMakeFiles/cmTC_7c64e.dir/build]
-        ignore line: [make[1]: Entering directory '/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-zV7T5x']
-        ignore line: [Building CXX object CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o]
-        ignore line: [/usr/bin/c++   -v -o CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_f16e4/fast]
+        ignore line: [/usr/bin/make  -f CMakeFiles/cmTC_f16e4.dir/build.make CMakeFiles/cmTC_f16e4.dir/build]
+        ignore line: [make[1]: Entering directory '/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-sJfjJk']
+        ignore line: [Building CXX object CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o]
+        ignore line: [/usr/bin/c++   -v -o CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
         ignore line: [Using built-in specs.]
         ignore line: [COLLECT_GCC=/usr/bin/c++]
         ignore line: [Target: x86_64-pc-linux-gnu]
         ignore line: [Configured with: ../gcc/configure --enable-languages=ada c c++ d fortran go lto m2 objc obj-c++ rust cobol --enable-bootstrap --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://github.com/CachyOS/CachyOS-PKGBUILDS/issues --with-build-config=bootstrap-lto --with-gcc-major-version-only --with-linker-hash-style=gnu --with-system-zlib --enable-cet=auto --enable-checking=release --enable-clocale=gnu --enable-default-pie --enable-default-ssp --enable-gnu-indirect-function --enable-gnu-unique-object --enable-libstdcxx-backtrace --enable-link-serialization=1 --enable-linker-build-id --enable-lto --enable-multilib --enable-plugin --enable-shared --enable-threads=posix --disable-fixincludes --disable-libssp --disable-libstdcxx-pch --disable-werror]
         ignore line: [Thread model: posix]
         ignore line: [Supported LTO compression algorithms: zlib zstd]
-        ignore line: [gcc version 16.1.1 20260625 (GCC) ]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_7c64e.dir/']
-        ignore line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/16/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_7c64e.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -version -o /tmp/ccmSy96Z.s]
-        ignore line: [GNU C++20 (GCC) version 16.1.1 20260625 (x86_64-pc-linux-gnu)]
-        ignore line: [	compiled by GNU C version 16.1.1 20260625  GMP version 6.3.0  MPFR version 4.2.2  MPC version 1.4.1  isl version isl-0.28-GMP]
+        ignore line: [gcc version 16.1.1 20260728 (GCC) ]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_f16e4.dir/']
+        ignore line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/16/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_f16e4.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -version -o /tmp/ccWylM7W.s]
+        ignore line: [GNU C++20 (GCC) version 16.1.1 20260728 (x86_64-pc-linux-gnu)]
+        ignore line: [	compiled by GNU C version 16.1.1 20260728  GMP version 6.3.0  MPFR version 4.2.2  MPC version 1.4.1  isl version isl-0.28-GMP]
         ignore line: []
         ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
         ignore line: [ignoring nonexistent directory "/usr/lib/gcc/x86_64-pc-linux-gnu/16/include-fixed"]
@@ -1312,15 +1199,15 @@ events:
         ignore line: [ /usr/local/include]
         ignore line: [ /usr/include]
         ignore line: [End of search list.]
-        ignore line: [Compiler executable checksum: 27172de8836ea6b303b0014313024f2d]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_7c64e.dir/']
-        ignore line: [ as -v --64 -o CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccmSy96Z.s]
-        ignore line: [GNU assembler version 2.46.1 (x86_64-pc-linux-gnu) using BFD version (GNU Binutils) 2.46.1]
+        ignore line: [Compiler executable checksum: e6b58163ceb7101a7203a46cfef09871]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_f16e4.dir/']
+        ignore line: [ as -v --64 -o CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccWylM7W.s]
+        ignore line: [GNU assembler version 2.47 (x86_64-pc-linux-gnu) using BFD version (GNU Binutils) 2.47]
         ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/]
         ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/:/lib/../lib/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../:/lib/:/usr/lib/]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.']
-        ignore line: [Linking CXX executable cmTC_7c64e]
-        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7c64e.dir/link.txt --verbose=1]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.']
+        ignore line: [Linking CXX executable cmTC_f16e4]
+        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f16e4.dir/link.txt --verbose=1]
         ignore line: [Using built-in specs.]
         ignore line: [COLLECT_GCC=/usr/bin/c++]
         ignore line: [COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper]
@@ -1328,16 +1215,16 @@ events:
         ignore line: [Configured with: ../gcc/configure --enable-languages=ada c c++ d fortran go lto m2 objc obj-c++ rust cobol --enable-bootstrap --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://github.com/CachyOS/CachyOS-PKGBUILDS/issues --with-build-config=bootstrap-lto --with-gcc-major-version-only --with-linker-hash-style=gnu --with-system-zlib --enable-cet=auto --enable-checking=release --enable-clocale=gnu --enable-default-pie --enable-default-ssp --enable-gnu-indirect-function --enable-gnu-unique-object --enable-libstdcxx-backtrace --enable-link-serialization=1 --enable-linker-build-id --enable-lto --enable-multilib --enable-plugin --enable-shared --enable-threads=posix --disable-fixincludes --disable-libssp --disable-libstdcxx-pch --disable-werror]
         ignore line: [Thread model: posix]
         ignore line: [Supported LTO compression algorithms: zlib zstd]
-        ignore line: [gcc version 16.1.1 20260625 (GCC) ]
+        ignore line: [gcc version 16.1.1 20260728 (GCC) ]
         ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/]
         ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/16/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/:/lib/../lib/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../:/lib/:/usr/lib/]
-        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_7c64e' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_7c64e.']
-        link line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/16/collect2 -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/16/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper -plugin-opt=-fresolution=/tmp/cck8lvU5.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_7c64e /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/16 -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crtn.o]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_f16e4' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_f16e4.']
+        link line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/16/collect2 -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/16/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper -plugin-opt=-fresolution=/tmp/ccLvh9LR.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_f16e4 /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/16 -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crtn.o]
           arg [/usr/lib/gcc/x86_64-pc-linux-gnu/16/collect2] ==> ignore
           arg [-plugin] ==> ignore
           arg [/usr/lib/gcc/x86_64-pc-linux-gnu/16/liblto_plugin.so] ==> ignore
           arg [-plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper] ==> ignore
-          arg [-plugin-opt=-fresolution=/tmp/cck8lvU5.res] ==> ignore
+          arg [-plugin-opt=-fresolution=/tmp/ccLvh9LR.res] ==> ignore
           arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
           arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
           arg [-plugin-opt=-pass-through=-latomic_asneeded] ==> ignore
@@ -1353,7 +1240,7 @@ events:
           arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
           arg [-pie] ==> ignore
           arg [-o] ==> ignore
-          arg [cmTC_7c64e] ==> ignore
+          arg [cmTC_f16e4] ==> ignore
           arg [/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/Scrt1.o] ==> obj [/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/Scrt1.o]
           arg [/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crti.o] ==> obj [/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crti.o]
           arg [/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o] ==> obj [/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o]
@@ -1365,7 +1252,7 @@ events:
           arg [-L/lib] ==> dir [/lib]
           arg [-L/usr/lib] ==> dir [/usr/lib]
           arg [-v] ==> ignore
-          arg [CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+          arg [CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
           arg [-lstdc++] ==> lib [stdc++]
           arg [-lm] ==> lib [m]
           arg [-lgcc_s] ==> lib [gcc_s]
@@ -1376,10 +1263,10 @@ events:
           arg [-lgcc] ==> lib [gcc]
           arg [/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o] ==> obj [/usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o]
           arg [/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crtn.o] ==> obj [/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crtn.o]
-        ignore line: [collect2 version 16.1.1 20260625]
-        link line: [/usr/bin/ld -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/16/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper -plugin-opt=-fresolution=/tmp/cck8lvU5.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_7c64e /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/16 -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crtn.o] ==> linker [/usr/bin/ld]
-        link line: [/usr/bin/ld -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/16/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper -plugin-opt=-fresolution=/tmp/cck8lvU5.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_7c64e /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/16 -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crtn.o] ==> linker architecture flags [-m;elf]
-        ignore line: [/usr/bin/ld -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/16/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper -plugin-opt=-fresolution=/tmp/cck8lvU5.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_7c64e /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/16 -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_7c64e.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crtn.o]
+        ignore line: [collect2 version 16.1.1 20260728]
+        link line: [/usr/bin/ld -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/16/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper -plugin-opt=-fresolution=/tmp/ccLvh9LR.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_f16e4 /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/16 -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crtn.o] ==> linker [/usr/bin/ld]
+        link line: [/usr/bin/ld -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/16/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper -plugin-opt=-fresolution=/tmp/ccLvh9LR.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_f16e4 /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/16 -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crtn.o] ==> linker architecture flags [-m;elf]
+        ignore line: [/usr/bin/ld -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/16/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/16/lto-wrapper -plugin-opt=-fresolution=/tmp/ccLvh9LR.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-latomic_asneeded -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_f16e4 /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/16 -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_f16e4.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -latomic_asneeded -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/16/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crtn.o]
         linker tool for 'CXX': /usr/bin/ld -m;elf
         collapse obj [/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/Scrt1.o] ==> [/usr/lib/Scrt1.o]
         collapse obj [/usr/lib/gcc/x86_64-pc-linux-gnu/16/../../../../lib/crti.o] ==> [/usr/lib/crti.o]
@@ -1406,11 +1293,11 @@ events:
       - "CMakeLists.txt:2 (project)"
     message: |
       Running the CXX compiler's linker: "/usr/bin/ld" "-v"
-      GNU ld (GNU Binutils) 2.46.1
+      GNU ld (GNU Binutils) 2.47
   -
     kind: "try_compile-v1"
     backtrace:
-      - "/usr/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:138 (try_compile)"
+      - "/usr/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:81 (try_compile)"
       - "/usr/share/cmake/Modules/CheckCXXSourceCompiles.cmake:103 (cmake_check_source_compiles)"
       - "/usr/share/cmake/Modules/FindThreads.cmake:162 (check_cxx_source_compiles)"
       - "/usr/share/cmake/Modules/FindThreads.cmake:226 (_threads_check_libc)"
@@ -1423,8 +1310,8 @@ events:
     checks:
       - "Performing Test CMAKE_HAVE_LIBC_PTHREAD"
     directories:
-      source: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-osS6DB"
-      binary: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-osS6DB"
+      source: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-FQTEgP"
+      binary: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-FQTEgP"
     cmakeVariables:
       CMAKE_CXX_FLAGS: ""
       CMAKE_CXX_FLAGS_DEBUG: "-g"
@@ -1435,17 +1322,17 @@ events:
       variable: "CMAKE_HAVE_LIBC_PTHREAD"
       cached: true
       stdout: |
-        Change Dir: '/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-osS6DB'
+        Change Dir: '/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-FQTEgP'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_ecd03/fast
-        /usr/bin/make  -f CMakeFiles/cmTC_ecd03.dir/build.make CMakeFiles/cmTC_ecd03.dir/build
-        make[1]: Entering directory '/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-osS6DB'
-        Building CXX object CMakeFiles/cmTC_ecd03.dir/src.cxx.o
-        /usr/bin/c++ -DCMAKE_HAVE_LIBC_PTHREAD  -std=gnu++17 -o CMakeFiles/cmTC_ecd03.dir/src.cxx.o -c /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-osS6DB/src.cxx
-        Linking CXX executable cmTC_ecd03
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ecd03.dir/link.txt --verbose=1
-        /usr/bin/c++ CMakeFiles/cmTC_ecd03.dir/src.cxx.o -o cmTC_ecd03
-        make[1]: Leaving directory '/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-osS6DB'
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_49256/fast
+        /usr/bin/make  -f CMakeFiles/cmTC_49256.dir/build.make CMakeFiles/cmTC_49256.dir/build
+        make[1]: Entering directory '/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-FQTEgP'
+        Building CXX object CMakeFiles/cmTC_49256.dir/src.cxx.o
+        /usr/bin/c++ -DCMAKE_HAVE_LIBC_PTHREAD  -std=gnu++17 -o CMakeFiles/cmTC_49256.dir/src.cxx.o -c /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-FQTEgP/src.cxx
+        Linking CXX executable cmTC_49256
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_49256.dir/link.txt --verbose=1
+        /usr/bin/c++ CMakeFiles/cmTC_49256.dir/src.cxx.o -o cmTC_49256
+        make[1]: Leaving directory '/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-FQTEgP'
         
       exitCode: 0
   -
@@ -1502,27 +1389,123 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6CoreToolsConfig.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6CoreToolsConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6coretools-config.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6coretools-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6CoreTools.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6CoreTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6coretools.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6coretools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6CoreTools.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6CoreTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6coretools.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6coretools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/Qt6CoreToolsConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/qt6coretools-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/lib/cps/Qt6CoreTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/lib/cps/qt6coretools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/share/cps/Qt6CoreTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/share/cps/qt6coretools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/Qt6CoreToolsConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/qt6coretools-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/lib/cps/Qt6CoreTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/lib/cps/qt6coretools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/share/cps/Qt6CoreTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/share/cps/qt6coretools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/Qt6CoreToolsConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/qt6coretools-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/lib/cps/Qt6CoreTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/lib/cps/qt6coretools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/share/cps/Qt6CoreTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/share/cps/qt6coretools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/Qt6CoreToolsConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/usr/local/qt6coretools-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/usr/local/lib/cps/Qt6CoreTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/lib/cps/qt6coretools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/share/cps/Qt6CoreTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/share/cps/qt6coretools.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -1554,8 +1537,6 @@ events:
       mode: "config"
       version: "6.11.1"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -1571,8 +1552,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -1637,27 +1616,123 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6GuiToolsConfig.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6GuiToolsConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6guitools-config.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6guitools-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6GuiTools.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6GuiTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6guitools.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6guitools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6GuiTools.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6GuiTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6guitools.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6guitools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/Qt6GuiToolsConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/qt6guitools-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/lib/cps/Qt6GuiTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/lib/cps/qt6guitools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/share/cps/Qt6GuiTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/share/cps/qt6guitools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/Qt6GuiToolsConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/qt6guitools-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/lib/cps/Qt6GuiTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/lib/cps/qt6guitools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/share/cps/Qt6GuiTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/share/cps/qt6guitools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/Qt6GuiToolsConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/qt6guitools-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/lib/cps/Qt6GuiTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/lib/cps/qt6guitools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/share/cps/Qt6GuiTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/share/cps/qt6guitools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/Qt6GuiToolsConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/usr/local/qt6guitools-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/usr/local/lib/cps/Qt6GuiTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/lib/cps/qt6guitools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/share/cps/Qt6GuiTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/share/cps/qt6guitools.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -1689,8 +1764,6 @@ events:
       mode: "config"
       version: "6.11.1"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -1706,8 +1779,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -1769,27 +1840,123 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6WidgetsToolsConfig.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6WidgetsToolsConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6widgetstools-config.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6widgetstools-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6WidgetsTools.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6WidgetsTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6widgetstools.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6widgetstools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6WidgetsTools.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6WidgetsTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6widgetstools.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6widgetstools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/Qt6WidgetsToolsConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/qt6widgetstools-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/lib/cps/Qt6WidgetsTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/lib/cps/qt6widgetstools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/share/cps/Qt6WidgetsTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/share/cps/qt6widgetstools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/Qt6WidgetsToolsConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/qt6widgetstools-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/lib/cps/Qt6WidgetsTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/lib/cps/qt6widgetstools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/share/cps/Qt6WidgetsTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/share/cps/qt6widgetstools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/Qt6WidgetsToolsConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/qt6widgetstools-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/lib/cps/Qt6WidgetsTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/lib/cps/qt6widgetstools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/share/cps/Qt6WidgetsTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/share/cps/qt6widgetstools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/Qt6WidgetsToolsConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/usr/local/qt6widgetstools-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/usr/local/lib/cps/Qt6WidgetsTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/lib/cps/qt6widgetstools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/share/cps/Qt6WidgetsTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/share/cps/qt6widgetstools.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -1821,8 +1988,6 @@ events:
       mode: "config"
       version: "6.11.1"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -1838,8 +2003,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -1853,7 +2016,7 @@ events:
   -
     kind: "try_compile-v1"
     backtrace:
-      - "/usr/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:138 (try_compile)"
+      - "/usr/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:81 (try_compile)"
       - "/usr/share/cmake/Modules/CheckCXXSourceCompiles.cmake:103 (cmake_check_source_compiles)"
       - "/usr/lib/cmake/Qt6/FindWrapAtomic.cmake:36 (check_cxx_source_compiles)"
       - "/usr/share/cmake/Modules/CMakeFindDependencyMacro.cmake:93 (find_package)"
@@ -1871,8 +2034,8 @@ events:
     checks:
       - "Performing Test HAVE_STDATOMIC"
     directories:
-      source: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-5oTzFH"
-      binary: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-5oTzFH"
+      source: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-sxEXt9"
+      binary: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-sxEXt9"
     cmakeVariables:
       CMAKE_CXX_FLAGS: ""
       CMAKE_CXX_FLAGS_DEBUG: "-g"
@@ -1883,17 +2046,17 @@ events:
       variable: "HAVE_STDATOMIC"
       cached: true
       stdout: |
-        Change Dir: '/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-5oTzFH'
+        Change Dir: '/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-sxEXt9'
         
-        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_93404/fast
-        /usr/bin/make  -f CMakeFiles/cmTC_93404.dir/build.make CMakeFiles/cmTC_93404.dir/build
-        make[1]: Entering directory '/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-5oTzFH'
-        Building CXX object CMakeFiles/cmTC_93404.dir/src.cxx.o
-        /usr/bin/c++ -DHAVE_STDATOMIC  -std=gnu++17 -o CMakeFiles/cmTC_93404.dir/src.cxx.o -c /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-5oTzFH/src.cxx
-        Linking CXX executable cmTC_93404
-        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_93404.dir/link.txt --verbose=1
-        /usr/bin/c++ CMakeFiles/cmTC_93404.dir/src.cxx.o -o cmTC_93404
-        make[1]: Leaving directory '/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-5oTzFH'
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_0d2b9/fast
+        /usr/bin/make  -f CMakeFiles/cmTC_0d2b9.dir/build.make CMakeFiles/cmTC_0d2b9.dir/build
+        make[1]: Entering directory '/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-sxEXt9'
+        Building CXX object CMakeFiles/cmTC_0d2b9.dir/src.cxx.o
+        /usr/bin/c++ -DHAVE_STDATOMIC  -std=gnu++17 -o CMakeFiles/cmTC_0d2b9.dir/src.cxx.o -c /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-sxEXt9/src.cxx
+        Linking CXX executable cmTC_0d2b9
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_0d2b9.dir/link.txt --verbose=1
+        /usr/bin/c++ CMakeFiles/cmTC_0d2b9.dir/src.cxx.o -o cmTC_0d2b9
+        make[1]: Leaving directory '/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/CMakeScratch/TryCompile-sxEXt9'
         
       exitCode: 0
   -
@@ -1949,27 +2112,27 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6CoreConfig.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6CoreConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6core-config.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6core-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Core.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Core.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6core.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6core.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6Core.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6Core.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6core.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6core.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -2017,8 +2180,6 @@ events:
       mode: "config"
       version: "6.11.1"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -2034,8 +2195,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -2077,8 +2236,6 @@ events:
     names:
       - "GL/gl.h"
     candidate_directories:
-      - "/usr/include/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -2093,10 +2250,10 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/include/"
       - "/usr/local/"
+      - "/usr/include/"
+      - "/usr/"
       - "/include/"
       - "/usr/X11R6/include/"
       - "/usr/X11R6/"
@@ -2108,10 +2265,25 @@ events:
       - "/usr/share/doc/NVIDIA_GLX-1.0/include/"
       - "/usr/openwin/share/include/"
       - "/opt/graphics/OpenGL/include/"
+    searched_directories:
+      - "/home/bluet/.local/bin/GL/gl.h"
+      - "/home/bluet/.cargo/bin/GL/gl.h"
+      - "/home/bluet/.opencode/bin/GL/gl.h"
+      - "/usr/local/sbin/GL/gl.h"
+      - "/usr/local/bin/GL/gl.h"
+      - "/usr/bin/GL/gl.h"
+      - "/opt/cuda/bin/GL/gl.h"
+      - "/usr/share/dotnet/GL/gl.h"
+      - "/home/bluet/.dotnet/tools/GL/gl.h"
+      - "/var/lib/flatpak/exports/bin/GL/gl.h"
+      - "/usr/lib/jvm/default/bin/GL/gl.h"
+      - "/usr/bin/site_perl/GL/gl.h"
+      - "/usr/bin/vendor_perl/GL/gl.h"
+      - "/usr/bin/core_perl/GL/gl.h"
+      - "/usr/local/include/GL/gl.h"
+      - "/usr/local/GL/gl.h"
     found: "/usr/include/"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -2127,8 +2299,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -2172,8 +2342,6 @@ events:
     names:
       - "GL/glx.h"
     candidate_directories:
-      - "/usr/include/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -2188,10 +2356,10 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/include/"
       - "/usr/local/"
+      - "/usr/include/"
+      - "/usr/"
       - "/include/"
       - "/usr/X11R6/include/"
       - "/usr/X11R6/"
@@ -2200,10 +2368,25 @@ events:
       - "/opt/include/"
       - "/opt/"
       - "/usr/include/X11/"
+    searched_directories:
+      - "/home/bluet/.local/bin/GL/glx.h"
+      - "/home/bluet/.cargo/bin/GL/glx.h"
+      - "/home/bluet/.opencode/bin/GL/glx.h"
+      - "/usr/local/sbin/GL/glx.h"
+      - "/usr/local/bin/GL/glx.h"
+      - "/usr/bin/GL/glx.h"
+      - "/opt/cuda/bin/GL/glx.h"
+      - "/usr/share/dotnet/GL/glx.h"
+      - "/home/bluet/.dotnet/tools/GL/glx.h"
+      - "/var/lib/flatpak/exports/bin/GL/glx.h"
+      - "/usr/lib/jvm/default/bin/GL/glx.h"
+      - "/usr/bin/site_perl/GL/glx.h"
+      - "/usr/bin/vendor_perl/GL/glx.h"
+      - "/usr/bin/core_perl/GL/glx.h"
+      - "/usr/local/include/GL/glx.h"
+      - "/usr/local/GL/glx.h"
     found: "/usr/include/"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -2219,8 +2402,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -2264,8 +2445,6 @@ events:
     names:
       - "EGL/egl.h"
     candidate_directories:
-      - "/usr/include/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -2280,10 +2459,10 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/include/"
       - "/usr/local/"
+      - "/usr/include/"
+      - "/usr/"
       - "/include/"
       - "/usr/X11R6/include/"
       - "/usr/X11R6/"
@@ -2292,10 +2471,25 @@ events:
       - "/opt/include/"
       - "/opt/"
       - "/usr/include/X11/"
+    searched_directories:
+      - "/home/bluet/.local/bin/EGL/egl.h"
+      - "/home/bluet/.cargo/bin/EGL/egl.h"
+      - "/home/bluet/.opencode/bin/EGL/egl.h"
+      - "/usr/local/sbin/EGL/egl.h"
+      - "/usr/local/bin/EGL/egl.h"
+      - "/usr/bin/EGL/egl.h"
+      - "/opt/cuda/bin/EGL/egl.h"
+      - "/usr/share/dotnet/EGL/egl.h"
+      - "/home/bluet/.dotnet/tools/EGL/egl.h"
+      - "/var/lib/flatpak/exports/bin/EGL/egl.h"
+      - "/usr/lib/jvm/default/bin/EGL/egl.h"
+      - "/usr/bin/site_perl/EGL/egl.h"
+      - "/usr/bin/vendor_perl/EGL/egl.h"
+      - "/usr/bin/core_perl/EGL/egl.h"
+      - "/usr/local/include/EGL/egl.h"
+      - "/usr/local/EGL/egl.h"
     found: "/usr/include/"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -2311,8 +2505,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -2356,8 +2548,6 @@ events:
     names:
       - "GLES2/gl2.h"
     candidate_directories:
-      - "/usr/include/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -2372,10 +2562,10 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/include/"
       - "/usr/local/"
+      - "/usr/include/"
+      - "/usr/"
       - "/include/"
       - "/usr/X11R6/include/"
       - "/usr/X11R6/"
@@ -2384,10 +2574,25 @@ events:
       - "/opt/include/"
       - "/opt/"
       - "/usr/include/X11/"
+    searched_directories:
+      - "/home/bluet/.local/bin/GLES2/gl2.h"
+      - "/home/bluet/.cargo/bin/GLES2/gl2.h"
+      - "/home/bluet/.opencode/bin/GLES2/gl2.h"
+      - "/usr/local/sbin/GLES2/gl2.h"
+      - "/usr/local/bin/GLES2/gl2.h"
+      - "/usr/bin/GLES2/gl2.h"
+      - "/opt/cuda/bin/GLES2/gl2.h"
+      - "/usr/share/dotnet/GLES2/gl2.h"
+      - "/home/bluet/.dotnet/tools/GLES2/gl2.h"
+      - "/var/lib/flatpak/exports/bin/GLES2/gl2.h"
+      - "/usr/lib/jvm/default/bin/GLES2/gl2.h"
+      - "/usr/bin/site_perl/GLES2/gl2.h"
+      - "/usr/bin/vendor_perl/GLES2/gl2.h"
+      - "/usr/bin/core_perl/GLES2/gl2.h"
+      - "/usr/local/include/GLES2/gl2.h"
+      - "/usr/local/GLES2/gl2.h"
     found: "/usr/include/"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -2403,8 +2608,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -2448,8 +2651,6 @@ events:
     names:
       - "GLES3/gl3.h"
     candidate_directories:
-      - "/usr/include/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -2464,10 +2665,10 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/include/"
       - "/usr/local/"
+      - "/usr/include/"
+      - "/usr/"
       - "/include/"
       - "/usr/X11R6/include/"
       - "/usr/X11R6/"
@@ -2476,10 +2677,25 @@ events:
       - "/opt/include/"
       - "/opt/"
       - "/usr/include/X11/"
+    searched_directories:
+      - "/home/bluet/.local/bin/GLES3/gl3.h"
+      - "/home/bluet/.cargo/bin/GLES3/gl3.h"
+      - "/home/bluet/.opencode/bin/GLES3/gl3.h"
+      - "/usr/local/sbin/GLES3/gl3.h"
+      - "/usr/local/bin/GLES3/gl3.h"
+      - "/usr/bin/GLES3/gl3.h"
+      - "/opt/cuda/bin/GLES3/gl3.h"
+      - "/usr/share/dotnet/GLES3/gl3.h"
+      - "/home/bluet/.dotnet/tools/GLES3/gl3.h"
+      - "/var/lib/flatpak/exports/bin/GLES3/gl3.h"
+      - "/usr/lib/jvm/default/bin/GLES3/gl3.h"
+      - "/usr/bin/site_perl/GLES3/gl3.h"
+      - "/usr/bin/vendor_perl/GLES3/gl3.h"
+      - "/usr/bin/core_perl/GLES3/gl3.h"
+      - "/usr/local/include/GLES3/gl3.h"
+      - "/usr/local/GLES3/gl3.h"
     found: "/usr/include/"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -2495,8 +2711,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -2540,8 +2754,6 @@ events:
     names:
       - "GL/xmesa.h"
     candidate_directories:
-      - "/usr/include/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -2556,10 +2768,10 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/include/"
       - "/usr/local/"
+      - "/usr/include/"
+      - "/usr/"
       - "/include/"
       - "/usr/X11R6/include/"
       - "/usr/X11R6/"
@@ -2572,8 +2784,6 @@ events:
       - "/usr/openwin/share/include/"
       - "/opt/graphics/OpenGL/include/"
     searched_directories:
-      - "/usr/include/GL/xmesa.h"
-      - "/usr/GL/xmesa.h"
       - "/home/bluet/.local/bin/GL/xmesa.h"
       - "/home/bluet/.cargo/bin/GL/xmesa.h"
       - "/home/bluet/.opencode/bin/GL/xmesa.h"
@@ -2588,10 +2798,10 @@ events:
       - "/usr/bin/site_perl/GL/xmesa.h"
       - "/usr/bin/vendor_perl/GL/xmesa.h"
       - "/usr/bin/core_perl/GL/xmesa.h"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/GL/xmesa.h"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/GL/xmesa.h"
       - "/usr/local/include/GL/xmesa.h"
       - "/usr/local/GL/xmesa.h"
+      - "/usr/include/GL/xmesa.h"
+      - "/usr/GL/xmesa.h"
       - "/include/GL/xmesa.h"
       - "/usr/X11R6/include/GL/xmesa.h"
       - "/usr/X11R6/GL/xmesa.h"
@@ -2605,8 +2815,6 @@ events:
       - "/opt/graphics/OpenGL/include/GL/xmesa.h"
     found: false
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -2622,8 +2830,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -2667,8 +2873,6 @@ events:
     names:
       - "GL/glu.h"
     candidate_directories:
-      - "/usr/include/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -2683,10 +2887,10 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/include/"
       - "/usr/local/"
+      - "/usr/include/"
+      - "/usr/"
       - "/include/"
       - "/usr/X11R6/include/"
       - "/usr/X11R6/"
@@ -2695,10 +2899,25 @@ events:
       - "/opt/include/"
       - "/opt/"
       - "/usr/include/X11/"
+    searched_directories:
+      - "/home/bluet/.local/bin/GL/glu.h"
+      - "/home/bluet/.cargo/bin/GL/glu.h"
+      - "/home/bluet/.opencode/bin/GL/glu.h"
+      - "/usr/local/sbin/GL/glu.h"
+      - "/usr/local/bin/GL/glu.h"
+      - "/usr/bin/GL/glu.h"
+      - "/opt/cuda/bin/GL/glu.h"
+      - "/usr/share/dotnet/GL/glu.h"
+      - "/home/bluet/.dotnet/tools/GL/glu.h"
+      - "/var/lib/flatpak/exports/bin/GL/glu.h"
+      - "/usr/lib/jvm/default/bin/GL/glu.h"
+      - "/usr/bin/site_perl/GL/glu.h"
+      - "/usr/bin/vendor_perl/GL/glu.h"
+      - "/usr/bin/core_perl/GL/glu.h"
+      - "/usr/local/include/GL/glu.h"
+      - "/usr/local/GL/glu.h"
     found: "/usr/include/"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -2714,8 +2933,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -2759,8 +2976,6 @@ events:
     names:
       - "OpenGL"
     candidate_directories:
-      - "/usr/lib/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -2775,10 +2990,10 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/lib/"
       - "/usr/local/"
+      - "/usr/lib/"
+      - "/usr/"
       - "/lib/"
       - "/usr/X11R6/lib/"
       - "/usr/X11R6/"
@@ -2787,10 +3002,25 @@ events:
       - "/opt/lib/"
       - "/opt/"
       - "/usr/lib/X11/"
+    searched_directories:
+      - "/home/bluet/.local/bin/"
+      - "/home/bluet/.cargo/bin/"
+      - "/home/bluet/.opencode/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/usr/bin/"
+      - "/opt/cuda/bin/"
+      - "/usr/share/dotnet/"
+      - "/home/bluet/.dotnet/tools/"
+      - "/var/lib/flatpak/exports/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/local/lib/"
+      - "/usr/local/"
     found: "/usr/lib/libOpenGL.so"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -2806,8 +3036,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -2851,10 +3079,6 @@ events:
     names:
       - "GLX"
     candidate_directories:
-      - "/usr/lib/libglvnd/"
-      - "/usr/lib/"
-      - "/usr/libglvnd/"
-      - "/usr/"
       - "/home/bluet/.local/bin/libglvnd/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/libglvnd/"
@@ -2883,14 +3107,14 @@ events:
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/libglvnd/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/libglvnd/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/libglvnd/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/lib/libglvnd/"
       - "/usr/local/lib/"
       - "/usr/local/libglvnd/"
       - "/usr/local/"
+      - "/usr/lib/libglvnd/"
+      - "/usr/lib/"
+      - "/usr/libglvnd/"
+      - "/usr/"
       - "/lib/libglvnd/"
       - "/lib/"
       - "/usr/X11R6/lib/libglvnd/"
@@ -2908,11 +3132,41 @@ events:
       - "/usr/lib/X11/libglvnd/"
       - "/usr/lib/X11/"
     searched_directories:
+      - "/home/bluet/.local/bin/libglvnd/"
+      - "/home/bluet/.local/bin/"
+      - "/home/bluet/.cargo/bin/libglvnd/"
+      - "/home/bluet/.cargo/bin/"
+      - "/home/bluet/.opencode/bin/libglvnd/"
+      - "/home/bluet/.opencode/bin/"
+      - "/usr/local/sbin/libglvnd/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/libglvnd/"
+      - "/usr/local/bin/"
+      - "/usr/bin/libglvnd/"
+      - "/usr/bin/"
+      - "/opt/cuda/bin/libglvnd/"
+      - "/opt/cuda/bin/"
+      - "/usr/share/dotnet/libglvnd/"
+      - "/usr/share/dotnet/"
+      - "/home/bluet/.dotnet/tools/libglvnd/"
+      - "/home/bluet/.dotnet/tools/"
+      - "/var/lib/flatpak/exports/bin/libglvnd/"
+      - "/var/lib/flatpak/exports/bin/"
+      - "/usr/lib/jvm/default/bin/libglvnd/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/libglvnd/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/libglvnd/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/libglvnd/"
+      - "/usr/bin/core_perl/"
+      - "/usr/local/lib/libglvnd/"
+      - "/usr/local/lib/"
+      - "/usr/local/libglvnd/"
+      - "/usr/local/"
       - "/usr/lib/libglvnd/"
     found: "/usr/lib/libGLX.so"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -2928,8 +3182,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -2973,10 +3225,6 @@ events:
     names:
       - "EGL"
     candidate_directories:
-      - "/usr/lib/libglvnd/"
-      - "/usr/lib/"
-      - "/usr/libglvnd/"
-      - "/usr/"
       - "/home/bluet/.local/bin/libglvnd/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/libglvnd/"
@@ -3005,14 +3253,14 @@ events:
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/libglvnd/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/libglvnd/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/libglvnd/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/lib/libglvnd/"
       - "/usr/local/lib/"
       - "/usr/local/libglvnd/"
       - "/usr/local/"
+      - "/usr/lib/libglvnd/"
+      - "/usr/lib/"
+      - "/usr/libglvnd/"
+      - "/usr/"
       - "/lib/libglvnd/"
       - "/lib/"
       - "/usr/X11R6/lib/libglvnd/"
@@ -3030,11 +3278,41 @@ events:
       - "/usr/lib/X11/libglvnd/"
       - "/usr/lib/X11/"
     searched_directories:
+      - "/home/bluet/.local/bin/libglvnd/"
+      - "/home/bluet/.local/bin/"
+      - "/home/bluet/.cargo/bin/libglvnd/"
+      - "/home/bluet/.cargo/bin/"
+      - "/home/bluet/.opencode/bin/libglvnd/"
+      - "/home/bluet/.opencode/bin/"
+      - "/usr/local/sbin/libglvnd/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/libglvnd/"
+      - "/usr/local/bin/"
+      - "/usr/bin/libglvnd/"
+      - "/usr/bin/"
+      - "/opt/cuda/bin/libglvnd/"
+      - "/opt/cuda/bin/"
+      - "/usr/share/dotnet/libglvnd/"
+      - "/usr/share/dotnet/"
+      - "/home/bluet/.dotnet/tools/libglvnd/"
+      - "/home/bluet/.dotnet/tools/"
+      - "/var/lib/flatpak/exports/bin/libglvnd/"
+      - "/var/lib/flatpak/exports/bin/"
+      - "/usr/lib/jvm/default/bin/libglvnd/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/libglvnd/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/libglvnd/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/libglvnd/"
+      - "/usr/bin/core_perl/"
+      - "/usr/local/lib/libglvnd/"
+      - "/usr/local/lib/"
+      - "/usr/local/libglvnd/"
+      - "/usr/local/"
       - "/usr/lib/libglvnd/"
     found: "/usr/lib/libEGL.so"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -3050,8 +3328,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -3095,8 +3371,6 @@ events:
     names:
       - "GLESv2"
     candidate_directories:
-      - "/usr/lib/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -3111,10 +3385,10 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/lib/"
       - "/usr/local/"
+      - "/usr/lib/"
+      - "/usr/"
       - "/lib/"
       - "/usr/X11R6/lib/"
       - "/usr/X11R6/"
@@ -3123,10 +3397,25 @@ events:
       - "/opt/lib/"
       - "/opt/"
       - "/usr/lib/X11/"
+    searched_directories:
+      - "/home/bluet/.local/bin/"
+      - "/home/bluet/.cargo/bin/"
+      - "/home/bluet/.opencode/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/usr/bin/"
+      - "/opt/cuda/bin/"
+      - "/usr/share/dotnet/"
+      - "/home/bluet/.dotnet/tools/"
+      - "/var/lib/flatpak/exports/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/local/lib/"
+      - "/usr/local/"
     found: "/usr/lib/libGLESv2.so"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -3142,8 +3431,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -3188,8 +3475,6 @@ events:
       - "GLESv3"
       - "GLESv2"
     candidate_directories:
-      - "/usr/lib/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -3204,10 +3489,10 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/lib/"
       - "/usr/local/"
+      - "/usr/lib/"
+      - "/usr/"
       - "/lib/"
       - "/usr/X11R6/lib/"
       - "/usr/X11R6/"
@@ -3217,8 +3502,6 @@ events:
       - "/opt/"
       - "/usr/lib/X11/"
     searched_directories:
-      - "/usr/lib/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -3233,10 +3516,10 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/lib/"
       - "/usr/local/"
+      - "/usr/lib/"
+      - "/usr/"
       - "/lib/"
       - "/usr/X11R6/lib/"
       - "/usr/X11R6/"
@@ -3245,10 +3528,24 @@ events:
       - "/opt/lib/"
       - "/opt/"
       - "/usr/lib/X11/"
+      - "/home/bluet/.local/bin/"
+      - "/home/bluet/.cargo/bin/"
+      - "/home/bluet/.opencode/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/usr/bin/"
+      - "/opt/cuda/bin/"
+      - "/usr/share/dotnet/"
+      - "/home/bluet/.dotnet/tools/"
+      - "/var/lib/flatpak/exports/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/local/lib/"
+      - "/usr/local/"
     found: "/usr/lib/libGLESv2.so"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -3264,8 +3561,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -3310,8 +3605,6 @@ events:
       - "GLU"
       - "MesaGLU"
     candidate_directories:
-      - "/usr/lib/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -3326,10 +3619,10 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/lib/"
       - "/usr/local/"
+      - "/usr/lib/"
+      - "/usr/"
       - "/lib/"
       - "/usr/X11R6/lib/"
       - "/usr/X11R6/"
@@ -3341,10 +3634,25 @@ events:
       - "/opt/graphics/OpenGL/lib/"
       - "/usr/openwin/lib/"
       - "/usr/shlib/"
+    searched_directories:
+      - "/home/bluet/.local/bin/"
+      - "/home/bluet/.cargo/bin/"
+      - "/home/bluet/.opencode/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/usr/bin/"
+      - "/opt/cuda/bin/"
+      - "/usr/share/dotnet/"
+      - "/home/bluet/.dotnet/tools/"
+      - "/var/lib/flatpak/exports/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/local/lib/"
+      - "/usr/local/"
     found: "/usr/lib/libGLU.so"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -3360,8 +3668,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -3403,8 +3709,6 @@ events:
     names:
       - "vulkan/vulkan.h"
     candidate_directories:
-      - "/usr/include/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -3419,10 +3723,10 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/include/"
       - "/usr/local/"
+      - "/usr/include/"
+      - "/usr/"
       - "/include/"
       - "/usr/X11R6/include/"
       - "/usr/X11R6/"
@@ -3431,10 +3735,25 @@ events:
       - "/opt/include/"
       - "/opt/"
       - "/usr/include/X11/"
+    searched_directories:
+      - "/home/bluet/.local/bin/vulkan/vulkan.h"
+      - "/home/bluet/.cargo/bin/vulkan/vulkan.h"
+      - "/home/bluet/.opencode/bin/vulkan/vulkan.h"
+      - "/usr/local/sbin/vulkan/vulkan.h"
+      - "/usr/local/bin/vulkan/vulkan.h"
+      - "/usr/bin/vulkan/vulkan.h"
+      - "/opt/cuda/bin/vulkan/vulkan.h"
+      - "/usr/share/dotnet/vulkan/vulkan.h"
+      - "/home/bluet/.dotnet/tools/vulkan/vulkan.h"
+      - "/var/lib/flatpak/exports/bin/vulkan/vulkan.h"
+      - "/usr/lib/jvm/default/bin/vulkan/vulkan.h"
+      - "/usr/bin/site_perl/vulkan/vulkan.h"
+      - "/usr/bin/vendor_perl/vulkan/vulkan.h"
+      - "/usr/bin/core_perl/vulkan/vulkan.h"
+      - "/usr/local/include/vulkan/vulkan.h"
+      - "/usr/local/vulkan/vulkan.h"
     found: "/usr/include/"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -3450,8 +3769,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -3493,8 +3810,6 @@ events:
     names:
       - "vulkan"
     candidate_directories:
-      - "/usr/lib/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -3509,10 +3824,10 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/lib/"
       - "/usr/local/"
+      - "/usr/lib/"
+      - "/usr/"
       - "/lib/"
       - "/usr/X11R6/lib/"
       - "/usr/X11R6/"
@@ -3521,10 +3836,25 @@ events:
       - "/opt/lib/"
       - "/opt/"
       - "/usr/lib/X11/"
+    searched_directories:
+      - "/home/bluet/.local/bin/"
+      - "/home/bluet/.cargo/bin/"
+      - "/home/bluet/.opencode/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/usr/bin/"
+      - "/opt/cuda/bin/"
+      - "/usr/share/dotnet/"
+      - "/home/bluet/.dotnet/tools/"
+      - "/var/lib/flatpak/exports/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/local/lib/"
+      - "/usr/local/"
     found: "/usr/lib/libvulkan.so"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -3540,8 +3870,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -3583,9 +3911,6 @@ events:
     names:
       - "glslc"
     candidate_directories:
-      - "/usr/bin/"
-      - "/usr/sbin/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -3600,11 +3925,12 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/bin/"
       - "/usr/local/sbin/"
       - "/usr/local/"
+      - "/usr/bin/"
+      - "/usr/sbin/"
+      - "/usr/"
       - "/bin/"
       - "/sbin/"
       - "/usr/X11R6/bin/"
@@ -3616,10 +3942,14 @@ events:
       - "/opt/bin/"
       - "/opt/sbin/"
       - "/opt/"
+    searched_directories:
+      - "/home/bluet/.local/bin/glslc"
+      - "/home/bluet/.cargo/bin/glslc"
+      - "/home/bluet/.opencode/bin/glslc"
+      - "/usr/local/sbin/glslc"
+      - "/usr/local/bin/glslc"
     found: "/usr/bin/glslc"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -3635,8 +3965,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -3676,9 +4004,6 @@ events:
     names:
       - "glslangValidator"
     candidate_directories:
-      - "/usr/bin/"
-      - "/usr/sbin/"
-      - "/usr/"
       - "/home/bluet/.local/bin/"
       - "/home/bluet/.cargo/bin/"
       - "/home/bluet/.opencode/bin/"
@@ -3693,11 +4018,12 @@ events:
       - "/usr/bin/site_perl/"
       - "/usr/bin/vendor_perl/"
       - "/usr/bin/core_perl/"
-      - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin/"
-      - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/usr/local/bin/"
       - "/usr/local/sbin/"
       - "/usr/local/"
+      - "/usr/bin/"
+      - "/usr/sbin/"
+      - "/usr/"
       - "/bin/"
       - "/sbin/"
       - "/usr/X11R6/bin/"
@@ -3709,10 +4035,14 @@ events:
       - "/opt/bin/"
       - "/opt/sbin/"
       - "/opt/"
+    searched_directories:
+      - "/home/bluet/.local/bin/glslangValidator"
+      - "/home/bluet/.cargo/bin/glslangValidator"
+      - "/home/bluet/.opencode/bin/glslangValidator"
+      - "/usr/local/sbin/glslangValidator"
+      - "/usr/local/bin/glslangValidator"
     found: "/usr/bin/glslangValidator"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -3728,8 +4058,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -3801,27 +4129,123 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6DBusToolsConfig.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6DBusToolsConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6dbustools-config.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6dbustools-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6DBusTools.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6DBusTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6dbustools.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6dbustools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6DBusTools.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6DBusTools.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6dbustools.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6dbustools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/Qt6DBusToolsConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/qt6dbustools-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/lib/cps/Qt6DBusTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/lib/cps/qt6dbustools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/share/cps/Qt6DBusTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/share/cps/qt6dbustools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/Qt6DBusToolsConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/qt6dbustools-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/lib/cps/Qt6DBusTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/lib/cps/qt6dbustools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/share/cps/Qt6DBusTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/share/cps/qt6dbustools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/Qt6DBusToolsConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/qt6dbustools-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/lib/cps/Qt6DBusTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/lib/cps/qt6dbustools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/share/cps/Qt6DBusTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/share/cps/qt6dbustools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/Qt6DBusToolsConfig.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/usr/local/qt6dbustools-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/usr/local/lib/cps/Qt6DBusTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/lib/cps/qt6dbustools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/share/cps/Qt6DBusTools.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/share/cps/qt6dbustools.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -3853,8 +4277,6 @@ events:
       mode: "config"
       version: "6.11.1"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -3870,8 +4292,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -3940,27 +4360,27 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6DBusConfig.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6DBusConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6dbus-config.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6dbus-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6DBus.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6DBus.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6dbus.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6dbus.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6DBus.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6DBus.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6dbus.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6dbus.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -3992,8 +4412,6 @@ events:
       mode: "config"
       version: "6.11.1"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -4009,8 +4427,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -4074,27 +4490,27 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6GuiConfig.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6GuiConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6gui-config.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6gui-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Gui.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Gui.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6gui.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6gui.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6Gui.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6Gui.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6gui.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6gui.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -4126,8 +4542,6 @@ events:
       mode: "config"
       version: "6.11.1"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -4143,8 +4557,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -4202,27 +4614,27 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6WidgetsConfig.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6WidgetsConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6widgets-config.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6widgets-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Widgets.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Widgets.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6widgets.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6widgets.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6Widgets.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6Widgets.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6widgets.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6widgets.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -4254,8 +4666,6 @@ events:
       mode: "config"
       version: "6.11.1"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -4271,8 +4681,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -4332,27 +4740,123 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6Config.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6Config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6-config.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/Qt6Config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/qt6-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/lib/cps/Qt6.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/lib/cps/qt6.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/share/cps/Qt6.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.local/share/cps/qt6.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/Qt6Config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/qt6-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/lib/cps/Qt6.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/lib/cps/qt6.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/share/cps/Qt6.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.cargo/share/cps/qt6.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/Qt6Config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/qt6-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/lib/cps/Qt6.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/lib/cps/qt6.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/share/cps/Qt6.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/home/bluet/.opencode/share/cps/qt6.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/Qt6Config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/usr/local/qt6-config.cmake"
+        mode: "config"
+        reason: "no_exist"
+      -
+        path: "/usr/local/lib/cps/Qt6.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/lib/cps/qt6.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/share/cps/Qt6.cps"
+        mode: "cps"
+        reason: "no_exist"
+      -
+        path: "/usr/local/share/cps/qt6.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -6608,8 +7112,6 @@ events:
       mode: "config"
       version: "6.11.1"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -6625,8 +7127,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"
@@ -6686,27 +7186,27 @@ events:
         CMAKE_FIND_ROOT_PATH_MODE: "BOTH"
     candidates:
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6TestConfig.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/Qt6TestConfig.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6test-config.cmake"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/qt6test-config.cmake"
         mode: "config"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Test.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/Qt6Test.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6test.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/lib/cps/qt6test.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6Test.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/Qt6Test.cps"
         mode: "cps"
         reason: "no_exist"
       -
-        path: "/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6test.cps"
+        path: "/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/pkgRedirects/share/cps/qt6test.cps"
         mode: "cps"
         reason: "no_exist"
       -
@@ -6738,8 +7238,6 @@ events:
       mode: "config"
       version: "6.11.1"
     search_context:
-      CMAKE_PREFIX_PATH:
-        - "/usr"
       ENV{PATH}:
         - "/home/bluet/.local/bin"
         - "/home/bluet/.cargo/bin"
@@ -6755,8 +7253,6 @@ events:
         - "/usr/bin/site_perl"
         - "/usr/bin/vendor_perl"
         - "/usr/bin/core_perl"
-        - "/home/bluet/.claude/plugins/cache/caveman/caveman/84cc3c14fa1e/bin"
-        - "/home/bluet/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/usr/local"

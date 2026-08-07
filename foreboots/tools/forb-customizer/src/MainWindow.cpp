@@ -6,6 +6,7 @@
 #include "EntriesTab.h"
 #include "PresetGallery.h"
 #include "Inspector.h"
+#include "DiffDialog.h"
 
 #include <QTabWidget>
 #include <QDockWidget>
@@ -32,6 +33,14 @@
 #include <QVector>
 #include <QPair>
 #include <QSet>
+#include <QShortcut>
+#include <QKeySequence>
+#include <QStatusBar>
+#include <QInputDialog>
+#include <QFileSystemWatcher>
+#include <QHBoxLayout>
+#include <QPushButton>
+#include <QCloseEvent>
 
 // ---- small form-row helpers (create bound control + add to a QFormLayout) ---
 static QWidget *addColor(QFormLayout *f, const QString &lbl, Opt<QRgb> *fld, ConfigModel *m) {
@@ -56,9 +65,44 @@ static QWidget *scrollWrap(QWidget *inner) {
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     model = new ConfigModel(this);
+    fileWatcher = new QFileSystemWatcher(this);
+    connect(fileWatcher, &QFileSystemWatcher::fileChanged,
+            this, &MainWindow::onFileChanged);
+
+    // ---- notification bar (hidden by default) ----
+    notificationBar = new QFrame;
+    notificationBar->setStyleSheet(
+        "QFrame { background: #3a3a2a; border-bottom: 1px solid #666; }");
+    notificationBar->hide();
+    auto *nbLayout = new QHBoxLayout(notificationBar);
+    nbLayout->setContentsMargins(8, 4, 8, 4);
+    auto *nbLabel = new QLabel("Config file changed externally");
+    nbLabel->setStyleSheet("color: #e0d080; font-weight: bold;");
+    nbLayout->addWidget(nbLabel);
+    nbLayout->addStretch();
+    auto *btnReload = new QPushButton("Reload");
+    auto *btnIgnore = new QPushButton("Ignore");
+    btnReload->setStyleSheet("color: #e0d080;");
+    btnIgnore->setStyleSheet("color: #e0d080;");
+    nbLayout->addWidget(btnReload);
+    nbLayout->addWidget(btnIgnore);
+    connect(btnReload, &QPushButton::clicked, this, &MainWindow::reloadConfig);
+    connect(btnIgnore, &QPushButton::clicked, this, [this]{
+        notificationBar->hide();
+        if (!currentPath.isEmpty() && fileWatcher->files().isEmpty())
+            fileWatcher->addPath(currentPath);
+    });
+
+    // ---- dirty tracking: any model edit marks unsaved changes ----
+    connect(model, &ConfigModel::changed, this, [this]{
+        if (!isDirty) {
+            isDirty = true;
+            updateWindowTitle();
+        }
+    });
 
     // ---- central: tabs | preview ----
-    auto *tabs = new QTabWidget;
+    tabs    = new QTabWidget;
     preview  = new PreviewWidget(model);
     entries  = new EntriesTab(model);
     gallery  = new PresetGallery(model);
@@ -89,7 +133,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     split->addWidget(pvBox);
     split->setStretchFactor(0, 1);
     split->setStretchFactor(1, 1);
-    setCentralWidget(split);
+    auto *central = new QWidget;
+    auto *centralLayout = new QVBoxLayout(central);
+    centralLayout->setContentsMargins(0, 0, 0, 0);
+    centralLayout->setSpacing(0);
+    centralLayout->addWidget(notificationBar);
+    centralLayout->addWidget(split, 1);
+    setCentralWidget(central);
 
     // ---- inspector dock ----
     auto *dock = new QDockWidget("Inspector", this);
@@ -118,17 +168,31 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     auto actNew    = mFile->addAction("&New", this, &MainWindow::newFile);
     auto actOpen   = mFile->addAction("&Open forebo.cfg…", this, &MainWindow::openFile);
     auto actImport = mFile->addAction("&Import Limine…", this, &MainWindow::importLimine);
+    auto actImpSys = mFile->addAction("Import &Syslinux…", this, &MainWindow::importSyslinux);
+    auto actImpRefind = mFile->addAction("Import &rEFInd…", this, &MainWindow::importRefind);
     auto actImpBoot = mFile->addAction("Import from &/boot…", this, &MainWindow::importFromBoot);
     mFile->addSeparator();
     auto actSave   = mFile->addAction("&Save", this, &MainWindow::saveFile);
     auto actSaveAs = mFile->addAction("Save &As…", this, &MainWindow::saveFileAs);
     auto actApply  = mFile->addAction("&Apply to /boot…", this, &MainWindow::applyToBoot);
     mFile->addSeparator();
+    auto actSaveTpl = mFile->addAction("Save as &Template…", this, &MainWindow::saveAsTemplate);
+    templateMenu = mFile->addMenu("&Templates");
+    auto actLoadTpl = templateMenu->addAction("&Load from file…", this, &MainWindow::loadTemplate);
+    templateMenu->addSeparator();
+    auto actDelTpl = templateMenu->addAction("&Delete Template…", this, &MainWindow::deleteTemplate);
+    buildTemplateMenu();
+    mFile->addSeparator();
     mFile->addAction("E&xit", this, &QWidget::close);
+
+    auto *mTools = menuBar()->addMenu("&Tools");
+    auto actCompare = mTools->addAction("&Compare with…", this, &MainWindow::compareWith);
+
     tb->addAction(actNew); tb->addAction(actOpen); tb->addAction(actImport);
-    tb->addAction(actImpBoot);
+    tb->addAction(actImpSys); tb->addAction(actImpRefind); tb->addAction(actImpBoot);
     tb->addSeparator(); tb->addAction(actSave); tb->addAction(actSaveAs);
-    tb->addAction(actApply);
+    tb->addAction(actApply); tb->addSeparator(); tb->addAction(actSaveTpl);
+    tb->addSeparator(); tb->addAction(actCompare);
 
     setWindowTitle("ForeB Customizer");
     resize(1180, 760);
@@ -309,16 +373,21 @@ QWidget *MainWindow::buildImagesTab() {
 
 // ---------------------------------------------------------------- file ops
 void MainWindow::newFile() {
+    if (!promptSaveIfDirty()) return;
     model->resetDefaults();
     model->requestRefresh();
     entries->reloadFromModel();
     currentPath.clear();
+    isDirty = false;
+    stopWatching();
+    notificationBar->hide();
     preview->setConfigDir(QString());   // drop the previous config's image root + cache
-    setWindowTitle("ForeB Customizer");
+    updateWindowTitle();
     statusBar()->showMessage("New config");
 }
 
 void MainWindow::openFile() {
+    if (!promptSaveIfDirty()) return;
     QString p = QFileDialog::getOpenFileName(this, "Open forebo.cfg", QString(),
                                              "forebo.cfg (*.cfg);;All files (*)");
     if (p.isEmpty()) return;
@@ -326,8 +395,10 @@ void MainWindow::openFile() {
     if (!model->loadFile(p, &err)) { QMessageBox::warning(this, "Open failed", err); return; }
     entries->reloadFromModel();
     currentPath = p;
+    isDirty = false;
+    startWatching();
     preview->setConfigDir(QFileInfo(p).absolutePath());
-    setWindowTitle("ForeB Customizer - " + p);
+    updateWindowTitle();
     statusBar()->showMessage("Loaded " + p);
 }
 
@@ -337,6 +408,28 @@ void MainWindow::importLimine() {
     if (p.isEmpty()) return;
     QString err;
     if (!model->importLimine(p, &err)) { QMessageBox::warning(this, "Import failed", err); return; }
+    entries->reloadFromModel();
+    if (!currentPath.isEmpty()) preview->setConfigDir(QFileInfo(currentPath).absolutePath());
+    statusBar()->showMessage("Imported (migrated) " + p);
+}
+
+void MainWindow::importSyslinux() {
+    QString p = QFileDialog::getOpenFileName(this, "Import syslinux.cfg", QString(),
+                                             "Syslinux (*.cfg);;All files (*)");
+    if (p.isEmpty()) return;
+    QString err;
+    if (!model->importSyslinux(p, &err)) { QMessageBox::warning(this, "Import failed", err); return; }
+    entries->reloadFromModel();
+    if (!currentPath.isEmpty()) preview->setConfigDir(QFileInfo(currentPath).absolutePath());
+    statusBar()->showMessage("Imported (migrated) " + p);
+}
+
+void MainWindow::importRefind() {
+    QString p = QFileDialog::getOpenFileName(this, "Import refind.conf", QString(),
+                                             "rEFInd (*.conf);;All files (*)");
+    if (p.isEmpty()) return;
+    QString err;
+    if (!model->importRefind(p, &err)) { QMessageBox::warning(this, "Import failed", err); return; }
     entries->reloadFromModel();
     if (!currentPath.isEmpty()) preview->setConfigDir(QFileInfo(currentPath).absolutePath());
     statusBar()->showMessage("Imported (migrated) " + p);
@@ -353,7 +446,8 @@ void MainWindow::saveFileAs() {
                                              "forebo.cfg (*.cfg);;All files (*)");
     if (p.isEmpty()) return;
     currentPath = p;
-    setWindowTitle("ForeB Customizer - " + p);
+    isDirty = false;
+    updateWindowTitle();
     doSave(p);
 }
 
@@ -478,6 +572,8 @@ void MainWindow::doSave(const QString &path) {
     QString err;
     if (writable && model->saveFile(path, &err)) {
         currentPath = path;
+        isDirty = false;
+        startWatching();
         model->touch();
         statusBar()->showMessage("Saved " + path + (imgs.isEmpty()?"":QString(" (+%1 image(s) -> TGA)").arg(imgs.size())));
         return;
@@ -501,6 +597,8 @@ void MainWindow::doSave(const QString &path) {
         QMessageBox::warning(this, "Apply failed", eerr); return;
     }
     currentPath = path;
+    isDirty = false;
+    startWatching();
     model->touch();
     statusBar()->showMessage(QString("Applied to %1 (admin, %2 image(s))").arg(path).arg(imgs.size()));
 }
@@ -567,9 +665,133 @@ void MainWindow::importFromBoot() {
     if (!isLimine) { currentPath = srcPath; }
     else           { // migrated: target apply back at the ESP forebo dir
         currentPath = QFileInfo(srcPath).absolutePath() + "/forebo/forebo.cfg"; }
+    isDirty = false;
+    startWatching();
     preview->setConfigDir(QFileInfo(currentPath).absolutePath());   // both branches
-    setWindowTitle("ForeB Customizer - " + srcPath);
+    updateWindowTitle();
     statusBar()->showMessage((isLimine?"Migrated ":"Imported ") + srcPath + " from /boot");
+}
+
+// ---------------------------------------------------------------- templates
+QString MainWindow::templateDir() const {
+    QString base = QDir::homePath();
+#ifdef Q_OS_LINUX
+    QByteArray xdg = qgetenv("XDG_CONFIG_HOME");
+    if (!xdg.isEmpty()) base = QString::fromLocal8Bit(xdg);
+    else base += "/.config";
+#endif
+    return base + "/forb-customizer/templates";
+}
+
+void MainWindow::buildTemplateMenu() {
+    // Remove all template-name actions (keep separator + "Load from file" + "Delete")
+    QList<QAction*> acts = templateMenu->actions();
+    for (QAction *a : acts) {
+        if (a->isSeparator()) continue;
+        if (a->text() == "&Load from file…" || a->text() == "&Delete Template…") continue;
+        templateMenu->removeAction(a);
+        delete a;
+    }
+    QDir dir(templateDir());
+    if (!dir.exists()) return;
+    QStringList names = dir.entryList(QStringList() << "*.cfg", QDir::Files, QDir::Name);
+    if (names.isEmpty()) return;
+    // Insert before the separator
+    QList<QAction*> all = templateMenu->actions();
+    QAction *beforeSep = nullptr;
+    for (QAction *a : all) { if (a->isSeparator()) { beforeSep = a; break; } }
+    for (const QString &fname : names) {
+        QString display = fname;
+        if (display.endsWith(".cfg")) display.chop(4);
+        QAction *act = new QAction(display, templateMenu);
+        connect(act, &QAction::triggered, this, [this, display]{ loadTemplateByName(display); });
+        // Insert before the separator if found, otherwise append
+        if (beforeSep) templateMenu->insertAction(beforeSep, act);
+        else           templateMenu->addAction(act);
+    }
+}
+
+void MainWindow::saveAsTemplate() {
+    bool ok;
+    QString name = QInputDialog::getText(this, "Save Template",
+        "Template name:", QLineEdit::Normal, QString(), &ok);
+    if (!ok || name.trimmed().isEmpty()) return;
+    name = name.trimmed();
+
+    QString desc = QInputDialog::getText(this, "Save Template",
+        "Description (optional):", QLineEdit::Normal, QString(), &ok);
+    if (!ok) return;
+
+    QString author = QInputDialog::getText(this, "Save Template",
+        "Author (optional):", QLineEdit::Normal, QString(), &ok);
+    if (!ok) return;
+
+    QDir().mkpath(templateDir());
+    QString path = templateDir() + "/" + name + ".cfg";
+    if (QFileInfo::exists(path)) {
+        if (QMessageBox::question(this, "Overwrite Template",
+                "Template \"" + name + "\" already exists. Overwrite?",
+                QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
+            return;
+    }
+    if (!model->saveTemplate(path, name, desc, author)) {
+        QMessageBox::warning(this, "Save failed", "Could not write template file.");
+        return;
+    }
+    buildTemplateMenu();
+    statusBar()->showMessage("Template saved: " + name);
+}
+
+void MainWindow::loadTemplate() {
+    QString p = QFileDialog::getOpenFileName(this, "Load Template",
+        templateDir(), "Templates (*.cfg);;All files (*)");
+    if (p.isEmpty()) return;
+    loadTemplateFromPath(p);
+}
+
+void MainWindow::loadTemplateByName(const QString &name) {
+    loadTemplateFromPath(templateDir() + "/" + name + ".cfg");
+}
+
+void MainWindow::loadTemplateFromPath(const QString &path) {
+    QStringList opts = { "Apply theme only", "Apply everything" };
+    bool ok;
+    QString choice = QInputDialog::getItem(this, "Load Template",
+        "How should this template be applied?", opts, 0, false, &ok);
+    if (!ok) return;
+    bool themeOnly = (choice == opts[0]);
+
+    QString err;
+    if (!model->loadTemplate(path, themeOnly, &err)) {
+        QMessageBox::warning(this, "Load failed", err);
+        return;
+    }
+    entries->reloadFromModel();
+    statusBar()->showMessage("Template loaded: " + QFileInfo(path).baseName());
+}
+
+void MainWindow::deleteTemplate() {
+    QDir dir(templateDir());
+    if (!dir.exists()) { QMessageBox::information(this, "Delete Template", "No templates found."); return; }
+    QStringList names = dir.entryList(QStringList() << "*.cfg", QDir::Files, QDir::Name);
+    if (names.isEmpty()) { QMessageBox::information(this, "Delete Template", "No templates found."); return; }
+    // Strip .cfg for display
+    QStringList display;
+    for (const QString &n : names) { QString d = n; if (d.endsWith(".cfg")) d.chop(4); display << d; }
+    bool ok;
+    QString pick = QInputDialog::getItem(this, "Delete Template",
+        "Select template to delete:", display, 0, false, &ok);
+    if (!ok) return;
+    if (QMessageBox::question(this, "Delete Template",
+            "Delete template \"" + pick + "\"?",
+            QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) return;
+    QString path = templateDir() + "/" + pick + ".cfg";
+    if (!QFile::remove(path)) {
+        QMessageBox::warning(this, "Delete failed", "Could not remove template file.");
+        return;
+    }
+    buildTemplateMenu();
+    statusBar()->showMessage("Template deleted: " + pick);
 }
 
 // Search the usual ESP mount points (and /proc/mounts vfat entries) for an
@@ -582,8 +804,10 @@ void MainWindow::autoLoad() {
         if (QFileInfo::exists(p) && model->loadFile(p, &err)) {
             entries->reloadFromModel();
             currentPath = p;
+            isDirty = false;
+            startWatching();
             preview->setConfigDir(QFileInfo(p).absolutePath());
-            setWindowTitle("ForeB Customizer - " + p);
+            updateWindowTitle();
             statusBar()->showMessage("Loaded " + p);
             return;
         }
@@ -608,11 +832,80 @@ void MainWindow::autoLoad() {
         if (model->loadFile(p, &err)) {
             entries->reloadFromModel();
             currentPath = p;
+            isDirty = false;
+            startWatching();
             preview->setConfigDir(QFileInfo(p).absolutePath());
-            setWindowTitle("ForeB Customizer - " + p);
+            updateWindowTitle();
             statusBar()->showMessage("Auto-loaded " + p);
             return;
         }
     }
     statusBar()->showMessage("Ready (no forebo.cfg found on /boot; File > Open or Import)");
+}
+
+// ---------------------------------------------------------------- file watcher + dirty tracking
+
+void MainWindow::startWatching() {
+    fileWatcher->removePaths(fileWatcher->files());
+    notificationBar->hide();
+    if (!currentPath.isEmpty() && QFileInfo::exists(currentPath))
+        fileWatcher->addPath(currentPath);
+}
+
+void MainWindow::stopWatching() {
+    fileWatcher->removePaths(fileWatcher->files());
+}
+
+void MainWindow::updateWindowTitle() {
+    QString base = currentPath.isEmpty() ? "ForeB Customizer" : QFileInfo(currentPath).fileName();
+    QString title;
+    if (isDirty) title += "*";
+    title += base;
+    if (!currentPath.isEmpty()) title += " - ForeB Customizer";
+    setWindowTitle(title);
+}
+
+void MainWindow::onFileChanged(const QString &path) {
+    // QFileSystemWatcher may drop the path after some edits; re-add when possible
+    if (!QFileInfo::exists(path)) return;
+    if (!fileWatcher->files().contains(path))
+        fileWatcher->addPath(path);
+    notificationBar->show();
+}
+
+void MainWindow::reloadConfig() {
+    notificationBar->hide();
+    if (currentPath.isEmpty()) return;
+    QString err;
+    if (!model->loadFile(currentPath, &err)) {
+        QMessageBox::warning(this, "Reload failed", err);
+        return;
+    }
+    entries->reloadFromModel();
+    isDirty = false;
+    updateWindowTitle();
+    startWatching();
+    statusBar()->showMessage("Reloaded " + currentPath);
+}
+
+bool MainWindow::promptSaveIfDirty() {
+    if (!isDirty) return true;
+    QMessageBox::StandardButton r = QMessageBox::question(this, "Unsaved Changes",
+        "The config has unsaved changes.\nSave before continuing?",
+        QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+    if (r == QMessageBox::Save) { saveFile(); return !isDirty; }
+    return r == QMessageBox::Discard;
+}
+
+void MainWindow::closeEvent(QCloseEvent *event) {
+    if (promptSaveIfDirty()) event->accept();
+    else event->ignore();
+}
+
+void MainWindow::compareWith() {
+    QString p = QFileDialog::getOpenFileName(this, "Compare with…", QString(),
+                                             "forebo.cfg (*.cfg);;All files (*)");
+    if (p.isEmpty()) return;
+    DiffDialog dlg(model, p, this);
+    dlg.exec();
 }

@@ -141,7 +141,8 @@ enum forebo_entry_type {
                                  /* OsIndications runtime variable           */
     FOREB_ENTRY_SUBMENU   = 8,   /* submenu row: groups child rows (parent   */
                                  /* links); not bootable, Enter descends     */
-    FOREB_ENTRY_SETTINGS  = 9    /* open the windowed Settings / theme editor */
+    FOREB_ENTRY_SETTINGS  = 9,   /* open the windowed Settings / theme editor */
+    FOREB_ENTRY_UEFI_SETTINGS = 10 /* UEFI firmware settings panel (view/edit) */
 };
 
 /* ------------------------------------------------------------------ */

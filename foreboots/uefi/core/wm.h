@@ -22,8 +22,8 @@
 #ifndef FOREB_UEFI_WM_H
 #define FOREB_UEFI_WM_H
 
-#include "efi.h"
-#include "../include/forebo_cfg.h"
+#include "../efi.h"
+#include "../../include/forebo_cfg.h"
 #include "input.h"
 
 #define WM_MAX_WINDOWS  8

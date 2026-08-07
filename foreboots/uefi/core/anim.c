@@ -6,8 +6,8 @@
  * exactly like ui.c. See anim.h for the API contract.
  */
 #include "anim.h"
-#include "ui.h"                       /* ui_width/height, ui_scale, ui_progress */
-#include "../include/forebo_theme.h"  /* forest palette                          */
+#include "../ui.h"                       /* ui_width/height, ui_scale, ui_progress */
+#include "../../include/forebo_theme.h"  /* forest palette                          */
 
 /* ------------------------------------------------------------------ */
 /*  Framebuffer state (owned, mirrors ui.c)                            */
@@ -382,6 +382,7 @@ void anim_particles_init(int count, int style)
     if (!a_snap || !a_fb || a_w == 0 || a_h == 0) return;
     if (count < 0) count = 0;
     if (count > ANIM_MAX_PARTICLES) count = ANIM_MAX_PARTICLES;
+    if (a_h < 720 && count > 48) count = 48;
     for (i = 0; i < count; i++) {
         int sz = 2 + (int)(a_rand() % 3u);            /* 2..4 px      */
         int px, py, tries;
@@ -445,9 +446,19 @@ void anim_particles_step(void)
                 UINT32 s0 = pc & 0xFF, s1 = (pc >> 8) & 0xFF, s2 = (pc >> 16) & 0xFF;
                 int alpha = p->alpha;
                 if (alpha > 255) alpha = 255;
-                if (alpha > 0)
+                if (alpha >= 200 && sz <= 4) {
+                    for (int dy = 0; dy < sz; dy++) {
+                        volatile UINT32 *row = (volatile UINT32 *)(a_fb + (UINTN)(ny + dy) * a_pitch + (UINTN)nx * 4u);
+                        for (int dx = 0; dx < sz; dx++) {
+                            if ((UINT32)(nx+dx) < a_w && (UINT32)(ny+dy) < a_h)
+                                row[dx] = pc;
+                        }
+                    }
+                    ui_mark_dirty(nx, ny, sz, sz);
+                } else if (alpha > 0) {
                     a_blend_rect(nx, ny, sz, sz,
                                  s0, s1, s2, (UINT32)alpha, 255u - (UINT32)alpha);
+                }
             }
             /* These writes bypass the ui.c primitives, so flag the erased and
              * freshly-drawn squares for the partial-present pass. vy>=1 so the

@@ -7,12 +7,12 @@
  * no libc, no float. See tools_cat.h CATEGORY MODULE CONTRACT + clock.c idiom.
  * ========================================================================== */
 #include "tools_text.h"
-#include "ui.h"
-#include "wm.h"
-#include "input.h"
-#include "efi.h"
-#include "../include/forebo_theme.h"
-#include "../include/font8x8.h"
+#include "../ui.h"
+#include "../core/wm.h"
+#include "../core/input.h"
+#include "../efi.h"
+#include "../../include/forebo_theme.h"
+#include "../../include/font8x8.h"
 
 /* ------------------------------------------------------------------ *
  *  Firmware globals (clock.c idiom).  Only Notepad uses them.         *

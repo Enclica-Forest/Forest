@@ -1,6 +1,6 @@
-/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/UVLADIE3JM/moc_ConfigModel.cpp: /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/ConfigModel.h \
-  /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/moc_predefs.h \
-  /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Opt.h \
+/home/bluet/forest/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/UVLADIE3JM/moc_ConfigModel.cpp: /home/bluet/forest/foreboots/tools/forb-customizer/src/ConfigModel.h \
+  /home/bluet/forest/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/moc_predefs.h \
+  /home/bluet/forest/foreboots/tools/forb-customizer/src/Opt.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/bitsperlong.h \
   /usr/include/asm-generic/errno-base.h \

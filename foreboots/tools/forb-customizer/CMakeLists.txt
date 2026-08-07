@@ -17,6 +17,7 @@ set(APP_SOURCES
   src/EntriesTab.cpp
   src/PresetGallery.cpp
   src/Inspector.cpp
+  src/DiffDialog.cpp
   src/MainWindow.cpp
 )
 

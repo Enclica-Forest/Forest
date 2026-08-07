@@ -1,5 +1,5 @@
-/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_EntriesTab.cpp: /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/EntriesTab.h \
-  /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/moc_predefs.h \
+/home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_EntriesTab.cpp: /home/bluet/forest/foreboots/tools/forb-customizer/src/EntriesTab.h \
+  /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/moc_predefs.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/bitsperlong.h \
   /usr/include/asm-generic/errno-base.h \

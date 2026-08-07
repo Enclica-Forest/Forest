@@ -38,6 +38,20 @@ inline QStringList iconNames() {
             "terminal","settings"};
 }
 
+// Syslinux icon mapping: keyword -> ForeB icon short-name (mirrors the
+// syslinux LABEL/MENU LABEL to icon resolution that forebo-install does).
+inline QMap<QString,QString> syslinuxIconMap() {
+    return {
+        {"windows", "windows"}, {"win", "windows"},
+        {"grub", "grub"}, {"ubuntu", "ubuntu"}, {"debian", "debian"},
+        {"fedora", "fedora"}, {"mint", "mint"}, {"arch", "arch"},
+        {"cachyos", "arch"}, {"endeavour", "arch"}, {"manjaro", "arch"},
+        {"safe", "safe"}, {"fallback", "safe"}, {"snapshot", "safe"},
+        {"usb", "usb"}, {"removable", "usb"}, {"shell", "terminal"},
+        {"recovery", "shield"}, {"memtest", "gear"}, {"hd", "disk"},
+    };
+}
+
 // ---- a concrete 8-colour palette per named theme ----
 // bg/fg/accent/sel_bg/sel_fg are taken verbatim from the firmware's g_themes
 // (uefi/ui.c: bg, text, accent, select, white) so an applied preset renders the

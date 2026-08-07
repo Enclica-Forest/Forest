@@ -19,8 +19,8 @@
 #ifndef FOREB_UEFI_CONFIG_H
 #define FOREB_UEFI_CONFIG_H
 
-#include "efi.h"
-#include "../include/forebo_cfg.h"
+#include "../efi.h"
+#include "../../include/forebo_cfg.h"
 
 #ifdef __cplusplus
 extern "C" {

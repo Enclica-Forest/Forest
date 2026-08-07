@@ -1,8 +1,8 @@
 CMakeFiles/tst_roundtrip.dir/tst_roundtrip_autogen/mocs_compilation.cpp.o: \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/mocs_compilation.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/mocs_compilation.cpp \
  /usr/include/stdc-predef.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/UVLADIE3JM/moc_ConfigModel.cpp \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/UVLADIE3JM/../../../src/ConfigModel.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/UVLADIE3JM/moc_ConfigModel.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/UVLADIE3JM/../../../src/ConfigModel.h \
  /usr/include/qt6/QtCore/QObject /usr/include/qt6/QtCore/qobject.h \
  /usr/include/qt6/QtCore/qobjectdefs.h \
  /usr/include/qt6/QtCore/qnamespace.h /usr/include/qt6/QtCore/qglobal.h \
@@ -289,7 +289,7 @@ CMakeFiles/tst_roundtrip.dir/tst_roundtrip_autogen/mocs_compilation.cpp.o: \
  /usr/include/qt6/QtGui/qtguiglobal.h \
  /usr/include/qt6/QtGui/qtgui-config.h \
  /usr/include/qt6/QtGui/qtguiexports.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/UVLADIE3JM/../../../src/Opt.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/UVLADIE3JM/../../../src/Opt.h \
  /usr/include/qt6/QtCore/qtmochelpers.h \
  /usr/include/qt6/QtCore/qtmocconstants.h \
  /usr/include/qt6/QtCore/q20algorithm.h

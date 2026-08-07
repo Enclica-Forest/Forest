@@ -7,7 +7,7 @@
  * after ExitBootServices (uses only the raw framebuffer address).
  */
 #include "ui.h"
-#include "image.h"                   /* struct img_image + img_blit_scaled     */
+#include "core/image.h"                   /* struct img_image + img_blit_scaled     */
 #include "../include/font8x16.h"
 #include "../include/forebo_theme.h"
 #include "../include/forebo_cfg.h"   /* struct forebo_style + menu-style enums */

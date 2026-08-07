@@ -7,9 +7,9 @@
  * off-screen back buffer; the caller flips with ui_present().
  * ========================================================================== */
 #include "wm.h"
-#include "ui.h"
+#include "../ui.h"
 #include "image.h"
-#include "../include/forebo_theme.h"
+#include "../../include/forebo_theme.h"
 
 struct wm_window {
     int         used;

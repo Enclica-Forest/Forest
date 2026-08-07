@@ -14,10 +14,10 @@
  * (Newton) + perfect-square test, Pascal's triangle.
  * ========================================================================== */
 #include "tools_math.h"
-#include "ui.h"
-#include "wm.h"
-#include "input.h"
-#include "efi.h"
+#include "../ui.h"
+#include "../core/wm.h"
+#include "../core/input.h"
+#include "../efi.h"
 
 #include <stdarg.h>
 

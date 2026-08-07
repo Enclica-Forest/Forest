@@ -9,9 +9,9 @@
  * Freestanding: no libc, no heap, no float/SSE. See project build flags.
  * ========================================================================== */
 #include "clock.h"
-#include "ui.h"
-#include "wm.h"
-#include "../include/forebo_theme.h"
+#include "../ui.h"
+#include "../core/wm.h"
+#include "../../include/forebo_theme.h"
 
 /* GetTime is a VOID* placeholder in EFI_RUNTIME_SERVICES (efi.h); give it a
  * proper callable type. Capabilities pointer is optional (we pass NULL). */

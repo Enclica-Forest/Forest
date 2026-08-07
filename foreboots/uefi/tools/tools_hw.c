@@ -12,11 +12,11 @@
  * integer math only, all pre-ExitBootServices.
  * ========================================================================== */
 #include "tools_hw.h"
-#include "ui.h"
-#include "wm.h"
-#include "input.h"
-#include "efi.h"
-#include "../include/forebo_theme.h"
+#include "../ui.h"
+#include "../core/wm.h"
+#include "../core/input.h"
+#include "../efi.h"
+#include "../../include/forebo_theme.h"
 
 /* ==========================================================================
  * Firmware services (clock.c idiom).

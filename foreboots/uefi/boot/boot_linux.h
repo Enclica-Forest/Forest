@@ -32,7 +32,7 @@
 #ifndef FOREB_UEFI_BOOT_LINUX_H
 #define FOREB_UEFI_BOOT_LINUX_H
 
-#include "efi.h"
+#include "../efi.h"
 
 #ifdef __cplusplus
 extern "C" {

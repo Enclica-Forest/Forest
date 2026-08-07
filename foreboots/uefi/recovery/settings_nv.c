@@ -7,9 +7,9 @@
  * Settings tool mutates instead of a single UINT32. Freestanding, no libc,
  * no allocation; every pointer is guarded.
  */
-#include "efi.h"
-#include "efi_ext.h"
-#include "forebo_cfg.h"
+#include "../efi.h"
+#include "../efi_ext.h"
+#include "../../include/forebo_cfg.h"
 #include "settings_nv.h"
 
 /* --------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o: \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/EntriesTab.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/EntriesTab.cpp \
  /usr/include/stdc-predef.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/EntriesTab.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/EntriesTab.h \
  /usr/include/qt6/QtWidgets/QWidget /usr/include/qt6/QtWidgets/qwidget.h \
  /usr/include/qt6/QtWidgets/qtwidgetsglobal.h \
  /usr/include/qt6/QtGui/qtguiglobal.h /usr/include/qt6/QtCore/qglobal.h \
@@ -326,12 +326,12 @@ CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o: \
  /usr/include/qt6/QtGui/qfontvariableaxis.h \
  /usr/include/qt6/QtWidgets/qsizepolicy.h \
  /usr/include/qt6/QtGui/qcursor.h /usr/include/qt6/QtGui/qbitmap.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/ConfigModel.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/ConfigModel.h \
  /usr/include/qt6/QtCore/QObject /usr/include/qt6/QtCore/QString \
  /usr/include/qt6/QtCore/QVector /usr/include/qt6/QtCore/qvector.h \
  /usr/include/qt6/QtGui/QRgb \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Opt.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Schema.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/Opt.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/Schema.h \
  /usr/include/qt6/QtCore/QStringList /usr/include/qt6/QtCore/QMap \
  /usr/include/qt6/QtWidgets/QTreeWidget \
  /usr/include/qt6/QtWidgets/qtreewidget.h \
@@ -403,4 +403,5 @@ CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o: \
  /usr/include/qt6/QtWidgets/qstackedwidget.h \
  /usr/include/qt6/QtWidgets/QLabel /usr/include/qt6/QtWidgets/qlabel.h \
  /usr/include/qt6/QtGui/qpicture.h /usr/include/qt6/QtWidgets/QGroupBox \
- /usr/include/qt6/QtWidgets/qgroupbox.h
+ /usr/include/qt6/QtWidgets/qgroupbox.h /usr/include/qt6/QtGui/QShortcut \
+ /usr/include/qt6/QtGui/qshortcut.h /usr/include/qt6/QtGui/QKeySequence

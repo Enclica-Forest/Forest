@@ -1,8 +1,8 @@
 CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.o: \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/mocs_compilation.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/mocs_compilation.cpp \
  /usr/include/stdc-predef.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_Bound.cpp \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/Bound.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_Bound.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/Bound.h \
  /usr/include/qt6/QtWidgets/QWidget /usr/include/qt6/QtWidgets/qwidget.h \
  /usr/include/qt6/QtWidgets/qtwidgetsglobal.h \
  /usr/include/qt6/QtGui/qtguiglobal.h /usr/include/qt6/QtCore/qglobal.h \
@@ -328,26 +328,26 @@ CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.o: \
  /usr/include/qt6/QtWidgets/qsizepolicy.h \
  /usr/include/qt6/QtGui/qcursor.h /usr/include/qt6/QtGui/qbitmap.h \
  /usr/include/qt6/QtGui/QRgb \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/Opt.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/Opt.h \
  /usr/include/qt6/QtCore/qtmochelpers.h \
  /usr/include/qt6/QtCore/qtmocconstants.h \
  /usr/include/qt6/QtCore/q20algorithm.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_ConfigModel.cpp \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/ConfigModel.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_ConfigModel.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/ConfigModel.h \
  /usr/include/qt6/QtCore/QObject /usr/include/qt6/QtCore/QString \
  /usr/include/qt6/QtCore/QVector /usr/include/qt6/QtCore/qvector.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_EntriesTab.cpp \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/EntriesTab.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_Inspector.cpp \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/Inspector.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_MainWindow.cpp \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/MainWindow.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_EntriesTab.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/EntriesTab.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_Inspector.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/Inspector.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_MainWindow.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/MainWindow.h \
  /usr/include/qt6/QtWidgets/QMainWindow \
  /usr/include/qt6/QtWidgets/qmainwindow.h \
  /usr/include/qt6/QtWidgets/qtabwidget.h /usr/include/qt6/QtCore/QPair \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_PresetGallery.cpp \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/PresetGallery.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_PreviewWidget.cpp \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/PreviewWidget.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_PresetGallery.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/PresetGallery.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_PreviewWidget.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/PreviewWidget.h \
  /usr/include/qt6/QtCore/QRect /usr/include/qt6/QtCore/QHash \
  /usr/include/qt6/QtGui/QImage

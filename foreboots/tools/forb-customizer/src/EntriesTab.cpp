@@ -13,6 +13,8 @@
 #include <QStackedWidget>
 #include <QLabel>
 #include <QGroupBox>
+#include <QShortcut>
+#include <QKeySequence>
 
 // per-item payload
 static const int RoleMap = Qt::UserRole + 1;
@@ -103,6 +105,58 @@ EntriesTab::EntriesTab(ConfigModel *m, QWidget *parent) : QWidget(parent), model
     connect(cmdline,&QPlainTextEdit::textChanged,this,onEdit);
 
     reloadFromModel();
+
+    // ---- keyboard shortcuts ----
+    auto *scDel = new QShortcut(QKeySequence(Qt::Key_Delete), this);
+    connect(scDel, &QShortcut::activated, this, &EntriesTab::deleteSel);
+    auto *scBackspace = new QShortcut(QKeySequence(Qt::Key_Backspace), this);
+    connect(scBackspace, &QShortcut::activated, this, &EntriesTab::deleteSel);
+    auto *scAdd = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_N), this);
+    connect(scAdd, &QShortcut::activated, this, [this]{ addEntry(false); });
+    auto *scUp = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Up), this);
+    connect(scUp, &QShortcut::activated, this, &EntriesTab::moveUp);
+    auto *scDown = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Down), this);
+    connect(scDown, &QShortcut::activated, this, &EntriesTab::moveDown);
+    auto *scRename = new QShortcut(QKeySequence(Qt::Key_F2), this);
+    connect(scRename, &QShortcut::activated, this, [this]{ if(tree->currentItem()) title->setFocus(); });
+    auto *scEnter = new QShortcut(QKeySequence(Qt::Key_Return), this);
+    connect(scEnter, &QShortcut::activated, this, [this]{ if(tree->currentItem()) title->setFocus(); });
+    auto *scEscape = new QShortcut(QKeySequence(Qt::Key_Escape), this);
+    connect(scEscape, &QShortcut::activated, this, [this]{ tree->clearSelection(); });
+
+    // ---- accessibility ----
+    tree->setAccessibleName("Menu entries");
+    tree->setAccessibleDescription("Boot menu entries tree. Use Delete to remove, Ctrl+Up/Down to reorder.");
+    bAdd->setAccessibleName("Add entry");
+    bAdd->setToolTip("Add a new menu entry (Ctrl+N)");
+    bSub->setAccessibleName("Add submenu");
+    bSub->setToolTip("Add a new submenu container");
+    bDup->setAccessibleName("Duplicate entry");
+    bDup->setToolTip("Duplicate the selected entry");
+    bDel->setAccessibleName("Delete entry");
+    bDel->setToolTip("Delete the selected entry (Del)");
+    editorBox->setAccessibleName("Entry editor");
+    title->setAccessibleName("Entry title");
+    title->setToolTip("Entry display title (F2 or Enter to edit)");
+    type->setAccessibleName("Entry type");
+    type->setToolTip("Boot entry type: forest, linux, chainload, etc.");
+    kernel->setAccessibleName("Kernel path");
+    vmlinuz->setAccessibleName("Vmlinuz path");
+    initrd->setAccessibleName("Initrd path");
+    chain->setAccessibleName("Chainload path");
+    cmdline->setAccessibleName("Kernel command line");
+    cmdline->setToolTip("Extra kernel command-line arguments");
+    icon->setAccessibleName("Icon name");
+    icon->setToolTip("Icon name (arch, tux, gear) or path to a TGA");
+    background->setAccessibleName("Background image");
+    modules->setAccessibleName("Kernel modules");
+    modules->setToolTip("Comma-separated module paths to load");
+    setTabOrder(tree, bAdd);
+    setTabOrder(bAdd, bSub);
+    setTabOrder(bSub, bDup);
+    setTabOrder(bDup, bDel);
+    setTabOrder(bDel, title);
+    setTabOrder(title, type);
 }
 
 void EntriesTab::updateTypeFields() {
@@ -227,4 +281,42 @@ void EntriesTab::selectFlatIndex(int i) {
     };
     for (int k=0;k<tree->topLevelItemCount();++k) rec(tree->topLevelItem(k));
     if (i>=0 && i<flat.size()) tree->setCurrentItem(flat[i]);
+}
+
+void EntriesTab::moveUp() {
+    QTreeWidgetItem *cur = tree->currentItem();
+    if (!cur) return;
+    QTreeWidgetItem *par = cur->parent();
+    if (par) {
+        int idx = par->indexOfChild(cur);
+        if (idx <= 0) return;
+        par->removeChild(cur);
+        par->insertChild(idx - 1, cur);
+    } else {
+        int idx = tree->indexOfTopLevelItem(cur);
+        if (idx <= 0) return;
+        tree->takeTopLevelItem(idx);
+        tree->insertTopLevelItem(idx - 1, cur);
+    }
+    tree->setCurrentItem(cur);
+    rebuildModel();
+}
+
+void EntriesTab::moveDown() {
+    QTreeWidgetItem *cur = tree->currentItem();
+    if (!cur) return;
+    QTreeWidgetItem *par = cur->parent();
+    if (par) {
+        int idx = par->indexOfChild(cur);
+        if (idx >= par->childCount() - 1) return;
+        par->removeChild(cur);
+        par->insertChild(idx + 1, cur);
+    } else {
+        int idx = tree->indexOfTopLevelItem(cur);
+        if (idx >= tree->topLevelItemCount() - 1) return;
+        tree->takeTopLevelItem(idx);
+        tree->insertTopLevelItem(idx + 1, cur);
+    }
+    tree->setCurrentItem(cur);
+    rebuildModel();
 }

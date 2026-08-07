@@ -15,11 +15,11 @@
  * ========================================================================== */
 
 #include "sysmon.h"
-#include "efi.h"
-#include "wm.h"
-#include "ui.h"
-#include "diskio.h"
-#include "../include/forebo_theme.h"
+#include "../efi.h"
+#include "../core/wm.h"
+#include "../ui.h"
+#include "../core/diskio.h"
+#include "../../include/forebo_theme.h"
 
 /* ==========================================================================
  * Module state (captured at tool_sysmon_init).

@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/bluet/Forest-OS/foreboots/tools/forb-customizer
+CMAKE_SOURCE_DIR = /home/bluet/forest/foreboots/tools/forb-customizer
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build
+CMAKE_BINARY_DIR = /home/bluet/forest/foreboots/tools/forb-customizer/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/forb-customizer.dir/depend.make
@@ -75,128 +75,128 @@ CMakeFiles/forb-customizer.dir/codegen:
 CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.o: CMakeFiles/forb-customizer.dir/flags.make
 CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.o: forb-customizer_autogen/mocs_compilation.cpp
 CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.o: CMakeFiles/forb-customizer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.o -MF CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.o.d -o CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.o -c /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/mocs_compilation.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.o -MF CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.o.d -o CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.o -c /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/mocs_compilation.cpp
 
 CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/mocs_compilation.cpp > CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/mocs_compilation.cpp > CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.i
 
 CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/mocs_compilation.cpp -o CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/mocs_compilation.cpp -o CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.s
 
 CMakeFiles/forb-customizer.dir/main.cpp.o: CMakeFiles/forb-customizer.dir/flags.make
-CMakeFiles/forb-customizer.dir/main.cpp.o: /home/bluet/Forest-OS/foreboots/tools/forb-customizer/main.cpp
+CMakeFiles/forb-customizer.dir/main.cpp.o: /home/bluet/forest/foreboots/tools/forb-customizer/main.cpp
 CMakeFiles/forb-customizer.dir/main.cpp.o: CMakeFiles/forb-customizer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/forb-customizer.dir/main.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/main.cpp.o -MF CMakeFiles/forb-customizer.dir/main.cpp.o.d -o CMakeFiles/forb-customizer.dir/main.cpp.o -c /home/bluet/Forest-OS/foreboots/tools/forb-customizer/main.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/forb-customizer.dir/main.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/main.cpp.o -MF CMakeFiles/forb-customizer.dir/main.cpp.o.d -o CMakeFiles/forb-customizer.dir/main.cpp.o -c /home/bluet/forest/foreboots/tools/forb-customizer/main.cpp
 
 CMakeFiles/forb-customizer.dir/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/forb-customizer.dir/main.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/Forest-OS/foreboots/tools/forb-customizer/main.cpp > CMakeFiles/forb-customizer.dir/main.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/forest/foreboots/tools/forb-customizer/main.cpp > CMakeFiles/forb-customizer.dir/main.cpp.i
 
 CMakeFiles/forb-customizer.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/forb-customizer.dir/main.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/Forest-OS/foreboots/tools/forb-customizer/main.cpp -o CMakeFiles/forb-customizer.dir/main.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/forest/foreboots/tools/forb-customizer/main.cpp -o CMakeFiles/forb-customizer.dir/main.cpp.s
 
 CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.o: CMakeFiles/forb-customizer.dir/flags.make
-CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.o: /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/ConfigModel.cpp
+CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.o: /home/bluet/forest/foreboots/tools/forb-customizer/src/ConfigModel.cpp
 CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.o: CMakeFiles/forb-customizer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.o -MF CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.o.d -o CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.o -c /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/ConfigModel.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.o -MF CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.o.d -o CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.o -c /home/bluet/forest/foreboots/tools/forb-customizer/src/ConfigModel.cpp
 
 CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/ConfigModel.cpp > CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/forest/foreboots/tools/forb-customizer/src/ConfigModel.cpp > CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.i
 
 CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/ConfigModel.cpp -o CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/forest/foreboots/tools/forb-customizer/src/ConfigModel.cpp -o CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.s
 
 CMakeFiles/forb-customizer.dir/src/Bound.cpp.o: CMakeFiles/forb-customizer.dir/flags.make
-CMakeFiles/forb-customizer.dir/src/Bound.cpp.o: /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Bound.cpp
+CMakeFiles/forb-customizer.dir/src/Bound.cpp.o: /home/bluet/forest/foreboots/tools/forb-customizer/src/Bound.cpp
 CMakeFiles/forb-customizer.dir/src/Bound.cpp.o: CMakeFiles/forb-customizer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/forb-customizer.dir/src/Bound.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/src/Bound.cpp.o -MF CMakeFiles/forb-customizer.dir/src/Bound.cpp.o.d -o CMakeFiles/forb-customizer.dir/src/Bound.cpp.o -c /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Bound.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/forb-customizer.dir/src/Bound.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/src/Bound.cpp.o -MF CMakeFiles/forb-customizer.dir/src/Bound.cpp.o.d -o CMakeFiles/forb-customizer.dir/src/Bound.cpp.o -c /home/bluet/forest/foreboots/tools/forb-customizer/src/Bound.cpp
 
 CMakeFiles/forb-customizer.dir/src/Bound.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/forb-customizer.dir/src/Bound.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Bound.cpp > CMakeFiles/forb-customizer.dir/src/Bound.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/forest/foreboots/tools/forb-customizer/src/Bound.cpp > CMakeFiles/forb-customizer.dir/src/Bound.cpp.i
 
 CMakeFiles/forb-customizer.dir/src/Bound.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/forb-customizer.dir/src/Bound.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Bound.cpp -o CMakeFiles/forb-customizer.dir/src/Bound.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/forest/foreboots/tools/forb-customizer/src/Bound.cpp -o CMakeFiles/forb-customizer.dir/src/Bound.cpp.s
 
 CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.o: CMakeFiles/forb-customizer.dir/flags.make
-CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.o: /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/PreviewWidget.cpp
+CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.o: /home/bluet/forest/foreboots/tools/forb-customizer/src/PreviewWidget.cpp
 CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.o: CMakeFiles/forb-customizer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.o -MF CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.o.d -o CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.o -c /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/PreviewWidget.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.o -MF CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.o.d -o CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.o -c /home/bluet/forest/foreboots/tools/forb-customizer/src/PreviewWidget.cpp
 
 CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/PreviewWidget.cpp > CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/forest/foreboots/tools/forb-customizer/src/PreviewWidget.cpp > CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.i
 
 CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/PreviewWidget.cpp -o CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/forest/foreboots/tools/forb-customizer/src/PreviewWidget.cpp -o CMakeFiles/forb-customizer.dir/src/PreviewWidget.cpp.s
 
 CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o: CMakeFiles/forb-customizer.dir/flags.make
-CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o: /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/EntriesTab.cpp
+CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o: /home/bluet/forest/foreboots/tools/forb-customizer/src/EntriesTab.cpp
 CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o: CMakeFiles/forb-customizer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o -MF CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o.d -o CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o -c /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/EntriesTab.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o -MF CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o.d -o CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o -c /home/bluet/forest/foreboots/tools/forb-customizer/src/EntriesTab.cpp
 
 CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/EntriesTab.cpp > CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/forest/foreboots/tools/forb-customizer/src/EntriesTab.cpp > CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.i
 
 CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/EntriesTab.cpp -o CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/forest/foreboots/tools/forb-customizer/src/EntriesTab.cpp -o CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.s
 
 CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.o: CMakeFiles/forb-customizer.dir/flags.make
-CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.o: /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/PresetGallery.cpp
+CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.o: /home/bluet/forest/foreboots/tools/forb-customizer/src/PresetGallery.cpp
 CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.o: CMakeFiles/forb-customizer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.o -MF CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.o.d -o CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.o -c /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/PresetGallery.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.o -MF CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.o.d -o CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.o -c /home/bluet/forest/foreboots/tools/forb-customizer/src/PresetGallery.cpp
 
 CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/PresetGallery.cpp > CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/forest/foreboots/tools/forb-customizer/src/PresetGallery.cpp > CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.i
 
 CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/PresetGallery.cpp -o CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/forest/foreboots/tools/forb-customizer/src/PresetGallery.cpp -o CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.s
 
 CMakeFiles/forb-customizer.dir/src/Inspector.cpp.o: CMakeFiles/forb-customizer.dir/flags.make
-CMakeFiles/forb-customizer.dir/src/Inspector.cpp.o: /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Inspector.cpp
+CMakeFiles/forb-customizer.dir/src/Inspector.cpp.o: /home/bluet/forest/foreboots/tools/forb-customizer/src/Inspector.cpp
 CMakeFiles/forb-customizer.dir/src/Inspector.cpp.o: CMakeFiles/forb-customizer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/forb-customizer.dir/src/Inspector.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/src/Inspector.cpp.o -MF CMakeFiles/forb-customizer.dir/src/Inspector.cpp.o.d -o CMakeFiles/forb-customizer.dir/src/Inspector.cpp.o -c /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Inspector.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/forb-customizer.dir/src/Inspector.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/src/Inspector.cpp.o -MF CMakeFiles/forb-customizer.dir/src/Inspector.cpp.o.d -o CMakeFiles/forb-customizer.dir/src/Inspector.cpp.o -c /home/bluet/forest/foreboots/tools/forb-customizer/src/Inspector.cpp
 
 CMakeFiles/forb-customizer.dir/src/Inspector.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/forb-customizer.dir/src/Inspector.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Inspector.cpp > CMakeFiles/forb-customizer.dir/src/Inspector.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/forest/foreboots/tools/forb-customizer/src/Inspector.cpp > CMakeFiles/forb-customizer.dir/src/Inspector.cpp.i
 
 CMakeFiles/forb-customizer.dir/src/Inspector.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/forb-customizer.dir/src/Inspector.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Inspector.cpp -o CMakeFiles/forb-customizer.dir/src/Inspector.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/forest/foreboots/tools/forb-customizer/src/Inspector.cpp -o CMakeFiles/forb-customizer.dir/src/Inspector.cpp.s
 
 CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o: CMakeFiles/forb-customizer.dir/flags.make
-CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o: /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/MainWindow.cpp
+CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o: /home/bluet/forest/foreboots/tools/forb-customizer/src/MainWindow.cpp
 CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o: CMakeFiles/forb-customizer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o -MF CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o.d -o CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o -c /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/MainWindow.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o -MF CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o.d -o CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o -c /home/bluet/forest/foreboots/tools/forb-customizer/src/MainWindow.cpp
 
 CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/MainWindow.cpp > CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/bluet/forest/foreboots/tools/forb-customizer/src/MainWindow.cpp > CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.i
 
 CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/MainWindow.cpp -o CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/bluet/forest/foreboots/tools/forb-customizer/src/MainWindow.cpp -o CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.s
 
 # Object files for target forb-customizer
 forb__customizer_OBJECTS = \
@@ -230,7 +230,7 @@ forb-customizer: /usr/lib/libGLX.so
 forb-customizer: /usr/lib/libOpenGL.so
 forb-customizer: /usr/lib/libQt6Core.so.6.11.1
 forb-customizer: CMakeFiles/forb-customizer.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Linking CXX executable forb-customizer"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Linking CXX executable forb-customizer"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/forb-customizer.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -242,6 +242,6 @@ CMakeFiles/forb-customizer.dir/clean:
 .PHONY : CMakeFiles/forb-customizer.dir/clean
 
 CMakeFiles/forb-customizer.dir/depend:
-	cd /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/bluet/Forest-OS/foreboots/tools/forb-customizer /home/bluet/Forest-OS/foreboots/tools/forb-customizer /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/forb-customizer.dir/DependInfo.cmake "--color=$(COLOR)" forb-customizer
+	cd /home/bluet/forest/foreboots/tools/forb-customizer/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/bluet/forest/foreboots/tools/forb-customizer /home/bluet/forest/foreboots/tools/forb-customizer /home/bluet/forest/foreboots/tools/forb-customizer/build /home/bluet/forest/foreboots/tools/forb-customizer/build /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/forb-customizer.dir/DependInfo.cmake "--color=$(COLOR)" forb-customizer
 .PHONY : CMakeFiles/forb-customizer.dir/depend
 

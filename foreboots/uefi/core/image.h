@@ -32,8 +32,8 @@
 #ifndef FOREB_UEFI_IMAGE_H
 #define FOREB_UEFI_IMAGE_H
 
-#include "efi.h"
-#include "ui.h"
+#include "../efi.h"
+#include "../ui.h"
 
 /* Decoded image: linear top-down rows of 0xAARRGGBB pixels. */
 struct img_image {

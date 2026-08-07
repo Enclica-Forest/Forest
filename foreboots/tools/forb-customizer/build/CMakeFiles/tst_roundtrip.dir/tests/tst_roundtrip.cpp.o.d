@@ -1,5 +1,5 @@
 CMakeFiles/tst_roundtrip.dir/tests/tst_roundtrip.cpp.o: \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/tests/tst_roundtrip.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/tests/tst_roundtrip.cpp \
  /usr/include/stdc-predef.h /usr/include/qt6/QtTest/QtTest \
  /usr/include/qt6/QtTest/QtTestDepends /usr/include/qt6/QtCore/QtCore \
  /usr/include/qt6/QtCore/QtCoreDepends /usr/include/qt6/QtCore/qglobal.h \
@@ -644,9 +644,9 @@ CMakeFiles/tst_roundtrip.dir/tests/tst_roundtrip.cpp.o: \
  /usr/include/qt6/QtGui/qvector4d.h \
  /usr/include/qt6/QtTest/qttestversion.h \
  /usr/include/qt6/QtCore/QFileInfo \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/ConfigModel.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/ConfigModel.h \
  /usr/include/qt6/QtCore/QObject /usr/include/qt6/QtCore/QString \
  /usr/include/qt6/QtCore/QVector /usr/include/qt6/QtGui/QRgb \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Opt.h \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/include/tst_roundtrip.moc \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/Opt.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/include/tst_roundtrip.moc \
  /usr/include/qt6/QtCore/qtmochelpers.h

@@ -562,6 +562,70 @@ bool ConfigModel::saveFile(const QString &path, QString *err) {
 }
 
 // ===========================================================================
+//  Template save / load
+// ===========================================================================
+
+// Template header marker used to identify template files.
+static const char *kTemplateHeader = "# ForeB Template:";
+
+bool ConfigModel::saveTemplate(const QString &path, const QString &name,
+                               const QString &description, const QString &author) {
+    QStringList o;
+    // header block
+    QString descLine = description.isEmpty() ? name : name + " - " + description;
+    o << QString("%1 %2").arg(kTemplateHeader, descLine);
+    if (!author.isEmpty()) o << "# Author: " + author;
+    o << "# Date: " + QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
+    o << "";
+    o << serialize();
+    QString text = o.join("\n");
+
+    QSaveFile sf(path);
+    if (!sf.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        return false;
+    sf.write(text.toUtf8());
+    return sf.commit();
+}
+
+bool ConfigModel::loadTemplate(const QString &path, bool themeOnly, QString *err) {
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly)) { if (err) *err = f.errorString(); return false; }
+    QString text = QString::fromUtf8(f.readAll());
+    text.replace("\r\n", "\n").replace("\r", "\n");
+
+    // Strip template header lines (lines starting with # before the first
+    // non-comment, non-empty line).
+    QStringList lines = text.split('\n');
+    int start = 0;
+    for (int i = 0; i < lines.size(); ++i) {
+        QString l = lines[i].trimmed();
+        if (l.isEmpty()) { start = i + 1; continue; }
+        if (l.startsWith('#')) { start = i + 1; continue; }
+        break;
+    }
+    QString cfgText = lines.mid(start).join('\n');
+
+    if (themeOnly) {
+        // Save globals + entries, apply only theme keys from the template.
+        Global savedG = g;
+        QVector<EntryNode> savedRoots = roots;
+        // Parse the template fully into a temp model state, then copy only theme.
+        Theme savedTh = th;
+        resetDefaults();
+        parseText(cfgText);
+        Theme templTh = th;
+        // Restore globals and entries, apply template theme.
+        g = savedG;
+        roots = savedRoots;
+        th = templTh;
+    } else {
+        parseText(cfgText);
+    }
+    requestRefresh();
+    return true;
+}
+
+// ===========================================================================
 //  Limine importer (ports tools/forebo-install parse_limine/translate).
 //  ESP-relative resolution only: guid()/uuid() schemes are treated as the ESP.
 // ===========================================================================
@@ -717,6 +781,480 @@ bool ConfigModel::importLimine(const QString &path, QString *err) {
 }
 
 // ===========================================================================
+//  Syslinux importer (ports tools/forebo-install parse_syslinux/translate).
+// ===========================================================================
+static QString guessSyslinuxIcon(const QString &text, const QString &type) {
+    static const QMap<QString,QString> &m = []{
+        static QMap<QString,QString> mm; if (!mm.isEmpty()) return mm;
+        mm["windows"]="windows"; mm["win"]="windows"; mm["grub"]="grub";
+        mm["ubuntu"]="ubuntu"; mm["debian"]="debian"; mm["fedora"]="fedora";
+        mm["mint"]="mint"; mm["arch"]="arch"; mm["cachyos"]="arch";
+        mm["endeavour"]="arch"; mm["manjaro"]="arch"; mm["safe"]="safe";
+        mm["fallback"]="safe"; mm["snapshot"]="safe"; mm["usb"]="usb";
+        mm["removable"]="usb"; mm["shell"]="terminal"; mm["recovery"]="shield";
+        mm["memtest"]="gear"; mm["hd"]="disk";
+        return mm;
+    }();
+    QString hay = text.toLower();
+    for (auto it = m.constBegin(); it != m.constEnd(); ++it)
+        if (hay.contains(it.key())) return it.value();
+    if (type == "linux") return "tux";
+    if (type == "chainload") return "usb";
+    if (type == "forest") return "os";
+    return "";
+}
+
+bool ConfigModel::importSyslinux(const QString &path, QString *err) {
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly)) { if (err) *err = f.errorString(); return false; }
+    QString text = QString::fromUtf8(f.readAll());
+    text.replace("\r\n", "\n").replace("\r", "\n");
+
+    resetDefaults();
+    const QStringList lines = text.split('\n');
+    int globalTimeout = -1;
+    QString globalDefault;
+
+    // Current LABEL block state
+    struct Label {
+        QString name, menuLabel, kernel, append, initrd, localboot;
+        bool hasLocalboot = false;
+        int localbootIndex = -1;
+    };
+    QVector<Label> labels;
+    Label cur;
+    bool inLabel = false;
+
+    auto flush = [&]{
+        if (!inLabel) return;
+        inLabel = false;
+        if (cur.name.isEmpty() && cur.kernel.isEmpty() && !cur.hasLocalboot) return;
+        labels.append(cur);
+        cur = Label();
+    };
+
+    QRegularExpression reKeyValue("^([A-Za-z_][A-Za-z0-9_]*)\\s+(.*)$");
+
+    for (const QString &raw : lines) {
+        QString line = raw.trimmed();
+        if (line.isEmpty() || line.startsWith('#') || line.startsWith(';')) continue;
+
+        // LABEL keyword (syslinux uses "LABEL name" or "label name")
+        QString low = line.toLower();
+        if (low.startsWith("label ")) {
+            flush();
+            inLabel = true;
+            cur.name = line.mid(6).trimmed();
+            continue;
+        }
+        if (low == "label") {
+            flush();
+            inLabel = true;
+            continue;
+        }
+        if (low.startsWith("label\t")) {
+            flush();
+            inLabel = true;
+            cur.name = line.mid(6).trimmed();
+            continue;
+        }
+
+        // Global keywords
+        if (!inLabel) {
+            if (low.startsWith("timeout ")) {
+                // syslinux TIMEOUT is in 10ths of seconds
+                bool ok; int t = line.mid(8).trimmed().toInt(&ok);
+                if (ok) globalTimeout = t / 10;  // convert to whole seconds
+            } else if (low.startsWith("default ")) {
+                globalDefault = line.mid(8).trimmed();
+            } else if (low.startsWith("ui ") || low.startsWith(" vesamenu") || low.startsWith(" gfxboot")) {
+                // UI directives — skip
+            }
+            continue;
+        }
+
+        // Inside a LABEL block
+        auto m = reKeyValue.match(line);
+        if (m.hasMatch()) {
+            QString key = m.captured(1).toLower();
+            QString val = m.captured(2).trimmed();
+            if (key == "kernel")       cur.kernel = val;
+            else if (key == "append")  cur.append = val;
+            else if (key == "initrd")  cur.initrd = val;
+            else if (key == "menu" && val.toLower().startsWith("label ")) {
+                cur.menuLabel = val.mid(6).trimmed();
+            } else if (key == "menu" && val.toLower().startsWith("label\t")) {
+                cur.menuLabel = val.mid(6).trimmed();
+            } else if (key == "localboot") {
+                cur.hasLocalboot = true;
+                cur.localbootIndex = val.toInt();
+            }
+        } else if (line.toLower().startsWith("menu ")) {
+            // "MENU LABEL xxx" handled above; "MENU COLOR", "MENU WIDTH", etc. — skip
+            QString rest = line.mid(4).trimmed();
+            if (rest.toLower().startsWith("label ")) {
+                cur.menuLabel = rest.mid(6).trimmed();
+            }
+        }
+    }
+    flush();
+
+    // Apply globals
+    if (globalTimeout >= 0) g.timeout.assign(globalTimeout);
+
+    int defaultIdx = globalDefault.isEmpty() ? -1 : -1;
+    // Find default by label name
+    if (!globalDefault.isEmpty()) {
+        for (int i = 0; i < labels.size(); i++) {
+            if (labels[i].name.toLower() == globalDefault.toLower()) {
+                defaultIdx = i; break;
+            }
+        }
+    }
+
+    // Convert labels to EntryNodes
+    auto translateEntry = [](const Label &lb) -> EntryNode {
+        EntryNode e;
+        QString title = lb.menuLabel.isEmpty() ? lb.name : lb.menuLabel;
+        sanitizeTitleInPlace(title);
+        e.title = title;
+
+        if (lb.hasLocalboot) {
+            e.type = "chainload";
+            e.chain = QString("LOCALBOOT %1").arg(lb.localbootIndex);
+            e.icon = iconResolve(guessSyslinuxIcon(title, "chainload"));
+        } else {
+            QString k = lb.kernel.toLower();
+            // Strip leading / from kernel path (syslinux paths are relative to config dir)
+            QString kernelPath = lb.kernel;
+            if (!kernelPath.startsWith('/')) kernelPath = "/" + kernelPath;
+
+            if (k.endsWith(".efi")) {
+                e.type = "chainload";
+                e.chain = kernelPath;
+                e.icon = iconResolve(guessSyslinuxIcon(title + " " + QFileInfo(kernelPath).fileName(), "chainload"));
+            } else {
+                e.type = "linux";
+                e.vmlinuz = kernelPath;
+                // INITRD can be inline in APPEND or separate INITRD directive
+                if (!lb.initrd.isEmpty()) {
+                    QString initrdPath = lb.initrd.trimmed();
+                    if (!initrdPath.startsWith('/')) initrdPath = "/" + initrdPath;
+                    e.initrd = initrdPath;
+                }
+                // APPEND carries the kernel cmdline (and sometimes initrd= as a param)
+                if (!lb.append.isEmpty()) {
+                    QString cmdline = lb.append;
+                    // Extract initrd= from append if no explicit INITRD was given
+                    if (lb.initrd.isEmpty()) {
+                        QRegularExpression initrdRe("\\binitrd=(\\S+)");
+                        auto im = initrdRe.match(cmdline);
+                        if (im.hasMatch()) {
+                            QString ip = im.captured(1);
+                            if (!ip.startsWith('/')) ip = "/" + ip;
+                            e.initrd = ip;
+                            cmdline.remove(im.capturedStart(), im.capturedLength());
+                        }
+                    }
+                    // Extract root= from append (not meaningful to ForeB)
+                    QRegularExpression rootRe("\\broot=\\S+");
+                    cmdline.remove(rootRe);
+                    e.cmdline = cmdline.trimmed();
+                }
+                e.icon = iconResolve(guessSyslinuxIcon(title + " " + QFileInfo(kernelPath).fileName(), "linux"));
+            }
+        }
+        return e;
+    };
+
+    for (const auto &lb : labels) {
+        roots.append(translateEntry(lb));
+    }
+
+    if (defaultIdx >= 0 && defaultIdx < roots.size()) {
+        g.defaultRef = QString::number(defaultIdx);
+    }
+
+    requestRefresh();
+    return true;
+}
+
+// ===========================================================================
+//  rEFInd importer (ports tools/forebo-install parse_refind/translate).
+// ===========================================================================
+static QString guessRefindIcon(const QString &text, const QString &type) {
+    static const QMap<QString,QString> &m = []{
+        static QMap<QString,QString> mm; if (!mm.isEmpty()) return mm;
+        mm["windows"]="windows"; mm["win"]="windows"; mm["grub"]="grub";
+        mm["ubuntu"]="ubuntu"; mm["debian"]="debian"; mm["fedora"]="fedora";
+        mm["mint"]="mint"; mm["arch"]="arch"; mm["cachyos"]="arch";
+        mm["endeavour"]="arch"; mm["manjaro"]="arch"; mm["safe"]="safe";
+        mm["fallback"]="safe"; mm["snapshot"]="safe"; mm["usb"]="usb";
+        mm["removable"]="usb"; mm["shell"]="terminal"; mm["recovery"]="shield";
+        mm["memtest"]="gear"; mm["hd"]="disk"; mm["mac"]="os"; mm["linux"]="tux";
+        mm["tux"]="tux";
+        return mm;
+    }();
+    QString hay = text.toLower();
+    for (auto it = m.constBegin(); it != m.constEnd(); ++it)
+        if (hay.contains(it.key())) return it.value();
+    if (type == "linux") return "tux";
+    if (type == "chainload") return "usb";
+    if (type == "forest") return "os";
+    return "";
+}
+
+bool ConfigModel::importRefind(const QString &path, QString *err) {
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly)) { if (err) *err = f.errorString(); return false; }
+    QString text = QString::fromUtf8(f.readAll());
+    text.replace("\r\n", "\n").replace("\r", "\n");
+
+    resetDefaults();
+    const QStringList lines = text.split('\n');
+
+    // rEFInd directives at top level (not inside menuentry)
+    int globalTimeout = -1;
+    QString globalDefault;
+    bool scanForEfi = true;
+
+    struct RefindEntry {
+        QString title;
+        QString loader, icon, options, initrd;
+        QVector<RefindEntry> submenu;
+    };
+    QVector<RefindEntry> entries;
+    RefindEntry cur;
+    bool inEntry = false;
+    int entryDepth = 0;  // track submenuentry nesting
+
+    auto flush = [&]{
+        if (!inEntry) return;
+        inEntry = false;
+        if (cur.title.isEmpty() && cur.loader.isEmpty()) return;
+        entries.append(cur);
+        cur = RefindEntry();
+    };
+
+    QRegularExpression keyVal("^([A-Za-z_]\\w*)\\s+(.*)$");
+    QRegularExpression menuEntry("^menuentry\\s+\"([^\"]*)\"\\s*\\{(.*)$",
+                                  QRegularExpression::CaseInsensitiveOption);
+    QRegularExpression menuEntrySingle("^menuentry\\s+(\\S+)\\s*\\{(.*)$",
+                                        QRegularExpression::CaseInsensitiveOption);
+    QRegularExpression subEntry("^submenuentry\\s+\"([^\"]*)\"\\s*\\{(.*)$",
+                                 QRegularExpression::CaseInsensitiveOption);
+    QRegularExpression subEntrySingle("^submenuentry\\s+(\\S+)\\s*\\{(.*)$",
+                                       QRegularExpression::CaseInsensitiveOption);
+
+    for (const QString &raw : lines) {
+        QString line = raw.trimmed();
+        if (line.isEmpty() || line.startsWith('#')) continue;
+
+        // Check for menuentry open
+        auto me = menuEntry.match(line);
+        auto me2 = (!me.hasMatch()) ? menuEntrySingle.match(line) : QRegularExpressionMatch();
+        if (me.hasMatch() || me2.hasMatch()) {
+            flush();
+            inEntry = true;
+            cur.title = me.hasMatch() ? me.captured(1) : me2.captured(1);
+            // Inline "}" on the same line?
+            QString rest = me.hasMatch() ? me.captured(2) : me2.captured(2);
+            rest = rest.trimmed();
+            if (rest == "}") { flush(); continue; }
+            continue;
+        }
+
+        // submenuentry
+        auto se = subEntry.match(line);
+        auto se2 = (!se.hasMatch()) ? subEntrySingle.match(line) : QRegularExpressionMatch();
+        if (se.hasMatch() || se2.hasMatch()) {
+            // We don't nest deeper than one level; treat submenuentry as a child
+            RefindEntry sub;
+            sub.title = se.hasMatch() ? se.captured(1) : se2.captured(1);
+            QString rest = (se.hasMatch() ? se.captured(2) : se2.captured(2)).trimmed();
+            if (rest == "}") {
+                if (inEntry) cur.submenu.append(sub);
+                continue;
+            }
+            // Parse submenu body inline
+            bool inSub = true;
+            for (int i = lines.indexOf(raw) + 1; i < lines.size() && inSub; i++) {
+                QString sl = lines[i].trimmed();
+                if (sl == "}") { inSub = false; break; }
+                auto skm = keyVal.match(sl);
+                if (skm.hasMatch()) {
+                    QString k = skm.captured(1).toLower();
+                    QString v = skm.captured(2).trimmed();
+                    // Strip quotes from value
+                    if (v.startsWith('"') && v.endsWith('"') && v.size() >= 2)
+                        v = v.mid(1, v.size() - 2);
+                    if (k == "loader") sub.loader = v;
+                    else if (k == "icon") sub.icon = v;
+                    else if (k == "options") sub.options = v;
+                    else if (k == "initrd") sub.initrd = v;
+                    else if (k == "title") sub.title = v;  // rEFInd also allows title=
+                }
+            }
+            if (inEntry) cur.submenu.append(sub);
+            continue;
+        }
+
+        // Closing brace
+        if (line == "}") {
+            flush();
+            continue;
+        }
+
+        // Top-level keywords
+        if (!inEntry) {
+            QString low = line.toLower();
+            if (low.startsWith("timeout ")) {
+                bool ok; int t = line.mid(8).trimmed().toInt(&ok);
+                if (ok) globalTimeout = t;
+            } else if (low.startsWith("default_selection ")) {
+                globalDefault = line.mid(17).trimmed();
+            } else if (low.startsWith("scanfor ")) {
+                scanForEfi = line.mid(8).trimmed().toLower().contains("efi");
+            } else if (low.startsWith("scan_manual ")) {
+                // skip
+            }
+            continue;
+        }
+
+        // Inside a menuentry block: key value
+        auto kv = keyVal.match(line);
+        if (kv.hasMatch()) {
+            QString key = kv.captured(1).toLower();
+            QString val = kv.captured(2).trimmed();
+            // Strip quotes
+            if (val.startsWith('"') && val.endsWith('"') && val.size() >= 2)
+                val = val.mid(1, val.size() - 2);
+            if (key == "loader")   cur.loader = val;
+            else if (key == "icon")    cur.icon = val;
+            else if (key == "options") cur.options = val;
+            else if (key == "initrd")  cur.initrd = val;
+            else if (key == "title")   cur.title = val;
+        }
+    }
+    flush();
+
+    // Apply globals
+    if (globalTimeout >= 0) g.timeout.assign(globalTimeout);
+
+    // Convert rEFInd entries to ForeB EntryNodes
+    for (const auto &re : entries) {
+        EntryNode e;
+        e.title = re.title;
+        sanitizeTitleInPlace(e.title);
+
+        QString loaderLow = re.loader.toLower();
+
+        if (re.loader.isEmpty()) {
+            // No loader — skip this entry
+            continue;
+        }
+
+        if (loaderLow.endsWith(".efi")) {
+            e.type = "chainload";
+            QString loaderPath = re.loader;
+            if (!loaderPath.startsWith('/')) loaderPath = "/" + loaderPath;
+            e.chain = loaderPath;
+            e.icon = iconResolve(re.icon.isEmpty()
+                ? guessRefindIcon(e.title + " " + QFileInfo(loaderPath).fileName(), "chainload")
+                : re.icon);
+        } else if (loaderLow.contains("vmlinuz") || loaderLow.contains("bzimage") ||
+                   loaderLow.contains("vmlinux")) {
+            e.type = "linux";
+            QString loaderPath = re.loader;
+            if (!loaderPath.startsWith('/')) loaderPath = "/" + loaderPath;
+            e.vmlinuz = loaderPath;
+            if (!re.initrd.isEmpty()) {
+                QString initrdPath = re.initrd;
+                if (!initrdPath.startsWith('/')) initrdPath = "/" + initrdPath;
+                e.initrd = initrdPath;
+            }
+            e.cmdline = re.options;
+            e.icon = iconResolve(re.icon.isEmpty()
+                ? guessRefindIcon(e.title + " " + QFileInfo(loaderPath).fileName(), "linux")
+                : re.icon);
+        } else {
+            // Unknown loader — chainload it
+            e.type = "chainload";
+            QString loaderPath = re.loader;
+            if (!loaderPath.startsWith('/')) loaderPath = "/" + loaderPath;
+            e.chain = loaderPath;
+            e.icon = iconResolve(re.icon.isEmpty()
+                ? guessRefindIcon(e.title, "chainload")
+                : re.icon);
+        }
+
+        // Append submenu entries as children
+        if (!re.submenu.isEmpty()) {
+            e.isSubmenu = false;  // entries with submenus stay flat in ForeB
+            // rEFInd submenuentries are alternative boot options; add them after
+        }
+
+        roots.append(e);
+
+        // Add submenuentry children as separate entries (ForeB doesn't nest rEFInd submenus)
+        for (const auto &sub : re.submenu) {
+            EntryNode se;
+            se.title = sub.title;
+            sanitizeTitleInPlace(se.title);
+            if (sub.loader.endsWith(".efi", Qt::CaseInsensitive)) {
+                se.type = "chainload";
+                QString lp = sub.loader;
+                if (!lp.startsWith('/')) lp = "/" + lp;
+                se.chain = lp;
+            } else if (sub.loader.contains("vmlinuz", Qt::CaseInsensitive) ||
+                       sub.loader.contains("bzimage", Qt::CaseInsensitive)) {
+                se.type = "linux";
+                QString lp = sub.loader;
+                if (!lp.startsWith('/')) lp = "/" + lp;
+                se.vmlinuz = lp;
+                if (!sub.initrd.isEmpty()) {
+                    QString ip = sub.initrd;
+                    if (!ip.startsWith('/')) ip = "/" + ip;
+                    se.initrd = ip;
+                }
+                se.cmdline = sub.options;
+            } else if (!sub.loader.isEmpty()) {
+                se.type = "chainload";
+                QString lp = sub.loader;
+                if (!lp.startsWith('/')) lp = "/" + lp;
+                se.chain = lp;
+            } else {
+                continue;  // no loader, skip
+            }
+            se.icon = iconResolve(sub.icon.isEmpty()
+                ? guessRefindIcon(se.title, se.type)
+                : sub.icon);
+            roots.append(se);
+        }
+    }
+
+    if (!globalDefault.isEmpty() && !roots.isEmpty()) {
+        // Try matching by index or title
+        bool ok;
+        int idx = globalDefault.toInt(&ok);
+        if (ok && idx >= 0 && idx < roots.size()) {
+            g.defaultRef = QString::number(idx);
+        } else {
+            // Match by title
+            for (int i = 0; i < roots.size(); i++) {
+                if (roots[i].title.toLower() == globalDefault.toLower()) {
+                    g.defaultRef = QString::number(i);
+                    break;
+                }
+            }
+        }
+    }
+
+    requestRefresh();
+    return true;
+}
+
+// ===========================================================================
 //  flatten (for the default= combo + preview list)
 // ===========================================================================
 static void flattenRec(const QVector<EntryNode> &nodes, const QString &prefix,
@@ -731,6 +1269,147 @@ QVector<ConfigModel::FlatRef> ConfigModel::flatten() const {
     QVector<FlatRef> out;
     flattenRec(roots, QString(), out);
     return out;
+}
+
+// ===========================================================================
+//  Entry validation
+// ===========================================================================
+static bool isValidEspPath(const QString &p) {
+    if (p.isEmpty()) return true;
+    if (!p.startsWith('/')) return false;
+    if (p.contains("//")) return false;
+    if (p.contains('\\')) return false;
+    return true;
+}
+
+static bool isValidIconName(const QString &icon) {
+    if (icon.isEmpty()) return true;
+    if (icon.startsWith('/')) return true;
+    if (icon.contains('/')) return true;
+    return Schema::iconNames().contains(icon.toLower());
+}
+
+QVector<EntryValidation> ConfigModel::validateEntry(const EntryNode &e) {
+    QVector<EntryValidation> r;
+    static const QStringList VALID_TYPES = Schema::entryTypes();
+
+    // 1. Title length <= 63 chars
+    if (e.title.size() > 63)
+        r.append({EntryValidation::Error, "title",
+                  QString("title is %1 chars (firmware max 63)").arg(e.title.size())});
+
+    // 2. Valid type
+    if (!e.type.isEmpty() && !VALID_TYPES.contains(e.type))
+        r.append({EntryValidation::Warning, "type",
+                  QString("unknown type '%1'").arg(e.type)});
+
+    // 3. Type-specific path checks
+    if (e.type == "forest") {
+        if (e.kernel.isEmpty())
+            r.append({EntryValidation::Warning, "kernel",
+                      "forest entry has no kernel path"});
+        if (!e.kernel.isEmpty() && !isValidEspPath(e.kernel))
+            r.append({EntryValidation::Warning, "kernel",
+                      QString("kernel path '%1' has invalid format").arg(e.kernel)});
+        if (e.kernel.size() > 255)
+            r.append({EntryValidation::Warning, "kernel",
+                      QString("kernel path is %1 chars (firmware max 255)").arg(e.kernel.size())});
+        for (int i = 0; i < e.modules.size(); ++i) {
+            const QString &m = e.modules[i];
+            if (m.size() > 255)
+                r.append({EntryValidation::Warning, "modules",
+                          QString("module[%1] path is %2 chars (firmware max 255)").arg(i).arg(m.size())});
+            if (!isValidEspPath(m))
+                r.append({EntryValidation::Warning, "modules",
+                          QString("module[%1] path '%2' has invalid format").arg(i).arg(m)});
+        }
+    } else if (e.type == "linux") {
+        if (e.vmlinuz.isEmpty())
+            r.append({EntryValidation::Warning, "vmlinuz",
+                      "linux entry has no vmlinuz path"});
+        if (!e.vmlinuz.isEmpty() && !isValidEspPath(e.vmlinuz))
+            r.append({EntryValidation::Warning, "vmlinuz",
+                      QString("vmlinuz path '%1' has invalid format").arg(e.vmlinuz)});
+        if (e.vmlinuz.size() > 255)
+            r.append({EntryValidation::Warning, "vmlinuz",
+                      QString("vmlinuz path is %1 chars (firmware max 255)").arg(e.vmlinuz.size())});
+        if (!e.initrd.isEmpty() && !isValidEspPath(e.initrd))
+            r.append({EntryValidation::Warning, "initrd",
+                      QString("initrd path '%1' has invalid format").arg(e.initrd)});
+        if (e.initrd.size() > 255)
+            r.append({EntryValidation::Warning, "initrd",
+                      QString("initrd path is %1 chars (firmware max 255)").arg(e.initrd.size())});
+    } else if (e.type == "chainload") {
+        if (!e.chain.isEmpty() && !isValidEspPath(e.chain))
+            r.append({EntryValidation::Warning, "chain",
+                      QString("chain path '%1' has invalid format").arg(e.chain)});
+        if (e.chain.size() > 255)
+            r.append({EntryValidation::Warning, "chain",
+                      QString("chain path is %1 chars (firmware max 255)").arg(e.chain.size())});
+    }
+
+    // 4. Cmdline length <= 255 chars
+    if (e.cmdline.size() > 255)
+        r.append({EntryValidation::Warning, "cmdline",
+                  QString("cmdline is %1 chars (firmware max 255)").arg(e.cmdline.size())});
+
+    // 5. Icon name is valid
+    if (!isValidIconName(e.icon))
+        r.append({EntryValidation::Info, "icon",
+                  QString("unknown icon '%1' (not in icon table)").arg(e.icon)});
+
+    return r;
+}
+
+QVector<EntryValidation> ConfigModel::validateAll() const {
+    QVector<EntryValidation> all;
+    // Collect all flattened entries for duplicate detection
+    QVector<const EntryNode*> flatEntries;
+    std::function<void(const QVector<EntryNode>&)> collect =
+        [&](const QVector<EntryNode> &nodes) {
+        for (const auto &n : nodes) {
+            if (!n.isSubmenu) flatEntries.append(&n);
+            else collect(n.children);
+        }
+    };
+    collect(roots);
+
+    // Validate each entry
+    for (const auto *e : flatEntries) {
+        QVector<EntryValidation> ev = validateEntry(*e);
+        for (auto &v : ev) {
+            // Prefix message with entry title for context
+            v.message = QString("[%1] %2").arg(e->title, v.message);
+        }
+        all.append(ev);
+    }
+
+    // Duplicate detection: same title + same kernel/vmlinuz
+    struct DupKey { QString title, kernel; bool operator<(const DupKey &o) const {
+        return title < o.title || (title == o.title && kernel < o.kernel);
+    }};
+    QMap<DupKey, int> seen;  // key -> first index
+    for (int i = 0; i < flatEntries.size(); ++i) {
+        const EntryNode *e = flatEntries[i];
+        DupKey key;
+        key.title = e->title;
+        key.kernel = e->type == "linux" ? e->vmlinuz : e->kernel;
+        if (seen.contains(key)) {
+            all.append({EntryValidation::Warning, "title",
+                        QString("duplicate entry: '%1' (kernel='%2') first at index %3, duplicated at %4")
+                        .arg(key.title, key.kernel).arg(seen[key]).arg(i)});
+        } else {
+            seen[key] = i;
+        }
+    }
+
+    // Row count check
+    int rows = flatEntries.size();
+    if (rows > 64)
+        all.append({EntryValidation::Warning, "",
+                    QString("%1 entries exceeds firmware cap of 64 rows").arg(rows)});
+
+    return all;
 }
 
 // ===========================================================================

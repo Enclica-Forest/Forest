@@ -25,8 +25,8 @@
 #ifndef FOREB_FS_EXT_H
 #define FOREB_FS_EXT_H
 
-#include "efi.h"
-#include "efi_ext.h"   /* EFI_DISK_IO_PROTOCOL (optional fast path) */
+#include "../efi.h"
+#include "../efi_ext.h"   /* EFI_DISK_IO_PROTOCOL (optional fast path) */
 
 /* Opaque mount context. Allocated by ext_mount(), released by ext_unmount(). */
 typedef struct ext_ctx ext_ctx;

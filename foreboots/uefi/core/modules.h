@@ -14,9 +14,9 @@
 #ifndef FOREB_UEFI_MODULES_H
 #define FOREB_UEFI_MODULES_H
 
-#include "efi.h"
-#include "../include/forebo_cfg.h"
-#include "../include/boot_protocol.h"
+#include "../efi.h"
+#include "../../include/forebo_cfg.h"
+#include "../../include/boot_protocol.h"
 
 #ifdef __cplusplus
 extern "C" {

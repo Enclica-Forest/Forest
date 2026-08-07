@@ -77,28 +77,58 @@ std::vector<OutNode> cap_entries(std::vector<OutNode> roots, int max_entries,
     return filt(std::move(roots));
 }
 
+// ---------------------------------------------------------------------------
+//  Per-entry path format validation
+// ---------------------------------------------------------------------------
+static bool is_valid_esp_path(const std::string& p) {
+    if (p.empty()) return true;  // optional paths are OK empty
+    if (p[0] != '/') return false;
+    if (p.find("//") != std::string::npos) return false;
+    for (size_t i = 1; i < p.size(); ++i) {
+        if (p[i] == '\\' ) return false;  // backslashes not allowed
+    }
+    return true;
+}
+
+static bool is_valid_icon_name(const std::string& icon) {
+    if (icon.empty()) return true;  // icon is optional
+    if (icon[0] == '/') return true;  // literal path
+    if (icon.find('/') != std::string::npos) return true;
+    return ICON_NAMES.count(icon) > 0;
+}
+
 void validate_entry(OutEntry& e, Reporter& rep) {
+    // 1. Title length <= 63 chars
     if (static_cast<int>(e.title.size()) > MAX_TITLE) {
         rep.warn("title '" + e.title + "' is " +
                  std::to_string(e.title.size()) + " chars (firmware max " +
                  std::to_string(MAX_TITLE) + "); truncated");
         e.title = e.title.substr(0, MAX_TITLE);
     }
-    struct LV { const char* label; const std::string& val; };
-    for (const LV& lv : {LV{"kernel", e.kernel}, LV{"vmlinuz", e.vmlinuz},
-                         LV{"initrd", e.initrd}, LV{"chain", e.chain}}) {
+    // 2-4. Path lengths + format validation
+    struct LV { const char* label; const std::string& val; bool required; };
+    for (const LV& lv : {LV{"kernel", e.kernel, e.type == "forest"},
+                         LV{"vmlinuz", e.vmlinuz, e.type == "linux"},
+                         LV{"initrd", e.initrd, e.type == "linux"},
+                         LV{"chain", e.chain, e.type == "chainload"}}) {
+        if (lv.val.empty()) {
+            if (lv.required)
+                rep.warn(std::string("entry '") + e.title + "': " + lv.label +
+                         " path is required for type '" + e.type + "' but is empty");
+            continue;
+        }
         if (static_cast<int>(lv.val.size()) > MAX_PATH)
             rep.warn(std::string("entry '") + e.title + "': " + lv.label +
                      " path is " + std::to_string(lv.val.size()) +
                      " chars (firmware max " + std::to_string(MAX_PATH) +
                      "); firmware will truncate it");
+        if (!is_valid_esp_path(lv.val))
+            rep.warn(std::string("entry '") + e.title + "': " + lv.label +
+                     " path '" + lv.val +
+                     "' has invalid format (must start with /, no backslashes,"
+                     " no double slashes)");
     }
-    for (const auto& m : e.modules) {
-        if (static_cast<int>(m.size()) > MAX_PATH)
-            rep.warn("entry '" + e.title + "': module path is " +
-                     std::to_string(m.size()) + " chars (firmware max " +
-                     std::to_string(MAX_PATH) + "); firmware will truncate it");
-    }
+    // 5. Cmdline length <= 255 chars
     if (e.cmdline.find('"') != std::string::npos) {
         rep.note("entry '" + e.title + "': '\"' in cmdline replaced by \"'\"");
         e.cmdline = replace_all(e.cmdline, "\"", "'");
@@ -107,6 +137,59 @@ void validate_entry(OutEntry& e, Reporter& rep) {
         rep.warn("entry '" + e.title + "': cmdline is " +
                  std::to_string(e.cmdline.size()) + " chars (firmware max " +
                  std::to_string(MAX_CMDLINE) + "); firmware will truncate it");
+    // 6. Valid type
+    static const std::set<std::string> VALID_TYPES = {
+        "linux", "forest", "chainload", "shell", "recovery",
+        "tools", "setup", "settings", "reboot"
+    };
+    if (!e.type.empty() && VALID_TYPES.count(e.type) == 0)
+        rep.warn("entry '" + e.title + "': unknown type '" + e.type + "'");
+    // 7. Icon name is valid (exists in icon table)
+    if (!is_valid_icon_name(e.icon))
+        rep.warn("entry '" + e.title + "': unknown icon '" + e.icon +
+                 "' (not in icon table; use a known name or /path/to/icon.tga)");
+    // 8. Module paths (for forest type)
+    if (e.type == "forest") {
+        if (e.modules.empty() && e.kernel.empty())
+            rep.warn("entry '" + e.title +
+                     "': forest entry has no kernel and no modules");
+        for (size_t i = 0; i < e.modules.size(); ++i) {
+            const auto& m = e.modules[i];
+            if (static_cast<int>(m.size()) > MAX_PATH)
+                rep.warn("entry '" + e.title + "': module[" +
+                         std::to_string(i) + "] path is " +
+                         std::to_string(m.size()) + " chars (firmware max " +
+                         std::to_string(MAX_PATH) +
+                         "); firmware will truncate it");
+            if (!is_valid_esp_path(m))
+                rep.warn("entry '" + e.title + "': module[" +
+                         std::to_string(i) + "] path '" + m +
+                         "' has invalid format");
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+//  Duplicate detection across a set of entries
+// ---------------------------------------------------------------------------
+void detect_duplicate_entries(
+    const std::vector<std::shared_ptr<OutEntry>>& entries, Reporter& rep) {
+    // key: (title, kernel-or-vmlinuz) -> first index
+    std::map<std::pair<std::string, std::string>, size_t> seen;
+    for (size_t i = 0; i < entries.size(); ++i) {
+        const auto& e = entries[i];
+        std::string key_kernel = e->type == "linux" ? e->vmlinuz : e->kernel;
+        auto key = std::make_pair(e->title, key_kernel);
+        auto it = seen.find(key);
+        if (it != seen.end()) {
+            rep.warn("duplicate entry: '" + e->title + "' (kernel='" +
+                     key_kernel + "') first appears at index " +
+                     std::to_string(it->second) + ", duplicated at index " +
+                     std::to_string(i));
+        } else {
+            seen[key] = i;
+        }
+    }
 }
 
 std::string resolve_default(const ParsedConfig& cfg,

@@ -17,8 +17,8 @@
 #ifndef FOREB_UEFI_LINUX_H
 #define FOREB_UEFI_LINUX_H
 
-#include "efi.h"
-#include "../include/forebo_cfg.h"
+#include "../efi.h"
+#include "../../include/forebo_cfg.h"
 
 EFI_STATUS boot_linux(EFI_HANDLE image, EFI_BOOT_SERVICES *bs,
                       EFI_SYSTEM_TABLE *st, const struct forebo_menuentry *ent);

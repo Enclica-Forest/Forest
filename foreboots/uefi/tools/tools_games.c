@@ -10,10 +10,10 @@
  *
  * Entropy: RDTSC feeds a xorshift64 PRNG (no RDRAND / RTC dependency).
  * ========================================================================== */
-#include "efi.h"
-#include "ui.h"
-#include "wm.h"
-#include "input.h"
+#include "../efi.h"
+#include "../ui.h"
+#include "../core/wm.h"
+#include "../core/input.h"
 #include "tools_games.h"
 
 /* ================================================================== */

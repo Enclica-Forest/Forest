@@ -13,10 +13,10 @@
  * Freestanding, no libc, no heap, fixed buffers.
  * ========================================================================== */
 #include "tools_gfx.h"
-#include "ui.h"
-#include "wm.h"
-#include "input.h"
-#include "efi.h"
+#include "../ui.h"
+#include "../core/wm.h"
+#include "../core/input.h"
+#include "../efi.h"
 
 /* Upper bound on any gfx window's client area. Windows are size-capped at
  * open() (max 640 wide/tall) and are never resized, so these bounds hold for

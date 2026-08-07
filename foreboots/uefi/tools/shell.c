@@ -17,9 +17,9 @@
  * ==========================================================================*/
 
 #include "shell.h"
-#include "ui.h"          /* draw_string / fill_rect / ui_width/height/scale + theme */
-#include "efi_ext.h"     /* EFI_DISK_IO (optional byte reads) + device-path bits    */
-#include "fwsetup.h"     /* fw_boot_to_setup / fw_setup_supported ('setup' command) */
+#include "../ui.h"          /* draw_string / fill_rect / ui_width/height/scale + theme */
+#include "../efi_ext.h"     /* EFI_DISK_IO (optional byte reads) + device-path bits    */
+#include "../recovery/fwsetup.h"     /* fw_boot_to_setup / fw_setup_supported ('setup' command) */
 #include "tools.h"       /* tools_launcher_open ('tools' command)                   */
 
 /* -----------------------------------------------------------------------------

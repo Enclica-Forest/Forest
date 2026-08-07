@@ -22,7 +22,7 @@
 #ifndef FOREB_UEFI_CLONE_H
 #define FOREB_UEFI_CLONE_H
 
-#include "efi.h"
+#include "../efi.h"
 
 /*
  * One-time init: captures the loader image handle + system table (needed to open

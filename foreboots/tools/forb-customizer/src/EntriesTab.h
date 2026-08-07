@@ -22,15 +22,21 @@ public:
     void reloadFromModel();               // after file load / import / preset
     void selectFlatIndex(int i);          // preview clicked an entry row
 
-private:
+private slots:
     void addEntry(bool submenu);
     void duplicateSel();
     void deleteSel();
+    void moveUp();
+    void moveDown();
+
+private:
     void rebuildModel();                  // tree -> model
     void loadEditor(QTreeWidgetItem *it);
     void saveEditor();                    // editor -> current item
     QTreeWidgetItem *makeItem(const struct EntryNode &n);
     void updateTypeFields();
+    void validateCurrentEntry();          // inline validation on editor fields
+    void highlightDuplicates();           // mark duplicate titles in tree
 
     ConfigModel *model; bool syncing = false;
     QTreeWidget *tree;

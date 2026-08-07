@@ -9,8 +9,8 @@
  */
 
 #include "chainload.h"
-#include "efi_ext.h"   /* device-path nodes + LoadImage/StartImage wrappers */
-#include "arch.h"      /* FOREB_ARCH_* -> arch-appropriate loader filenames  */
+#include "../efi_ext.h"   /* device-path nodes + LoadImage/StartImage wrappers */
+#include "../arch.h"      /* FOREB_ARCH_* -> arch-appropriate loader filenames  */
 
 /* =============================================================================
  * File-scope GUID copies (own-per-TU pattern; avoids duplicate symbols).

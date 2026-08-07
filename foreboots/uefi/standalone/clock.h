@@ -20,7 +20,7 @@
 #ifndef FOREB_UEFI_CLOCK_H
 #define FOREB_UEFI_CLOCK_H
 
-#include "efi.h"
+#include "../efi.h"
 
 /* Cache the system table (for RuntimeServices->GetTime). NULL-safe; if never
  * called (or passed NULL) the tool degrades gracefully to "RTC unavailable". */

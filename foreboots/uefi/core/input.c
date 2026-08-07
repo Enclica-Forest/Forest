@@ -7,8 +7,8 @@
  * input.h for the contract.
  * ========================================================================== */
 #include "input.h"
-#include "efi_ext.h"
-#include "ui.h"
+#include "../efi_ext.h"
+#include "../ui.h"
 
 static EFI_GUID sp_guid  = EFI_SIMPLE_POINTER_PROTOCOL_GUID;
 static EFI_GUID abs_guid = EFI_ABSOLUTE_POINTER_PROTOCOL_GUID;

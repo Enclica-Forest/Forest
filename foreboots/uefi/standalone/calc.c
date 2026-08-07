@@ -16,9 +16,9 @@
  * cursor trace. Typing while the graph is focused edits the shared expression
  * live.
  * ========================================================================== */
-#include "efi.h"
-#include "ui.h"
-#include "wm.h"
+#include "../efi.h"
+#include "../ui.h"
+#include "../core/wm.h"
 #include "calc.h"
 
 /* ------------------------------------------------------------------ */

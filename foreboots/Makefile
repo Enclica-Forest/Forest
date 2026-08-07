@@ -31,7 +31,8 @@
 
 .PHONY: all clean install iso iso-bios iso-hybrid qemu qemu-iso qemu-debug \
         check disasm help uefi esp qemu-uefi qemu-uefi-iso screenshots assets \
-        uefi-aa64 uefi-riscv esp-aa64 qemu-aa64 qemu-riscv uefi-all
+        uefi-aa64 uefi-riscv esp-aa64 qemu-aa64 qemu-riscv uefi-all \
+        install-bin install-gui install-all install-disk uninstall tools-install
 
 # -----------------------------------------------------------------------------
 # Configuration
@@ -49,41 +50,39 @@ MMD      := mmd
 MCOPY    := mcopy
 
 # Sources / outputs (BIOS)
-STAGE1_SRC  := stage1.asm
-STAGE2_SRC  := stage2.asm
-STAGE3_SRC  := stage3.asm
-STAGE1_BIN  := stage1.bin
-STAGE2_BIN  := stage2.bin
-STAGE3_BIN  := stage3.bin
-DISK_IMAGE  := forebo.img
-ISO_IMAGE   := forebo.iso
+STAGE1_SRC  := bios/stage1.asm
+STAGE2_SRC  := bios/stage2.asm
+STAGE3_SRC  := bios/stage3.asm
+STAGE1_BIN  := build/stage1.bin
+STAGE2_BIN  := build/stage2.bin
+STAGE3_BIN  := build/stage3.bin
+DISK_IMAGE  := build/forebo.img
+ISO_IMAGE   := build/forebo.iso
 
 # UEFI sources / outputs
 UEFI_SRC        := uefi/bootx64.c
-UEFI_OBJ        := uefi/bootx64.o
+UEFI_OBJ        := build/uefi/bootx64.o
 # Graphical UI: GOP-drawn forest-theme menu + in-place load progress bar.
 # Shares include/font8x8.h + include/forebo_theme.h with the BIOS path.
 UEFI_UI_SRC     := uefi/ui.c
-UEFI_UI_OBJ     := uefi/ui.o
-# Feature modules. AUTO-DISCOVERED: every uefi/*.c EXCEPT the loader (bootx64.c)
-# and the graphical UI (ui.c), which have their own dedicated object rules below.
-# This wildcard means new modules added by this upgrade -- input.c (mouse), wm.c
-# (window manager/compositor), boot_linux.c (EFI-stub vmlinuz + initrd),
-# chainload.c (LoadImage of GRUB/another EFI app), fs_ext.c (ext2/3/4 read-only),
-# fs_btrfs.c (btrfs detect/subvol listing), recovery.c (disk/data-recovery tools)
-# -- are compiled and linked into BOOTX64.EFI automatically the moment their .c
-# file exists, with no further Makefile edits. Original modules (image/config/
-# modules/shell/anim) are picked up by the same glob.
-UEFI_MOD_SRC    := $(filter-out $(UEFI_SRC) $(UEFI_UI_SRC),$(sort $(wildcard uefi/*.c)))
-UEFI_MOD_OBJ    := $(UEFI_MOD_SRC:.c=.o)
+UEFI_UI_OBJ     := build/uefi/ui.o
+# Feature modules. AUTO-DISCOVERED: every uefi/*.c + uefi/core/*.c +
+# uefi/boot/*.c + uefi/fs/*.c + uefi/tools/*.c + uefi/recovery/*.c +
+# uefi/standalone/*.c EXCEPT the loader (bootx64.c) and the graphical UI
+# (ui.c), which have their own dedicated object rules below.
+UEFI_MOD_SRC    := $(filter-out $(UEFI_SRC) $(UEFI_UI_SRC),$(sort \
+                     $(wildcard uefi/*.c uefi/core/*.c uefi/boot/*.c \
+                                uefi/fs/*.c uefi/tools/*.c \
+                                uefi/recovery/*.c uefi/standalone/*.c)))
+UEFI_MOD_OBJ    := $(patsubst uefi/%.c,build/uefi/%.o,$(UEFI_MOD_SRC))
 # NASM long-mode -> 32-bit PM handoff trampoline (nasm -f win64). This is the
 # forebo_handoff() the C loader externs. Falls back to uefi/trampoline.asm if a
 # user drops one in, otherwise uses the shipped uefi/handoff64to32.asm.
 UEFI_TRAMP_SRC  := $(firstword $(wildcard uefi/trampoline.asm) uefi/handoff64to32.asm)
-UEFI_TRAMP_OBJ  := $(UEFI_TRAMP_SRC:.asm=.o)
+UEFI_TRAMP_OBJ  := build/uefi/$(notdir $(UEFI_TRAMP_SRC:.asm=.o))
 UEFI_OBJS       := $(UEFI_OBJ) $(UEFI_UI_OBJ) $(UEFI_MOD_OBJ) $(UEFI_TRAMP_OBJ)
-EFI_APP         := BOOTX64.EFI
-ESP_IMAGE       := esp.img
+EFI_APP         := build/BOOTX64.EFI
+ESP_IMAGE       := build/esp.img
 
 # UEFI toolchain flags (exact recipe from the build contract; -Iinclude added so
 # the shared boot_protocol.h can be found).
@@ -94,13 +93,15 @@ ESP_IMAGE       := esp.img
 # arch.h/efi_ext.h headers resolve for every module.
 UEFI_CFLAGS  := -target x86_64-unknown-windows -ffreestanding -fshort-wchar \
                 -mno-red-zone -mno-mmx -mno-sse -mno-stack-arg-probe \
-                -Wall -Wextra -std=c11 -Iinclude -Iuefi
+                -Wall -Wextra -std=c11 -Iinclude -Iuefi \
+                -Iuefi/core -Iuefi/boot -Iuefi/fs -Iuefi/tools \
+                -Iuefi/recovery -Iuefi/standalone
 UEFI_LDFLAGS := -flavor link -subsystem:efi_application -entry:efi_main
 
 # OVMF firmware (UEFI). VARS is copied to a writable temp per run.
 OVMF_CODE      := /usr/share/edk2/x64/OVMF_CODE.4m.fd
 OVMF_VARS      := /usr/share/edk2/x64/OVMF_VARS.4m.fd
-OVMF_VARS_COPY := OVMF_VARS.local.fd
+OVMF_VARS_COPY := build/OVMF_VARS.local.fd
 
 # ESP FAT image size in KiB (~48 MiB). Must hold BOOTX64.EFI plus the kernel
 # ELF (the Forest debug kernel's apparent size is ~16 MiB), so 16 MiB is too
@@ -111,7 +112,7 @@ ESP_SIZE_KIB := 49152
 # emit internal [warning push/pop] pragmas that are flagged under -w+all, and
 # ForeB stages are flat binaries loaded at their ORG address so the absolute
 # dword/word relocations are correct and benign. -D overrides may be appended.
-NASMFLAGS   ?= -f bin
+NASMFLAGS   ?= -f bin -Ibios
 
 # Disk layout (MUST match config.h defaults):
 #   sector 0       : stage1 (MBR)
@@ -200,57 +201,66 @@ all: $(STAGE1_BIN) $(STAGE2_BIN) $(STAGE3_BIN) $(EFI_APP)
 # Assembly rules (BIOS stages)
 # =============================================================================
 
-$(STAGE1_BIN): $(STAGE1_SRC) config.h
+$(STAGE1_BIN): $(STAGE1_SRC) bios/config.h
 	@echo "$(CYAN)Assembling Stage 1 (MBR)...$(RESET)"
-	$(NASM) $(NASMFLAGS) -l stage1.lst -o $@ $<
+	@mkdir -p build
+	$(NASM) $(NASMFLAGS) -l build/stage1.lst -o $@ $<
 	@echo "$(GREEN)  Stage 1: $@ ($$(wc -c < $@) bytes, must be 512)$(RESET)"
 
-$(STAGE2_BIN): $(STAGE2_SRC) config.h forebo.h forebo64.h $(wildcard $(KERNEL))
+$(STAGE2_BIN): $(STAGE2_SRC) bios/config.h bios/forebo.h bios/forebo64.h $(wildcard $(KERNEL))
 	@echo "$(CYAN)Assembling Stage 2 (GUI + BIOS + menu, initrd sector $(BIOS_INITRD_SECTOR))...$(RESET)"
-	$(NASM) $(NASMFLAGS) $(BIOS_INITRD_DEFS) -l stage2.lst -o $@ $<
+	@mkdir -p build
+	$(NASM) $(NASMFLAGS) $(BIOS_INITRD_DEFS) -l build/stage2.lst -o $@ $<
 	@echo "$(GREEN)  Stage 2: $@ ($$(wc -c < $@) bytes, max 8192)$(RESET)"
 
-$(STAGE3_BIN): $(STAGE3_SRC) config.h forebo64.h
+$(STAGE3_BIN): $(STAGE3_SRC) bios/config.h bios/forebo64.h
 	@echo "$(CYAN)Assembling Stage 3 (PM ELF loader + handoff)...$(RESET)"
-	$(NASM) $(NASMFLAGS) -l stage3.lst -o $@ $<
+	@mkdir -p build
+	$(NASM) $(NASMFLAGS) -l build/stage3.lst -o $@ $<
 	@echo "$(GREEN)  Stage 3: $@ ($$(wc -c < $@) bytes, max 8192)$(RESET)"
 
 # =============================================================================
 # UEFI application (BOOTX64.EFI)
 # =============================================================================
 
-# Shared header set for the UEFI C modules. The per-module uefi/*.h are picked
+# Shared header set for the UEFI C modules. The per-module headers are picked
 # up via $(wildcard) so a not-yet-created header never breaks parsing.
 UEFI_MOD_HDRS := uefi/efi.h uefi/efi_ext.h uefi/arch.h include/boot_protocol.h \
                  include/forebo_cfg.h include/forebo_theme.h include/font8x16.h \
-                 $(wildcard uefi/ui.h uefi/image.h uefi/config.h uefi/modules.h \
-                            uefi/shell.h uefi/anim.h uefi/wm.h uefi/input.h \
-                            uefi/boot_linux.h uefi/chainload.h uefi/fs_ext.h \
-                            uefi/fs_btrfs.h uefi/recovery.h uefi/tools.h \
-                            uefi/fwsetup.h)
+                 $(wildcard uefi/ui.h uefi/core/image.h uefi/core/config.h \
+                            uefi/core/modules.h uefi/tools/shell.h \
+                            uefi/core/anim.h uefi/core/wm.h uefi/core/input.h \
+                            uefi/boot/boot_linux.h uefi/boot/chainload.h \
+                            uefi/fs/fs_ext.h uefi/fs/fs_btrfs.h \
+                            uefi/recovery/recovery.h uefi/tools/tools.h \
+                            uefi/recovery/fwsetup.h)
 
 # C -> object (freestanding PE/COFF target)
 $(UEFI_OBJ): $(UEFI_SRC) include/boot_protocol.h uefi/efi.h $(UEFI_MOD_HDRS)
 	@echo "$(CYAN)Compiling UEFI loader ($<)...$(RESET)"
+	@mkdir -p build/uefi
 	$(CLANG) $(UEFI_CFLAGS) -c $< -o $@
 
 # Graphical UI module (GOP menu + progress bar) -> object. Same freestanding
 # recipe as the loader; pulls in the shared font + theme headers.
 $(UEFI_UI_OBJ): $(UEFI_UI_SRC) include/font8x16.h include/forebo_theme.h uefi/efi.h
 	@echo "$(CYAN)Compiling UEFI graphical UI ($<)...$(RESET)"
+	@mkdir -p build/uefi
 	$(CLANG) $(UEFI_CFLAGS) -c $< -o $@
 
-# Feature modules (image/config/modules/shell/anim) -> objects. Static pattern
-# rule scoped to exactly $(UEFI_MOD_OBJ); same freestanding clang recipe.
-$(UEFI_MOD_OBJ): uefi/%.o: uefi/%.c $(UEFI_MOD_HDRS)
+# Feature modules -> objects. Static pattern rule scoped to exactly $(UEFI_MOD_OBJ);
+# same freestanding clang recipe. Output mirrors source subdirectory structure.
+$(UEFI_MOD_OBJ): build/uefi/%.o: uefi/%.c $(UEFI_MOD_HDRS)
 	@echo "$(CYAN)Compiling UEFI module ($<)...$(RESET)"
+	@mkdir -p $(dir $@)
 	$(CLANG) $(UEFI_CFLAGS) -c $< -o $@
 
-# NASM trampoline -> win64 object. -I. finds config.h, -Iinclude finds
+# NASM trampoline -> win64 object. -Ibios finds config.h, -Iinclude finds
 # boot_protocol.inc (which the trampoline %includes).
-uefi/%.o: uefi/%.asm include/boot_protocol.inc config.h
+$(UEFI_TRAMP_OBJ): $(UEFI_TRAMP_SRC) include/boot_protocol.inc bios/config.h
 	@echo "$(CYAN)Assembling UEFI trampoline ($<)...$(RESET)"
-	$(NASM) -f win64 -I. -Iinclude -o $@ $<
+	@mkdir -p build/uefi
+	$(NASM) -f win64 -Ibios -Iinclude -o $@ $<
 
 # Link the PE32+ EFI application
 uefi: $(EFI_APP)
@@ -279,36 +289,42 @@ $(EFI_APP): $(UEFI_OBJS)
 #            ELF, then prints the packaging boundary (needs edk2 GenFw). It does
 #            NOT fail the build.
 # -----------------------------------------------------------------------------
-EFI_APP_AA64   := BOOTAA64.EFI
-EFI_APP_RISCV  := BOOTRISCV64.EFI
+EFI_APP_AA64   := build/BOOTAA64.EFI
+EFI_APP_RISCV  := build/BOOTRISCV64.EFI
 AA64_BUILD     := build/aa64
 RISCV_BUILD    := build/riscv
-ESP_AA64_IMAGE := esp-aa64.img
+ESP_AA64_IMAGE := build/esp-aa64.img
 
-# Every uefi/*.c takes part in the cross-arch build (bootx64.c included -- it is
+# Every uefi source takes part in the cross-arch build (bootx64.c included -- it is
 # arch-guarded; its handoff call compiles to foreb_multiboot_unsupported()). The
 # x86 NASM trampoline is deliberately excluded.
-UEFI_ALL_SRC   := $(sort $(wildcard uefi/*.c))
+UEFI_ALL_SRC   := $(sort $(wildcard uefi/*.c uefi/core/*.c uefi/boot/*.c \
+                          uefi/fs/*.c uefi/tools/*.c \
+                          uefi/recovery/*.c uefi/standalone/*.c))
 AA64_OBJS      := $(patsubst uefi/%.c,$(AA64_BUILD)/%.o,$(UEFI_ALL_SRC))
 RISCV_OBJS     := $(patsubst uefi/%.c,$(RISCV_BUILD)/%.o,$(UEFI_ALL_SRC))
 
 # aarch64: same freestanding recipe as x86 but the aarch64 Windows (PE) target;
 # drop the x86-only -mno-mmx/-mno-sse and add -mgeneral-regs-only (no FP/NEON in
-# firmware context). -Iuefi so arch.h/efi_ext.h resolve.
+# firmware context). -Iuefi and subdirs so arch.h/efi_ext.h resolve.
 AA64_CFLAGS    := -target aarch64-unknown-windows -ffreestanding -fshort-wchar \
                   -mno-red-zone -mgeneral-regs-only -mno-stack-arg-probe \
-                  -Wall -Wextra -std=c11 -Iinclude -Iuefi
+                  -Wall -Wextra -std=c11 -Iinclude -Iuefi \
+                  -Iuefi/core -Iuefi/boot -Iuefi/fs -Iuefi/tools \
+                  -Iuefi/recovery -Iuefi/standalone
 # riscv64: ELF object target (no PE backend). -Wno-ignored-attributes silences the
 # harmless 'ms_abi ignored' notes (RISC-V UEFI uses the standard C ABI, which is
 # what clang emits anyway).
 RISCV_CFLAGS   := -target riscv64-unknown-elf -ffreestanding -fshort-wchar \
                   -fPIC -Wall -std=c11 -Wno-ignored-attributes -mno-relax \
-                  -Iinclude -Iuefi
+                  -Iinclude -Iuefi \
+                  -Iuefi/core -Iuefi/boot -Iuefi/fs -Iuefi/tools \
+                  -Iuefi/recovery -Iuefi/standalone
 
 # Cross-arch OVMF firmware (paths verified on this box; NOT the x64 4m.fd names).
 OVMF_AA64_CODE  := /usr/share/edk2/aa64/QEMU_EFI.fd
 OVMF_AA64_VARS  := /usr/share/edk2/aa64/QEMU_VARS.fd
-OVMF_AA64_VARS_COPY := QEMU_VARS.aa64.local.fd
+OVMF_AA64_VARS_COPY := build/QEMU_VARS.aa64.local.fd
 OVMF_RISCV_CODE := /usr/share/edk2/riscv64/RISCV_VIRT_CODE.fd
 OVMF_RISCV_VARS := /usr/share/edk2/riscv64/RISCV_VIRT_VARS.fd
 
@@ -684,9 +700,9 @@ $(ESP_IMAGE): $(EFI_APP) assets $(FOREBO_CFG)
 # Install to real disk (DANGEROUS)
 # =============================================================================
 
-install: $(STAGE1_BIN) $(STAGE2_BIN) $(STAGE3_BIN)
+install-disk: $(STAGE1_BIN) $(STAGE2_BIN) $(STAGE3_BIN)
 	@if [ "$(DISK)" = "$(DISK_IMAGE)" ]; then \
-	  echo "$(RED)ERROR: Set DISK= to a real device (e.g. make install DISK=/dev/sdb)$(RESET)"; \
+	  echo "$(RED)ERROR: Set DISK= to a real device (e.g. make install-disk DISK=/dev/sdb)$(RESET)"; \
 	  exit 1; \
 	fi
 	@echo "$(RED)WARNING: This will overwrite the MBR of $(DISK)!$(RESET)"
@@ -804,13 +820,7 @@ disasm: $(STAGE1_BIN) $(STAGE2_BIN) $(STAGE3_BIN)
 
 clean:
 	@echo "$(CYAN)Cleaning ForeB build outputs...$(RESET)"
-	@rm -f $(STAGE1_BIN) $(STAGE2_BIN) $(STAGE3_BIN) $(DISK_IMAGE) $(ISO_IMAGE)
-	@rm -f stage3_lm.bin
-	@rm -f stage1.lst stage2.lst stage3.lst
-	@rm -f $(UEFI_OBJ) $(UEFI_UI_OBJ) $(UEFI_MOD_OBJ) $(UEFI_TRAMP_OBJ) $(EFI_APP) $(ESP_IMAGE) $(OVMF_VARS_COPY)
-	@rm -f $(EFI_APP_AA64) $(EFI_APP_RISCV) $(ESP_AA64_IMAGE) $(OVMF_AA64_VARS_COPY)
-	@rm -rf $(AA64_BUILD) $(RISCV_BUILD) build
-	@rm -rf $(SHOTDIR) $(ASSETS_DIR)
+	@rm -rf build
 	@echo "$(GREEN)Clean complete.$(RESET)"
 
 # =============================================================================
@@ -837,6 +847,33 @@ rescue: $(EFI_APP) forb-install
 	@cd tools/forb-install && cmake --build build -j >/dev/null
 	@tools/forb-install/build/forb-mkrescue -o $(CURDIR)/forebo-rescue.iso -v
 	@echo "$(GREEN)  -> forebo-rescue.iso (UEFI-bootable CD/USB)$(RESET)"
+
+# =============================================================================
+# System-wide install (forb-install + forb-customizer)
+# =============================================================================
+PREFIX      ?= /usr/local
+BINDIR      := $(PREFIX)/bin
+
+install: install-bin
+
+install-bin: tools
+	install -Dm755 tools/forb-install/build/forb-install $(DESTDIR)$(BINDIR)/forb-install
+	ln -sf forb-install $(DESTDIR)$(BINDIR)/forb-mkrescue
+	@echo "Installed forb-install + forb-mkrescue to $(DESTDIR)$(BINDIR)/"
+
+install-gui: tools
+	install -Dm755 tools/forb-customizer/build/forb-customizer $(DESTDIR)$(BINDIR)/forb-customizer
+	@echo "Installed forb-customizer to $(DESTDIR)$(BINDIR)/"
+
+install-all: install-bin install-gui
+
+tools-install: install-all
+
+uninstall:
+	rm -f $(DESTDIR)$(BINDIR)/forb-install
+	rm -f $(DESTDIR)$(BINDIR)/forb-mkrescue
+	rm -f $(DESTDIR)$(BINDIR)/forb-customizer
+	@echo "Removed forb-install, forb-mkrescue, forb-customizer from $(DESTDIR)$(BINDIR)/"
 
 # =============================================================================
 # Help
@@ -876,7 +913,12 @@ help:
 	@echo "  qemu-riscv     Print the riscv64 run line (PE not producible yet)"
 	@echo ""
 	@echo "$(GREEN)Install:$(RESET)"
-	@echo "  install DISK=/dev/sdX   Install to real disk (DANGER!)"
+	@echo "  install        Install forb-install + forb-mkrescue to PREFIX (default /usr/local)"
+	@echo "  install-gui    Install forb-customizer to PREFIX"
+	@echo "  install-all    Install all tools (forb-install + forb-mkrescue + forb-customizer)"
+	@echo "  tools-install  Alias for install-all"
+	@echo "  uninstall      Remove installed tools from PREFIX"
+	@echo "  install-disk   Write ForeB stages to real disk (DANGER! DISK=/dev/sdX)"
 	@echo ""
 	@echo "$(GREEN)Variables:$(RESET)"
 	@echo "  KERNEL=/path/to/kernel.bin   Kernel ELF/binary for image/ESP/ISO"

@@ -1,5 +1,5 @@
 CMakeFiles/forb-customizer.dir/main.cpp.o: \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/main.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/main.cpp \
  /usr/include/stdc-predef.h /usr/include/qt6/QtWidgets/QApplication \
  /usr/include/qt6/QtWidgets/qapplication.h \
  /usr/include/qt6/QtWidgets/qtwidgetsglobal.h \
@@ -333,7 +333,7 @@ CMakeFiles/forb-customizer.dir/main.cpp.o: \
  /usr/include/qt6/QtGui/qguiapplication_platform.h \
  /usr/include/qt6/QtCore/QTimer /usr/include/qt6/QtCore/qtimer.h \
  /usr/include/qt6/QtCore/QString \
- /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/MainWindow.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/src/MainWindow.h \
  /usr/include/qt6/QtWidgets/QMainWindow \
  /usr/include/qt6/QtWidgets/qmainwindow.h \
  /usr/include/qt6/QtWidgets/qwidget.h /usr/include/qt6/QtGui/qaction.h \

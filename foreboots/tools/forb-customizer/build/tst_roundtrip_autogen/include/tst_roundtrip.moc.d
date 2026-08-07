@@ -1,7 +1,7 @@
-/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/include/tst_roundtrip.moc: /home/bluet/Forest-OS/foreboots/tools/forb-customizer/tests/tst_roundtrip.cpp \
-  /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/moc_predefs.h \
-  /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/ConfigModel.h \
-  /home/bluet/Forest-OS/foreboots/tools/forb-customizer/src/Opt.h \
+/home/bluet/forest/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/include/tst_roundtrip.moc: /home/bluet/forest/foreboots/tools/forb-customizer/tests/tst_roundtrip.cpp \
+  /home/bluet/forest/foreboots/tools/forb-customizer/build/tst_roundtrip_autogen/moc_predefs.h \
+  /home/bluet/forest/foreboots/tools/forb-customizer/src/ConfigModel.h \
+  /home/bluet/forest/foreboots/tools/forb-customizer/src/Opt.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/bitsperlong.h \
   /usr/include/asm-generic/errno-base.h \

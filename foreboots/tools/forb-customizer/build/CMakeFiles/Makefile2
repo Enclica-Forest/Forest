@@ -54,10 +54,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/bluet/Forest-OS/foreboots/tools/forb-customizer
+CMAKE_SOURCE_DIR = /home/bluet/forest/foreboots/tools/forb-customizer
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build
+CMAKE_BINARY_DIR = /home/bluet/forest/foreboots/tools/forb-customizer/build
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -93,14 +93,14 @@ CMakeFiles/forb-customizer.dir/all: CMakeFiles/forb-customizer_autogen_timestamp
 CMakeFiles/forb-customizer.dir/all: CMakeFiles/forb-customizer_autogen.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/forb-customizer.dir/build.make CMakeFiles/forb-customizer.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/forb-customizer.dir/build.make CMakeFiles/forb-customizer.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10 "Built target forb-customizer"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10 "Built target forb-customizer"
 .PHONY : CMakeFiles/forb-customizer.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/forb-customizer.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles 11
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles 11
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/forb-customizer.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles 0
 .PHONY : CMakeFiles/forb-customizer.dir/rule
 
 # Convenience name for target.
@@ -110,7 +110,7 @@ forb-customizer: CMakeFiles/forb-customizer.dir/rule
 # codegen rule for target.
 CMakeFiles/forb-customizer.dir/codegen: CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/forb-customizer.dir/build.make CMakeFiles/forb-customizer.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10 "Finished codegen for target forb-customizer"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10 "Finished codegen for target forb-customizer"
 .PHONY : CMakeFiles/forb-customizer.dir/codegen
 
 # clean rule for target.
@@ -126,14 +126,14 @@ CMakeFiles/tst_roundtrip.dir/all: CMakeFiles/tst_roundtrip_autogen_timestamp_dep
 CMakeFiles/tst_roundtrip.dir/all: CMakeFiles/tst_roundtrip_autogen.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tst_roundtrip.dir/build.make CMakeFiles/tst_roundtrip.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tst_roundtrip.dir/build.make CMakeFiles/tst_roundtrip.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=12,13,14,15 "Built target tst_roundtrip"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=12,13,14,15 "Built target tst_roundtrip"
 .PHONY : CMakeFiles/tst_roundtrip.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/tst_roundtrip.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles 5
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles 5
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/tst_roundtrip.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles 0
 .PHONY : CMakeFiles/tst_roundtrip.dir/rule
 
 # Convenience name for target.
@@ -143,7 +143,7 @@ tst_roundtrip: CMakeFiles/tst_roundtrip.dir/rule
 # codegen rule for target.
 CMakeFiles/tst_roundtrip.dir/codegen: CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tst_roundtrip.dir/build.make CMakeFiles/tst_roundtrip.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=12,13,14,15 "Finished codegen for target tst_roundtrip"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=12,13,14,15 "Finished codegen for target tst_roundtrip"
 .PHONY : CMakeFiles/tst_roundtrip.dir/codegen
 
 # clean rule for target.
@@ -158,14 +158,14 @@ CMakeFiles/tst_roundtrip.dir/clean:
 CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/build.make CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/build.make CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num= "Built target forb-customizer_autogen_timestamp_deps"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num= "Built target forb-customizer_autogen_timestamp_deps"
 .PHONY : CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles 0
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles 0
 .PHONY : CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/rule
 
 # Convenience name for target.
@@ -175,7 +175,7 @@ forb-customizer_autogen_timestamp_deps: CMakeFiles/forb-customizer_autogen_times
 # codegen rule for target.
 CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/build.make CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num= "Finished codegen for target forb-customizer_autogen_timestamp_deps"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num= "Finished codegen for target forb-customizer_autogen_timestamp_deps"
 .PHONY : CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/codegen
 
 # clean rule for target.
@@ -190,14 +190,14 @@ CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/clean:
 CMakeFiles/forb-customizer_autogen.dir/all: CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/forb-customizer_autogen.dir/build.make CMakeFiles/forb-customizer_autogen.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/forb-customizer_autogen.dir/build.make CMakeFiles/forb-customizer_autogen.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=11 "Built target forb-customizer_autogen"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=11 "Built target forb-customizer_autogen"
 .PHONY : CMakeFiles/forb-customizer_autogen.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/forb-customizer_autogen.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles 1
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles 1
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/forb-customizer_autogen.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles 0
 .PHONY : CMakeFiles/forb-customizer_autogen.dir/rule
 
 # Convenience name for target.
@@ -207,7 +207,7 @@ forb-customizer_autogen: CMakeFiles/forb-customizer_autogen.dir/rule
 # codegen rule for target.
 CMakeFiles/forb-customizer_autogen.dir/codegen: CMakeFiles/forb-customizer_autogen_timestamp_deps.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/forb-customizer_autogen.dir/build.make CMakeFiles/forb-customizer_autogen.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=11 "Finished codegen for target forb-customizer_autogen"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=11 "Finished codegen for target forb-customizer_autogen"
 .PHONY : CMakeFiles/forb-customizer_autogen.dir/codegen
 
 # clean rule for target.
@@ -222,14 +222,14 @@ CMakeFiles/forb-customizer_autogen.dir/clean:
 CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/build.make CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/build.make CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num= "Built target tst_roundtrip_autogen_timestamp_deps"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num= "Built target tst_roundtrip_autogen_timestamp_deps"
 .PHONY : CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles 0
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles 0
 .PHONY : CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/rule
 
 # Convenience name for target.
@@ -239,7 +239,7 @@ tst_roundtrip_autogen_timestamp_deps: CMakeFiles/tst_roundtrip_autogen_timestamp
 # codegen rule for target.
 CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/build.make CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num= "Finished codegen for target tst_roundtrip_autogen_timestamp_deps"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num= "Finished codegen for target tst_roundtrip_autogen_timestamp_deps"
 .PHONY : CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/codegen
 
 # clean rule for target.
@@ -254,14 +254,14 @@ CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/clean:
 CMakeFiles/tst_roundtrip_autogen.dir/all: CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tst_roundtrip_autogen.dir/build.make CMakeFiles/tst_roundtrip_autogen.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tst_roundtrip_autogen.dir/build.make CMakeFiles/tst_roundtrip_autogen.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=16 "Built target tst_roundtrip_autogen"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=16 "Built target tst_roundtrip_autogen"
 .PHONY : CMakeFiles/tst_roundtrip_autogen.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/tst_roundtrip_autogen.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles 1
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles 1
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/tst_roundtrip_autogen.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles 0
 .PHONY : CMakeFiles/tst_roundtrip_autogen.dir/rule
 
 # Convenience name for target.
@@ -271,7 +271,7 @@ tst_roundtrip_autogen: CMakeFiles/tst_roundtrip_autogen.dir/rule
 # codegen rule for target.
 CMakeFiles/tst_roundtrip_autogen.dir/codegen: CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tst_roundtrip_autogen.dir/build.make CMakeFiles/tst_roundtrip_autogen.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=16 "Finished codegen for target tst_roundtrip_autogen"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=16 "Finished codegen for target tst_roundtrip_autogen"
 .PHONY : CMakeFiles/tst_roundtrip_autogen.dir/codegen
 
 # clean rule for target.

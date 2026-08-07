@@ -19,7 +19,7 @@
 #ifndef FOREB_UEFI_FWSETUP_H
 #define FOREB_UEFI_FWSETUP_H
 
-#include "efi.h"
+#include "../efi.h"
 
 /* OsIndications bit that requests a reboot into the firmware/UEFI setup UI.
  * Guarded because tools.h / efi_ext.h also expose the same constant. */
@@ -46,5 +46,7 @@ int fw_setup_supported(EFI_RUNTIME_SERVICES *rt);
  *   FW_SETUP_ERROR       - rt/services NULL, or SetVariable failed.
  */
 int fw_boot_to_setup(EFI_RUNTIME_SERVICES *rt);
+
+#include "uefi_settings.h"
 
 #endif /* FOREB_UEFI_FWSETUP_H */

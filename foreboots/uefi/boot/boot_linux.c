@@ -9,8 +9,8 @@
  */
 
 #include "boot_linux.h"
-#include "efi_ext.h"    /* device-path nodes, LoadFile2, LoadImage wrappers   */
-#include "config.h"     /* esp_open_root / esp_ascii_to_char16 / esp_read_file */
+#include "../efi_ext.h"    /* device-path nodes, LoadFile2, LoadImage wrappers   */
+#include "../core/config.h"     /* esp_open_root / esp_ascii_to_char16 / esp_read_file */
 
 /* =============================================================================
  * File-scope GUID copies (same pattern as config.c/modules.c/shell.c: each TU

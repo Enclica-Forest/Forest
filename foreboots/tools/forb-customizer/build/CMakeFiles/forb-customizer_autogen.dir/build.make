@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/bluet/Forest-OS/foreboots/tools/forb-customizer
+CMAKE_SOURCE_DIR = /home/bluet/forest/foreboots/tools/forb-customizer
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build
+CMAKE_BINARY_DIR = /home/bluet/forest/foreboots/tools/forb-customizer/build
 
 # Utility rule file for forb-customizer_autogen.
 
@@ -71,9 +71,9 @@ CMakeFiles/forb-customizer_autogen: forb-customizer_autogen/timestamp
 forb-customizer_autogen/timestamp: /usr/lib/qt6/moc
 forb-customizer_autogen/timestamp: /usr/lib/qt6/uic
 forb-customizer_autogen/timestamp: CMakeFiles/forb-customizer_autogen.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Automatic MOC and UIC for target forb-customizer"
-	/usr/bin/cmake -E cmake_autogen /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/forb-customizer_autogen.dir/AutogenInfo.json ""
-	/usr/bin/cmake -E touch /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/forb-customizer_autogen/timestamp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Automatic MOC and UIC for target forb-customizer"
+	/usr/bin/cmake -E cmake_autogen /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/forb-customizer_autogen.dir/AutogenInfo.json Debug
+	/usr/bin/cmake -E touch /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/timestamp
 
 CMakeFiles/forb-customizer_autogen.dir/codegen:
 .PHONY : CMakeFiles/forb-customizer_autogen.dir/codegen
@@ -92,6 +92,6 @@ CMakeFiles/forb-customizer_autogen.dir/clean:
 .PHONY : CMakeFiles/forb-customizer_autogen.dir/clean
 
 CMakeFiles/forb-customizer_autogen.dir/depend:
-	cd /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/bluet/Forest-OS/foreboots/tools/forb-customizer /home/bluet/Forest-OS/foreboots/tools/forb-customizer /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build /home/bluet/Forest-OS/foreboots/tools/forb-customizer/build/CMakeFiles/forb-customizer_autogen.dir/DependInfo.cmake "--color=$(COLOR)" forb-customizer_autogen
+	cd /home/bluet/forest/foreboots/tools/forb-customizer/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/bluet/forest/foreboots/tools/forb-customizer /home/bluet/forest/foreboots/tools/forb-customizer /home/bluet/forest/foreboots/tools/forb-customizer/build /home/bluet/forest/foreboots/tools/forb-customizer/build /home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/forb-customizer_autogen.dir/DependInfo.cmake "--color=$(COLOR)" forb-customizer_autogen
 .PHONY : CMakeFiles/forb-customizer_autogen.dir/depend
 

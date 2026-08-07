@@ -24,8 +24,8 @@
 #ifndef FOREB_FS_BTRFS_H
 #define FOREB_FS_BTRFS_H
 
-#include "efi.h"
-#include "efi_ext.h"   /* EFI_DISK_IO_PROTOCOL (optional fast path) */
+#include "../efi.h"
+#include "../efi_ext.h"   /* EFI_DISK_IO_PROTOCOL (optional fast path) */
 
 /* -----------------------------------------------------------------------------
  * btrfs_probe - TRUE if `bio` holds a btrfs volume (primary superblock magic).
