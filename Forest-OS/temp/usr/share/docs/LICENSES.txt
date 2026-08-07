@@ -1,0 +1,3 @@
+Forest OS bundled assets
+- Fonts and icons are subject to their respective licenses.
+- Source code is under the Forest OS license.

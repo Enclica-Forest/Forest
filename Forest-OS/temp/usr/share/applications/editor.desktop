@@ -1,0 +1,10 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=Editor
+Comment=Text editor with syntax highlighting
+Exec=/bin/canopy_app_editor.elf
+Icon=editor
+Categories=Utility;TextEditor;
+Terminal=false
+Type=Application
+Hidden=false

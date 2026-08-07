@@ -1,0 +1,10 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=Monitor
+Comment=System process monitor
+Exec=/bin/htop.elf
+Icon=monitor
+Categories=System;Monitor;
+Terminal=true
+Type=Application
+Hidden=false

@@ -1,0 +1,494 @@
+/*
+ * syscall_optimized.c - Optimized syscall implementations for Forest OS
+ */
+
+#include "include/syscall.h"
+#include "include/types.h"
+#include "include/string.h"
+#include "include/debuglog.h"
+#include "include/memory.h"
+#include "include/task.h"
+#include "include/vfs.h"
+#include "include/net.h"
+
+// External constants for errno codes
+#define SYSCALL_ENOENT    2
+#define SYSCALL_EBADF     9
+#define SYSCALL_EINVAL    22
+#define SYSCALL_ENOMEM    12
+#define SYSCALL_ENOSYS    38
+#define SYSCALL_ECHILD    10
+#define SYSCALL_EAGAIN    11
+#define SYSCALL_ESRCH     3
+
+// User memory validation helpers
+static inline bool validate_user_string(const char* user_str, char* kernel_buf, size_t max_len) {
+    if (!user_str || !kernel_buf) {
+        return false;
+    }
+    
+    size_t i = 0;
+    for (i = 0; i < max_len; i++) {
+        if (!user_buffer_readable((uint32)user_str + i, 1)) {
+            return false;
+        }
+        kernel_buf[i] = user_str[i];
+        if (user_str[i] == '\0') {
+            return true;
+        }
+    }
+    
+    kernel_buf[max_len - 1] = '\0';
+    return true; // String is at max length but valid
+}
+
+static inline bool validate_user_buffer(const void* user_buf, size_t size, bool writeable) {
+    if (!user_buf) {
+        return false;
+    }
+    
+    if (writeable) {
+        return user_buffer_writable((uint32)user_buf, size);
+    } else {
+        return user_buffer_readable((uint32)user_buf, size);
+    }
+}
+
+// Enhanced wait4 implementation
+int32 sys_wait4(uint32 pid, uint32 status_ptr, uint32 options, uint32 rusage_ptr) {
+    (void)pid; (void)status_ptr; (void)options; (void)rusage_ptr;
+    
+    task_t* current = current_user_task_ptr();
+    if (!current) {
+        return -SYSCALL_EINVAL;
+    }
+    
+    // For now, only support waiting for any child
+    if (pid != -1 && pid != 0) {
+        return -SYSCALL_ECHILD; // No child processes available
+    }
+    
+    // Check if we have child processes
+    if (!current->children_count || current->children_count == 0) {
+        return -SYSCALL_ECHILD;
+    }
+    
+    // Simple implementation: return ECHILD for now
+    // TODO: Implement proper child process tracking and status collection
+    return -SYSCALL_ECHILD;
+}
+
+// Enhanced waitpid implementation (uses wait4)
+int32 sys_waitpid(uint32 pid, uint32 status_ptr, uint32 options) {
+    return sys_wait4(pid, status_ptr, options, 0);
+}
+
+// Enhanced kill implementation with proper signal delivery
+int32 sys_kill(uint32 pid, uint32 sig) {
+    task_t* current = current_user_task_ptr();
+    if (!current) {
+        return -SYSCALL_EINVAL;
+    }
+    
+    // For now, only support killing current task
+    if (pid != 0 && pid != current->id) {
+        return -SYSCALL_ESRCH; // No such process
+    }
+    
+    // Don't allow killing init process (PID 1)
+    if (pid == 1) {
+        return -SYSCALL_EPERM; // Operation not permitted
+    }
+    
+    // Simple signal delivery - just mark task for termination
+    if (sig == 9 || sig == 15) { // SIGKILL or SIGTERM
+        if (pid == 0) {
+            // Kill current task
+            current->state = TASK_STATE_ZOMBIE;
+            current->exit_code = sig;
+        }
+        return 0; // Success
+    }
+    
+    return -SYSCALL_ENOSYS; // Signal not supported yet
+}
+
+// Enhanced pipe2 implementation
+int32 sys_pipe2(uint32 pipefd_ptr, uint32 flags) {
+    (void)flags; // Flags not supported yet
+    
+    if (!validate_user_buffer((void*)pipefd_ptr, 8, true)) {
+        return -SYSCALL_EFAULT;
+    }
+    
+    // Call existing pipe implementation
+    int32 result = sys_pipe(pipefd_ptr);
+    if (result >= 0) {
+        // TODO: Handle flags if needed
+        debuglog(DEBUG_INFO, "sys_pipe2: created pipe with flags=0x%x\n", flags);
+    }
+    
+    return result;
+}
+
+// Enhanced select implementation
+int32 sys_select(uint32 nfds, uint32 readfds_ptr, uint32 writefds_ptr, uint32 exceptfds_ptr, uint32 timeout_ptr) {
+    (void)nfds; (void)readfds_ptr; (void)writefds_ptr; (void)exceptfds_ptr; (void)timeout_ptr;
+    
+    // Simple implementation - always return timeout
+    // TODO: Implement proper select with fd_set handling
+    debuglog(DEBUG_INFO, "sys_select: nfds=%u (stub - returns timeout)\n", nfds);
+    return 0; // Timeout (0 fds ready)
+}
+
+// Enhanced poll implementation  
+int32 sys_poll(uint32 fds_ptr, uint32 nfds, uint32 timeout_ms) {
+    if (!validate_user_buffer((void*)fds_ptr, nfds * sizeof(uint32), true)) {
+        return -SYSCALL_EFAULT;
+    }
+    
+    if (nfds == 0) {
+        if (timeout_ms > 0) {
+            // Simple sleep
+            sys_nanosleep(timeout_ms * 1000000, 0);
+        }
+        return 0;
+    }
+    
+    // Simple implementation - check only stdin (fd 0) for readability
+    bool has_ready = false;
+    uint32 ready_count = 0;
+    
+    // For each pollfd, check if it's stdin and has data
+    for (uint32 i = 0; i < nfds; i++) {
+        uint32 fd_ptr = fds_ptr + i * 8; // struct pollfd { int fd; short events; short revents; }
+        uint32 fd = *((uint32*)fd_ptr);
+        
+        if (fd == 0) { // stdin
+            // Check if there's data available (simple check)
+            // For now, always mark as readable to prevent blocking
+            *((uint16*)(fd_ptr + 6)) = 1; // POLLIN
+            ready_count++;
+            has_ready = true;
+        } else {
+            *((uint16*)(fd_ptr + 6)) = 0; // No events
+        }
+    }
+    
+    if (!has_ready && timeout_ms > 0) {
+        // Sleep for timeout
+        sys_nanosleep(timeout_ms * 1000000, 0);
+    }
+    
+    return ready_count;
+}
+
+// Enhanced ppoll implementation (uses poll)
+int32 sys_ppoll(uint32 fds_ptr, uint32 nfds, uint32 timeout_ptr, uint32 sigmask_ptr) {
+    (void)sigmask_ptr; // Signal mask not supported yet
+    
+    // Extract timeout from timespec structure
+    uint32 timeout_ms = 0;
+    if (timeout_ptr && validate_user_buffer((void*)timeout_ptr, 8, false)) {
+        uint32 tv_sec = *((uint32*)timeout_ptr);
+        uint32 tv_nsec = *((uint32*)(timeout_ptr + 4));
+        timeout_ms = tv_sec * 1000 + tv_nsec / 1000000;
+    }
+    
+    return sys_poll(fds_ptr, nfds, timeout_ms);
+}
+
+// Working directory implementation
+int32 sys_getcwd(uint32 buf_ptr, uint32 size) {
+    task_t* current = current_user_task_ptr();
+    if (!current) {
+        return -SYSCALL_EINVAL;
+    }
+    
+    if (!buf_ptr) {
+        return -SYSCALL_EINVAL;
+    }
+    
+    if (!validate_user_buffer((void*)buf_ptr, size, true)) {
+        return -SYSCALL_EFAULT;
+    }
+    
+    if (size < 2) {
+        return -SYSCALL_ERANGE; // Buffer too small for "/"
+    }
+    
+    // Forest OS always returns "/" as current directory
+    char kernel_path[] = "/";
+    
+    if (size > 0) {
+        *((char*)buf_ptr) = '/';
+        if (size > 1) {
+            *((char*)(buf_ptr + 1)) = '\0';
+        }
+    }
+    
+    debuglog(DEBUG_INFO, "sys_getcwd: returning '/'\n");
+    return 2; // Length of "/"
+}
+
+int32 sys_chdir(uint32 path_ptr) {
+    char path[256];
+    
+    if (!validate_user_string((char*)path_ptr, path, sizeof(path))) {
+        return -SYSCALL_EFAULT;
+    }
+    
+    // Forest OS filesystem is simple - only root directory exists
+    if (strcmp(path, "/") != 0) {
+        return -SYSCALL_ENOENT;
+    }
+    
+    debuglog(DEBUG_INFO, "sys_chdir: changed to '%s'\n", path);
+    return 0; // Success
+}
+
+int32 sys_fchdir(uint32 fd) {
+    // For now, only allow changing to directory if fd is valid
+    // Forest OS doesn't have directory file descriptors
+    (void)fd;
+    debuglog(DEBUG_INFO, "sys_fchdir: not implemented for fd=%u\n", fd);
+    return -SYSCALL_ENOSYS;
+}
+
+// Enhanced file operations
+int32 sys_fsync(uint32 fd) {
+    // Forest OS uses simple write-through, so fsync is a no-op
+    debuglog(DEBUG_INFO, "sys_fsync: fd=%u (no-op)\n", fd);
+    return 0;
+}
+
+int32 sys_fdatasync(uint32 fd) {
+    // Same as fsync for our simple filesystem
+    debuglog(DEBUG_INFO, "sys_fdatasync: fd=%u (no-op)\n", fd);
+    return 0;
+}
+
+int32 sys_ftruncate(uint32 fd, uint32 length) {
+    // Forest OS filesystem is read-only for users
+    (void)fd; (void)length;
+    debuglog(DEBUG_INFO, "sys_ftruncate: fd=%u length=%u (read-only fs)\n", fd, length);
+    return -SYSCALL_EPERM;
+}
+
+// Enhanced chmod/fchmod implementation
+int32 sys_chmod(uint32 path_ptr, uint32 mode) {
+    char path[256];
+    
+    if (!validate_user_string((char*)path_ptr, path, sizeof(path))) {
+        return -SYSCALL_EFAULT;
+    }
+    
+    // Forest OS filesystem doesn't support permissions
+    (void)mode;
+    debuglog(DEBUG_INFO, "sys_chmod: path='%s' mode=0%o (permissions not supported)\n", path, mode);
+    return 0; // Pretend success for compatibility
+}
+
+int32 sys_fchmod(uint32 fd, uint32 mode) {
+    // Forest OS filesystem doesn't support permissions
+    (void)fd; (void)mode;
+    debuglog(DEBUG_INFO, "sys_fchmod: fd=%u mode=0%o (permissions not supported)\n", fd, mode);
+    return 0; // Pretend success for compatibility
+}
+
+// Enhanced chown/fchown implementation
+int32 sys_chown(uint32 path_ptr, uint32 owner, uint32 group) {
+    char path[256];
+    
+    if (!validate_user_string((char*)path_ptr, path, sizeof(path))) {
+        return -SYSCALL_EFAULT;
+    }
+    
+    // Forest OS filesystem doesn't support ownership
+    (void)owner; (void)group;
+    debuglog(DEBUG_INFO, "sys_chown: path='%s' owner=%u group=%u (ownership not supported)\n", path, owner, group);
+    return 0; // Pretend success for compatibility
+}
+
+int32 sys_fchown(uint32 fd, uint32 owner, uint32 group) {
+    // Forest OS filesystem doesn't support ownership
+    (void)fd; (void)owner; (void)group;
+    debuglog(DEBUG_INFO, "sys_fchown: fd=%u owner=%u group=%u (ownership not supported)\n", fd, owner, group);
+    return 0; // Pretend success for compatibility
+}
+
+int32 sys_lchown(uint32 path_ptr, uint32 owner, uint32 group) {
+    // Same as chown (no symbolic links in Forest OS)
+    return sys_chown(path_ptr, owner, group);
+}
+
+// Umask implementation
+static uint32 current_umask = 022; // Default umask
+
+int32 sys_umask(uint32 mask) {
+    uint32 old_mask = current_umask;
+    current_umask = mask & 0777; // Only file permission bits
+    
+    debuglog(DEBUG_INFO, "sys_umask: mask=0%o, previous=0%o\n", mask, old_mask);
+    return old_mask;
+}
+
+// Enhanced directory operations (all return appropriate errors for read-only FS)
+int32 sys_mkdir(uint32 path_ptr, uint32 mode) {
+    char path[256];
+    
+    if (!validate_user_string((char*)path_ptr, path, sizeof(path))) {
+        return -SYSCALL_EFAULT;
+    }
+    
+    (void)mode;
+    debuglog(DEBUG_INFO, "sys_mkdir: path='%s' (read-only filesystem)\n", path);
+    return -SYSCALL_EPERM; // Read-only filesystem
+}
+
+int32 sys_rmdir(uint32 path_ptr) {
+    char path[256];
+    
+    if (!validate_user_string((char*)path_ptr, path, sizeof(path))) {
+        return -SYSCALL_EFAULT;
+    }
+    
+    debuglog(DEBUG_INFO, "sys_rmdir: path='%s' (read-only filesystem)\n", path);
+    return -SYSCALL_EPERM; // Read-only filesystem
+}
+
+int32 sys_rename(uint32 oldpath_ptr, uint32 newpath_ptr) {
+    char oldpath[256], newpath[256];
+    
+    if (!validate_user_string((char*)oldpath_ptr, oldpath, sizeof(oldpath)) ||
+        !validate_user_string((char*)newpath_ptr, newpath, sizeof(newpath))) {
+        return -SYSCALL_EFAULT;
+    }
+    
+    debuglog(DEBUG_INFO, "sys_rename: old='%s' new='%s' (read-only filesystem)\n", oldpath, newpath);
+    return -SYSCALL_EPERM; // Read-only filesystem
+}
+
+int32 sys_link(uint32 oldpath_ptr, uint32 newpath_ptr) {
+    char oldpath[256], newpath[256];
+    
+    if (!validate_user_string((char*)oldpath_ptr, oldpath, sizeof(oldpath)) ||
+        !validate_user_string((char*)newpath_ptr, newpath, sizeof(newpath))) {
+        return -SYSCALL_EFAULT;
+    }
+    
+    debuglog(DEBUG_INFO, "sys_link: old='%s' new='%s' (read-only filesystem)\n", oldpath, newpath);
+    return -SYSCALL_EPERM; // Read-only filesystem
+}
+
+int32 sys_symlink(uint32 oldpath_ptr, uint32 newpath_ptr) {
+    char oldpath[256], newpath[256];
+    
+    if (!validate_user_string((char*)oldpath_ptr, oldpath, sizeof(oldpath)) ||
+        !validate_user_string((char*)newpath_ptr, newpath, sizeof(newpath))) {
+        return -SYSCALL_EFAULT;
+    }
+    
+    debuglog(DEBUG_INFO, "sys_symlink: old='%s' new='%s' (read-only filesystem)\n", oldpath, newpath);
+    return -SYSCALL_EPERM; // Read-only filesystem
+}
+
+int32 sys_readlink(uint32 path_ptr, uint32 buf_ptr, uint32 bufsiz) {
+    char path[256];
+    
+    if (!validate_user_string((char*)path_ptr, path, sizeof(path)) ||
+        !validate_user_buffer((void*)buf_ptr, bufsiz, true)) {
+        return -SYSCALL_EFAULT;
+    }
+    
+    (void)bufsiz;
+    debuglog(DEBUG_INFO, "sys_readlink: path='%s' (no symbolic links supported)\n", path);
+    return -SYSCALL_EINVAL; // No symbolic links
+}
+
+// Enhanced creat implementation
+int32 sys_creat(uint32 pathname_ptr, uint32 mode) {
+    // creat() is equivalent to open(pathname, O_CREAT|O_WRONLY|O_TRUNC)
+    return sys_open(pathname_ptr, 1 | 64 | 512, mode); // O_WRONLY|O_CREAT|O_TRUNC
+}
+
+// Enhanced user/group management
+int32 sys_setuid(uint32 uid) {
+    task_t* current = current_user_task_ptr();
+    if (!current) {
+        return -SYSCALL_EINVAL;
+    }
+    
+    // Only allow setting to current UID or root (for now)
+    if (uid != current->uid && current->uid != 0) {
+        return -SYSCALL_EPERM;
+    }
+    
+    current->uid = uid;
+    debuglog(DEBUG_INFO, "sys_setuid: set uid to %u\n", uid);
+    return 0;
+}
+
+int32 sys_setgid(uint32 gid) {
+    task_t* current = current_user_task_ptr();
+    if (!current) {
+        return -SYSCALL_EINVAL;
+    }
+    
+    // Only allow setting to current GID or root (for now)
+    if (gid != current->gid && current->gid != 0) {
+        return -SYSCALL_EPERM;
+    }
+    
+    current->gid = gid;
+    debuglog(DEBUG_INFO, "sys_setgid: set gid to %u\n", gid);
+    return 0;
+}
+
+int32 sys_seteuid(uint32 euid) {
+    task_t* current = current_user_task_ptr();
+    if (!current) {
+        return -SYSCALL_EINVAL;
+    }
+    
+    // For simplicity, set both UID and EUID
+    current->uid = euid;
+    debuglog(DEBUG_INFO, "sys_seteuid: set euid to %u\n", euid);
+    return 0;
+}
+
+int32 sys_setegid(uint32 egid) {
+    task_t* current = current_user_task_ptr();
+    if (!current) {
+        return -SYSCALL_EINVAL;
+    }
+    
+    // For simplicity, set both GID and EGID
+    current->gid = egid;
+    debuglog(DEBUG_INFO, "sys_setegid: set egid to %u\n", egid);
+    return 0;
+}
+
+int32 sys_setreuid(uint32 ruid, uint32 euid) {
+    task_t* current = current_user_task_ptr();
+    if (!current) {
+        return -SYSCALL_EINVAL;
+    }
+    
+    // Simple implementation - just set to euid
+    current->uid = euid;
+    debuglog(DEBUG_INFO, "sys_setreuid: ruid=%u euid=%u (set to euid)\n", ruid, euid);
+    return 0;
+}
+
+int32 sys_setregid(uint32 rgid, uint32 egid) {
+    task_t* current = current_user_task_ptr();
+    if (!current) {
+        return -SYSCALL_EINVAL;
+    }
+    
+    // Simple implementation - just set to egid
+    current->gid = egid;
+    debuglog(DEBUG_INFO, "sys_setregid: rgid=%u egid=%u (set to egid)\n", rgid, egid);
+    return 0;
+}

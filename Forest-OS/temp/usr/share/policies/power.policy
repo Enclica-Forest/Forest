@@ -1,0 +1,3 @@
+allow_suspend=false
+allow_reboot=true
+allow_shutdown=true

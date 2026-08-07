@@ -1,0 +1,141 @@
+#include "include/fs.h"
+#include "include/iso9660.h"
+#include "include/ustar.h"
+#include "include/exfat.h"
+#include "include/udf.h"
+#include "include/lean.h"
+#include "include/jffs2.h"
+#include "include/yaffs.h"
+#include "include/ffs_amiga.h"
+#include "include/zdsfs.h"
+#include "include/debuglog.h"
+#include "include/enhanced_heap.h"
+
+static fs_filesystem_t* g_fs_list = NULL;
+
+void fs_init(void) {
+    debuglog(DEBUG_INFO, "[FS] Initializing filesystem layer\n");
+    
+    fs_filesystem_t* iso9660_fs = (fs_filesystem_t*)enhanced_heap_alloc(sizeof(fs_filesystem_t), "fs_iso9660");
+    if (iso9660_fs) {
+        iso9660_fs->name = "iso9660";
+        iso9660_fs->next = g_fs_list;
+        g_fs_list = iso9660_fs;
+        debuglog(DEBUG_INFO, "[FS] Registered: iso9660\n");
+    }
+    
+    fs_filesystem_t* exfat_fs = (fs_filesystem_t*)enhanced_heap_alloc(sizeof(fs_filesystem_t), "fs_exfat");
+    if (exfat_fs) {
+        exfat_fs->name = "exfat";
+        exfat_fs->next = g_fs_list;
+        g_fs_list = exfat_fs;
+        debuglog(DEBUG_INFO, "[FS] Registered: exfat\n");
+    }
+    
+    fs_filesystem_t* udf_fs = (fs_filesystem_t*)enhanced_heap_alloc(sizeof(fs_filesystem_t), "fs_udf");
+    if (udf_fs) {
+        udf_fs->name = "udf";
+        udf_fs->next = g_fs_list;
+        g_fs_list = udf_fs;
+        debuglog(DEBUG_INFO, "[FS] Registered: udf\n");
+    }
+    
+    fs_filesystem_t* ustar_fs = (fs_filesystem_t*)enhanced_heap_alloc(sizeof(fs_filesystem_t), "fs_ustar");
+    if (ustar_fs) {
+        ustar_fs->name = "ustar";
+        ustar_fs->next = g_fs_list;
+        g_fs_list = ustar_fs;
+        debuglog(DEBUG_INFO, "[FS] Registered: ustar\n");
+    }
+    
+    fs_filesystem_t* lean_fs = (fs_filesystem_t*)enhanced_heap_alloc(sizeof(fs_filesystem_t), "fs_lean");
+    if (lean_fs) {
+        lean_fs->name = "lean";
+        lean_fs->next = g_fs_list;
+        g_fs_list = lean_fs;
+        debuglog(DEBUG_INFO, "[FS] Registered: lean\n");
+    }
+    
+    fs_filesystem_t* jffs2_fs = (fs_filesystem_t*)enhanced_heap_alloc(sizeof(fs_filesystem_t), "fs_jffs2");
+    if (jffs2_fs) {
+        jffs2_fs->name = "jffs2";
+        jffs2_fs->next = g_fs_list;
+        g_fs_list = jffs2_fs;
+        debuglog(DEBUG_INFO, "[FS] Registered: jffs2\n");
+    }
+    
+    fs_filesystem_t* yaffs_fs = (fs_filesystem_t*)enhanced_heap_alloc(sizeof(fs_filesystem_t), "fs_yaffs");
+    if (yaffs_fs) {
+        yaffs_fs->name = "yaffs";
+        yaffs_fs->next = g_fs_list;
+        g_fs_list = yaffs_fs;
+        debuglog(DEBUG_INFO, "[FS] Registered: yaffs\n");
+    }
+    
+    fs_filesystem_t* ffs_amiga_fs = (fs_filesystem_t*)enhanced_heap_alloc(sizeof(fs_filesystem_t), "fs_ffs_amiga");
+    if (ffs_amiga_fs) {
+        ffs_amiga_fs->name = "ffs_amiga";
+        ffs_amiga_fs->next = g_fs_list;
+        g_fs_list = ffs_amiga_fs;
+        debuglog(DEBUG_INFO, "[FS] Registered: ffs_amiga\n");
+    }
+    
+    fs_filesystem_t* zdsfs_fs = (fs_filesystem_t*)enhanced_heap_alloc(sizeof(fs_filesystem_t), "fs_zdsfs");
+    if (zdsfs_fs) {
+        zdsfs_fs->name = "zdsfs";
+        zdsfs_fs->next = g_fs_list;
+        g_fs_list = zdsfs_fs;
+        debuglog(DEBUG_INFO, "[FS] Registered: zdsfs\n");
+    }
+    
+    debuglog(DEBUG_INFO, "[FS] Initialization complete\n");
+}
+
+fs_filesystem_t* fs_get_filesystem(const char* fstype) {
+    if (!fstype) return NULL;
+    for (fs_filesystem_t* f = g_fs_list; f; f = f->next) {
+        if (strcmp(f->name, fstype) == 0) {
+            return f;
+        }
+    }
+    return NULL;
+}
+
+uint32_t fs_probe_all(void* dev_data, uint32_t (*read_sector)(void*, uint64_t, uint8_t*), uint64_t total_sectors, const char** found_fs) {
+    uint32_t best_score = 0;
+    const char* best_name = NULL;
+    
+    for (fs_filesystem_t* f = g_fs_list; f; f = f->next) {
+        uint32_t score = 0;
+        if (strcmp(f->name, "iso9660") == 0) {
+            score = iso9660_probe(dev_data, read_sector, total_sectors);
+        } else if (strcmp(f->name, "exfat") == 0) {
+            score = exfat_probe(dev_data, read_sector, total_sectors);
+        } else if (strcmp(f->name, "udf") == 0) {
+            score = udf_probe(dev_data, read_sector, total_sectors);
+        } else if (strcmp(f->name, "ustar") == 0) {
+            score = ustar_probe(dev_data, read_sector, total_sectors);
+        } else if (strcmp(f->name, "lean") == 0) {
+            score = lean_probe(dev_data, read_sector, total_sectors);
+        } else if (strcmp(f->name, "jffs2") == 0) {
+            score = jffs2_probe(dev_data, read_sector, total_sectors);
+        } else if (strcmp(f->name, "yaffs") == 0) {
+            score = yaffs_probe(dev_data, read_sector, total_sectors);
+        } else if (strcmp(f->name, "ffs_amiga") == 0) {
+            score = ffs_amiga_probe(dev_data, read_sector, total_sectors);
+        } else if (strcmp(f->name, "zdsfs") == 0) {
+            score = zdsfs_probe(dev_data, read_sector, total_sectors);
+        }
+        
+        if (score > best_score) {
+            best_score = score;
+            best_name = f->name;
+        }
+    }
+    
+    if (found_fs) {
+        *found_fs = best_name;
+    }
+    
+    return best_score;
+}

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Settings
+Comment=System information and settings
+Exec=/bin/info.elf
+Icon=settings
+Categories=System;Settings;
+Terminal=true
+Type=Application
+Hidden=false

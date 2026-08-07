@@ -1,0 +1,383 @@
+/*
+ * syscall_table.c - Efficient syscall table implementation for Forest OS
+ */
+
+#include "include/syscall.h"
+#include "include/types.h"
+#include "include/string.h"
+#include "include/debuglog.h"
+#include "syscall_table.h"
+
+// Stub implementations for missing syscalls
+int32 sys_msync(uint32 addr, uint32 length, uint32 flags) {
+    (void)addr; (void)length; (void)flags;
+    return -38; // -ENOSYS
+}
+
+// Syscall table with function pointers
+const syscall_desc_t syscall_table[] = {
+    // File I/O operations
+    { "read",        3, {.fn3 = (syscall_3arg_t)sys_read},        SYSCALL_FLAG_FILE | SYSCALL_FLAG_CRITICAL },
+    { "write",       3, {.fn3 = (syscall_3arg_t)sys_write},       SYSCALL_FLAG_FILE | SYSCALL_FLAG_CRITICAL },
+    { "open",        3, {.fn3 = (syscall_3arg_t)sys_open},        SYSCALL_FLAG_FILE },
+    { "close",       1, {.fn1 = (syscall_1arg_t)sys_close},       SYSCALL_FLAG_FILE },
+    { "stat",        2, {.fn2 = (syscall_2arg_t)sys_stat},        SYSCALL_FLAG_FILE },
+    { "fstat",       2, {.fn2 = (syscall_2arg_t)sys_fstat},       SYSCALL_FLAG_FILE },
+    { "lstat",       2, {.fn2 = (syscall_2arg_t)sys_stat},        SYSCALL_FLAG_FILE }, // Alias stat
+    { "poll",        3, {.fn3 = (syscall_3arg_t)sys_poll},        SYSCALL_FLAG_FILE | SYSCALL_FLAG_NET },
+    { "lseek",       3, {.fn3 = (syscall_3arg_t)sys_lseek},       SYSCALL_FLAG_FILE },
+    { "mmap",        6, {.fn6 = (syscall_6arg_t)sys_mmap},        SYSCALL_FLAG_MEMORY },
+    { "mprotect",    3, {.fn3 = (syscall_3arg_t)sys_mprotect},    SYSCALL_FLAG_MEMORY },
+    { "munmap",      2, {.fn2 = (syscall_2arg_t)sys_munmap},      SYSCALL_FLAG_MEMORY },
+    { "brk",         1, {.fn1 = (syscall_1arg_t)sys_brk},         SYSCALL_FLAG_MEMORY | SYSCALL_FLAG_CRITICAL },
+    
+    // Process management
+    { "getpid",      0, {.fn0 = (syscall_0arg_t)sys_getpid},      SYSCALL_FLAG_PROCESS },
+    { "fork",        0, {.fn0 = (syscall_0arg_t)sys_fork},        SYSCALL_FLAG_PROCESS | SYSCALL_FLAG_CRITICAL },
+    { "execve",      3, {.fn3 = (syscall_3arg_t)sys_execve},      SYSCALL_FLAG_PROCESS | SYSCALL_FLAG_CRITICAL },
+    { "exit",        1, {.fn1 = (syscall_1arg_t)sys_exit},        SYSCALL_FLAG_PROCESS | SYSCALL_FLAG_CRITICAL },
+    { "exit_group",  1, {.fn1 = (syscall_1arg_t)sys_exit},        SYSCALL_FLAG_PROCESS | SYSCALL_FLAG_CRITICAL },
+    { "wait4",       4, {.fn4 = (syscall_4arg_t)sys_wait4},       SYSCALL_FLAG_PROCESS },
+    { "kill",        2, {.fn2 = (syscall_2arg_t)sys_kill},        SYSCALL_FLAG_PROCESS },
+    { "uname",       1, {.fn1 = (syscall_1arg_t)sys_uname},       SYSCALL_FLAG_PROCESS },
+    { "waitpid",     3, {.fn3 = (syscall_3arg_t)sys_waitpid},     SYSCALL_FLAG_PROCESS },
+    
+    // I/O control
+    { "ioctl",       3, {.fn3 = (syscall_3arg_t)sys_ioctl},       SYSCALL_FLAG_FILE },
+    { "pread64",     4, {.fn4 = (syscall_4arg_t)sys_pread64},     SYSCALL_FLAG_FILE },
+    { "pwrite64",    4, {.fn4 = (syscall_4arg_t)sys_pwrite64},    SYSCALL_FLAG_FILE },
+    { "readv",       3, {.fn3 = (syscall_3arg_t)sys_readv},       SYSCALL_FLAG_FILE },
+    { "writev",      3, {.fn3 = (syscall_3arg_t)sys_writev},      SYSCALL_FLAG_FILE },
+    { "access",      2, {.fn2 = (syscall_2arg_t)sys_access},      SYSCALL_FLAG_FILE },
+    { "pipe",        1, {.fn1 = (syscall_1arg_t)sys_pipe},        SYSCALL_FLAG_FILE },
+    { "select",      5, {.fn5 = (syscall_5arg_t)sys_select},      SYSCALL_FLAG_FILE },
+    { "sched_yield", 0, {.fn0 = (syscall_0arg_t)sys_sched_yield}, SYSCALL_FLAG_PROCESS },
+    { "mremap",      4, {.fn4 = (syscall_4arg_t)sys_mmap},        SYSCALL_FLAG_MEMORY }, // Stub
+    
+    // Time management
+    { "nanosleep",   2, {.fn2 = (syscall_2arg_t)sys_nanosleep},   SYSCALL_FLAG_CRITICAL },
+    { "getitimer",   2, {.fn2 = (syscall_2arg_t)sys_time},        SYSCALL_FLAG_MEMORY }, // Stub
+    { "alarm",       1, {.fn1 = (syscall_1arg_t)sys_nanosleep},   SYSCALL_FLAG_MEMORY }, // Stub
+    { "setitimer",   3, {.fn3 = (syscall_3arg_t)sys_time},        SYSCALL_FLAG_MEMORY }, // Stub
+    
+    // User/group management
+    { "getuid",      0, {.fn0 = (syscall_0arg_t)sys_getuid},      SYSCALL_FLAG_PROCESS },
+    { "syslog",      3, {.fn3 = (syscall_3arg_t)sys_write},       SYSCALL_FLAG_ADMIN }, // Stub
+    { "getgid",      0, {.fn0 = (syscall_0arg_t)sys_getgid},      SYSCALL_FLAG_PROCESS },
+    { "setuid",      1, {.fn1 = (syscall_1arg_t)sys_setuid},      SYSCALL_FLAG_PROCESS },
+    { "setgid",      1, {.fn1 = (syscall_1arg_t)sys_setgid},      SYSCALL_FLAG_PROCESS },
+    { "geteuid",     0, {.fn0 = (syscall_0arg_t)sys_geteuid},     SYSCALL_FLAG_PROCESS },
+    { "getegid",     0, {.fn0 = (syscall_0arg_t)sys_getegid},     SYSCALL_FLAG_PROCESS },
+    { "setpgid",     2, {.fn2 = (syscall_2arg_t)sys_getpid},      SYSCALL_FLAG_PROCESS }, // Stub
+    { "getppid",     0, {.fn0 = (syscall_0arg_t)sys_getppid},     SYSCALL_FLAG_PROCESS },
+    { "getpgrp",     0, {.fn0 = (syscall_0arg_t)sys_getpid},      SYSCALL_FLAG_PROCESS }, // Stub
+    { "setsid",      0, {.fn0 = (syscall_0arg_t)sys_getpid},      SYSCALL_FLAG_PROCESS }, // Stub
+    { "setreuid",    2, {.fn2 = (syscall_2arg_t)sys_setreuid},    SYSCALL_FLAG_PROCESS },
+    { "setregid",    2, {.fn2 = (syscall_2arg_t)sys_setregid},    SYSCALL_FLAG_PROCESS },
+    
+    // File system operations
+    { "unlink",      1, {.fn1 = (syscall_1arg_t)sys_unlink},      SYSCALL_FLAG_FILE },
+    { "mknod",       3, {.fn3 = (syscall_3arg_t)sys_mknod},       SYSCALL_FLAG_FILE | SYSCALL_FLAG_ADMIN },
+    { "chmod",       2, {.fn2 = (syscall_2arg_t)sys_chmod},       SYSCALL_FLAG_FILE },
+    { "fchmod",      2, {.fn2 = (syscall_2arg_t)sys_fchmod},      SYSCALL_FLAG_FILE },
+    { "chown",       3, {.fn3 = (syscall_3arg_t)sys_chown},       SYSCALL_FLAG_FILE },
+    { "fchown",      3, {.fn3 = (syscall_3arg_t)sys_fchown},      SYSCALL_FLAG_FILE },
+    { "lchown",      3, {.fn3 = (syscall_3arg_t)sys_lchown},      SYSCALL_FLAG_FILE },
+    { "umask",       1, {.fn1 = (syscall_1arg_t)sys_umask},       SYSCALL_FLAG_FILE },
+    { "gettimeofday", 2, {.fn2 = (syscall_2arg_t)sys_gettimeofday}, SYSCALL_FLAG_CRITICAL },
+    { "getrlimit",   2, {.fn2 = (syscall_2arg_t)sys_brk},         SYSCALL_FLAG_MEMORY }, // Stub
+    { "getrusage",   2, {.fn2 = (syscall_2arg_t)sys_time},        SYSCALL_FLAG_MEMORY }, // Stub
+    { "sysinfo",     1, {.fn1 = (syscall_1arg_t)sys_uname},       SYSCALL_FLAG_PROCESS }, // Stub
+    { "times",       1, {.fn1 = (syscall_1arg_t)sys_time},        SYSCALL_FLAG_PROCESS }, // Stub
+    { "ptrace",      4, {.fn4 = (syscall_4arg_t)sys_kill},        SYSCALL_FLAG_ADMIN }, // Stub
+    { "getpriority", 2, {.fn2 = (syscall_2arg_t)sys_getuid},      SYSCALL_FLAG_PROCESS }, // Stub
+    { "setpriority", 2, {.fn2 = (syscall_2arg_t)sys_setuid},      SYSCALL_FLAG_ADMIN }, // Stub
+    
+    // Time operations
+    { "time",        1, {.fn1 = (syscall_1arg_t)sys_time},        SYSCALL_FLAG_CRITICAL },
+    { "settimeofday", 2, {.fn2 = (syscall_2arg_t)sys_settimeofday}, SYSCALL_FLAG_ADMIN },
+    { "mount",       5, {.fn5 = (syscall_5arg_t)sys_write},       SYSCALL_FLAG_ADMIN }, // Stub
+    { "umount2",     2, {.fn2 = (syscall_2arg_t)sys_unlink},      SYSCALL_FLAG_ADMIN }, // Stub
+    { "swapon",      2, {.fn2 = (syscall_2arg_t)sys_write},       SYSCALL_FLAG_ADMIN }, // Stub
+    { "swapoff",     1, {.fn1 = (syscall_1arg_t)sys_write},       SYSCALL_FLAG_ADMIN }, // Stub
+    { "reboot",      1, {.fn1 = (syscall_1arg_t)sys_power},       SYSCALL_FLAG_ADMIN },
+    { "sethostname", 2, {.fn2 = (syscall_2arg_t)sys_write},       SYSCALL_FLAG_ADMIN }, // Stub
+    { "setdomainname", 2, {.fn2 = (syscall_2arg_t)sys_write},     SYSCALL_FLAG_ADMIN }, // Stub
+    
+    // File descriptor operations
+    { "flock",       2, {.fn2 = (syscall_2arg_t)sys_fcntl},        SYSCALL_FLAG_FILE }, // Stub
+    { "fsync",       1, {.fn1 = (syscall_1arg_t)sys_fsync},       SYSCALL_FLAG_FILE },
+    { "fdatasync",   1, {.fn1 = (syscall_1arg_t)sys_fdatasync},   SYSCALL_FLAG_FILE },
+    { "truncate",    2, {.fn2 = (syscall_2arg_t)sys_ftruncate},   SYSCALL_FLAG_FILE }, // Stub
+    { "ftruncate",   2, {.fn2 = (syscall_2arg_t)sys_ftruncate},   SYSCALL_FLAG_FILE },
+    { "getdents",   3, {.fn3 = (syscall_3arg_t)sys_read},        SYSCALL_FLAG_FILE }, // Stub
+    { "getcwd",      2, {.fn2 = (syscall_2arg_t)sys_getcwd},      SYSCALL_FLAG_FILE },
+    { "chdir",       1, {.fn1 = (syscall_1arg_t)sys_chdir},       SYSCALL_FLAG_FILE },
+    { "fchdir",      1, {.fn1 = (syscall_1arg_t)sys_fchdir},      SYSCALL_FLAG_FILE },
+    { "rename",      2, {.fn2 = (syscall_2arg_t)sys_rename},      SYSCALL_FLAG_FILE },
+    { "mkdir",       2, {.fn2 = (syscall_2arg_t)sys_mkdir},       SYSCALL_FLAG_FILE },
+    { "rmdir",       1, {.fn1 = (syscall_1arg_t)sys_rmdir},       SYSCALL_FLAG_FILE },
+    { "creat",       2, {.fn2 = (syscall_2arg_t)sys_creat},       SYSCALL_FLAG_FILE },
+    { "link",        2, {.fn2 = (syscall_2arg_t)sys_link},        SYSCALL_FLAG_FILE },
+    { "symlink",     2, {.fn2 = (syscall_2arg_t)sys_symlink},     SYSCALL_FLAG_FILE },
+    { "readlink",    3, {.fn3 = (syscall_3arg_t)sys_readlink},    SYSCALL_FLAG_FILE },
+    { "chmod",       2, {.fn2 = (syscall_2arg_t)sys_chmod},       SYSCALL_FLAG_FILE },
+    { "fchmod",      2, {.fn2 = (syscall_2arg_t)sys_fchmod},      SYSCALL_FLAG_FILE },
+    { "chown",       3, {.fn3 = (syscall_3arg_t)sys_chown},       SYSCALL_FLAG_FILE },
+    { "fchown",      3, {.fn3 = (syscall_3arg_t)sys_fchown},      SYSCALL_FLAG_FILE },
+    { "lchown",      3, {.fn3 = (syscall_3arg_t)sys_lchown},      SYSCALL_FLAG_FILE },
+    { "umask",       1, {.fn1 = (syscall_1arg_t)sys_umask},       SYSCALL_FLAG_FILE },
+    
+    // File descriptor control
+    { "fcntl",       3, {.fn3 = (syscall_3arg_t)sys_fcntl},       SYSCALL_FLAG_FILE },
+    { "dup",         1, {.fn1 = (syscall_1arg_t)sys_dup},         SYSCALL_FLAG_FILE },
+    { "dup2",        2, {.fn2 = (syscall_2arg_t)sys_dup2},        SYSCALL_FLAG_FILE },
+    { "pause",       0, {.fn0 = (syscall_0arg_t)sys_sched_yield}, SYSCALL_FLAG_PROCESS }, // Stub
+    
+    // Memory management
+    { "msync",       3, {.fn3 = (syscall_3arg_t)sys_msync},       SYSCALL_FLAG_MEMORY }, // Stub
+    { "mincore",     3, {.fn3 = (syscall_3arg_t)sys_mprotect},    SYSCALL_FLAG_MEMORY }, // Stub
+    { "madvise",     3, {.fn3 = (syscall_3arg_t)sys_mprotect},    SYSCALL_FLAG_MEMORY }, // Stub
+    { "shmget",      3, {.fn3 = (syscall_3arg_t)sys_pipe},        SYSCALL_FLAG_MEMORY }, // Stub
+    { "shmat",       3, {.fn3 = (syscall_3arg_t)sys_mmap},        SYSCALL_FLAG_MEMORY }, // Stub
+    { "shmctl",      3, {.fn3 = (syscall_3arg_t)sys_close},       SYSCALL_FLAG_MEMORY }, // Stub
+    { "mlock",       2, {.fn2 = (syscall_2arg_t)sys_mprotect},    SYSCALL_FLAG_MEMORY }, // Stub
+    { "munlock",     2, {.fn2 = (syscall_2arg_t)sys_mprotect},    SYSCALL_FLAG_MEMORY }, // Stub
+    { "mlockall",    0, {.fn0 = (syscall_0arg_t)sys_mprotect},    SYSCALL_FLAG_MEMORY }, // Stub
+    { "munlockall",  0, {.fn0 = (syscall_0arg_t)sys_mprotect},    SYSCALL_FLAG_MEMORY }, // Stub
+    
+    // VFS operations
+    { "vhangup",     0, {.fn0 = (syscall_0arg_t)sys_sched_yield}, SYSCALL_FLAG_ADMIN }, // Stub
+    { "modify_ldt",  2, {.fn2 = (syscall_2arg_t)sys_write},       SYSCALL_FLAG_ADMIN }, // Stub
+    { "pivot_root",  2, {.fn2 = (syscall_2arg_t)sys_write},       SYSCALL_FLAG_ADMIN }, // Stub
+    
+    // System control
+    { "prctl",       5, {.fn5 = (syscall_5arg_t)sys_kill},        SYSCALL_FLAG_PROCESS }, // Stub
+    { "arch_prctl",  2, {.fn2 = (syscall_2arg_t)sys_write},       SYSCALL_FLAG_PROCESS }, // Stub
+    { "adjtimex",    1, {.fn1 = (syscall_1arg_t)sys_settimeofday}, SYSCALL_FLAG_ADMIN },
+    { "setrlimit",   2, {.fn2 = (syscall_2arg_t)sys_brk},         SYSCALL_FLAG_ADMIN }, // Stub
+    { "chroot",      1, {.fn1 = (syscall_1arg_t)sys_chdir},       SYSCALL_FLAG_ADMIN },
+    { "sync",        0, {.fn0 = (syscall_0arg_t)sys_sched_yield}, SYSCALL_FLAG_FILE }, // Stub
+    { "acct",        1, {.fn1 = (syscall_1arg_t)sys_write},       SYSCALL_FLAG_ADMIN }, // Stub
+    { "settimeofday", 2, {.fn2 = (syscall_2arg_t)sys_settimeofday}, SYSCALL_FLAG_ADMIN },
+    
+    // Module management
+    { "init_module", 3, {.fn3 = (syscall_3arg_t)sys_write},       SYSCALL_FLAG_ADMIN }, // Stub
+    { "delete_module", 2, {.fn2 = (syscall_2arg_t)sys_write},     SYSCALL_FLAG_ADMIN }, // Stub
+    
+    // Network operations
+    { "socket",      3, {.fn3 = (syscall_3arg_t)sys_socket},      SYSCALL_FLAG_NET },
+    { "connect",     3, {.fn3 = (syscall_3arg_t)sys_connect},     SYSCALL_FLAG_NET },
+    { "accept",      3, {.fn3 = (syscall_3arg_t)sys_accept},      SYSCALL_FLAG_NET },
+    { "sendto",      6, {.fn6 = (syscall_6arg_t)sys_sendto},      SYSCALL_FLAG_NET },
+    { "recvfrom",    6, {.fn6 = (syscall_6arg_t)sys_recvfrom},    SYSCALL_FLAG_NET },
+    { "sendmsg",     3, {.fn3 = (syscall_3arg_t)sys_sendmsg},     SYSCALL_FLAG_NET },
+    { "recvmsg",     3, {.fn3 = (syscall_3arg_t)sys_recvmsg},     SYSCALL_FLAG_NET },
+    { "shutdown",    2, {.fn2 = (syscall_2arg_t)sys_shutdown},    SYSCALL_FLAG_NET },
+    { "bind",        3, {.fn3 = (syscall_3arg_t)sys_bind},        SYSCALL_FLAG_NET },
+    { "listen",      2, {.fn2 = (syscall_2arg_t)sys_listen},      SYSCALL_FLAG_NET },
+    { "getsockname", 3, {.fn3 = (syscall_3arg_t)sys_getsockname}, SYSCALL_FLAG_NET },
+    { "getpeername", 3, {.fn3 = (syscall_3arg_t)sys_getpeername}, SYSCALL_FLAG_NET },
+    { "socketpair",  4, {.fn4 = (syscall_4arg_t)sys_pipe},        SYSCALL_FLAG_NET }, // Stub
+    { "setsockopt",  5, {.fn5 = (syscall_5arg_t)sys_setsockopt},  SYSCALL_FLAG_NET },
+    { "getsockopt",  5, {.fn5 = (syscall_5arg_t)sys_getsockopt},  SYSCALL_FLAG_NET },
+    { "clone",       5, {.fn5 = (syscall_5arg_t)sys_fork},        SYSCALL_FLAG_PROCESS }, // Stub
+    { "fork",        0, {.fn0 = (syscall_0arg_t)sys_fork},        SYSCALL_FLAG_PROCESS },
+    { "vfork",       0, {.fn0 = (syscall_0arg_t)sys_fork},        SYSCALL_FLAG_PROCESS }, // Stub
+    { "execve",      3, {.fn3 = (syscall_3arg_t)sys_execve},      SYSCALL_FLAG_PROCESS },
+    { "exit",        1, {.fn1 = (syscall_1arg_t)sys_exit},        SYSCALL_FLAG_PROCESS },
+    
+    // Message queues
+    { "msgget",      2, {.fn2 = (syscall_2arg_t)sys_pipe},        SYSCALL_FLAG_MEMORY }, // Stub
+    { "msgsnd",      4, {.fn4 = (syscall_4arg_t)sys_write},       SYSCALL_FLAG_MEMORY }, // Stub
+    { "msgrcv",      5, {.fn5 = (syscall_5arg_t)sys_read},        SYSCALL_FLAG_MEMORY }, // Stub
+    { "msgctl",      3, {.fn3 = (syscall_3arg_t)sys_close},       SYSCALL_FLAG_MEMORY }, // Stub
+    
+    // Semaphores
+    { "semget",      3, {.fn3 = (syscall_3arg_t)sys_pipe},        SYSCALL_FLAG_MEMORY }, // Stub
+    { "semop",       2, {.fn2 = (syscall_2arg_t)sys_write},       SYSCALL_FLAG_MEMORY }, // Stub
+    { "semctl",      4, {.fn4 = (syscall_4arg_t)sys_close},       SYSCALL_FLAG_MEMORY }, // Stub
+    { "shmdt",       1, {.fn1 = (syscall_1arg_t)sys_munmap},      SYSCALL_FLAG_MEMORY },
+    
+    // I/O multiplexing
+    { "select",      5, {.fn5 = (syscall_5arg_t)sys_select},      SYSCALL_FLAG_FILE | SYSCALL_FLAG_NET },
+    { "poll",        3, {.fn3 = (syscall_3arg_t)sys_poll},        SYSCALL_FLAG_FILE | SYSCALL_FLAG_NET },
+    { "ppoll",       5, {.fn5 = (syscall_5arg_t)sys_ppoll},       SYSCALL_FLAG_FILE | SYSCALL_FLAG_NET },
+    
+    // Advanced I/O
+    { "epoll_create", 1, {.fn1 = (syscall_1arg_t)sys_epoll_create}, SYSCALL_FLAG_NET },
+    { "epoll_ctl",   4, {.fn4 = (syscall_4arg_t)sys_epoll_ctl},   SYSCALL_FLAG_NET },
+    { "epoll_wait",  4, {.fn4 = (syscall_4arg_t)sys_epoll_wait},  SYSCALL_FLAG_NET },
+    { "epoll_pwait", 5, {.fn5 = (syscall_5arg_t)sys_epoll_wait},  SYSCALL_FLAG_NET },
+    { "remap_file_pages", 5, {.fn5 = (syscall_5arg_t)sys_mmap}, SYSCALL_FLAG_MEMORY }, // Stub
+    { "getdents64", 3, {.fn3 = (syscall_3arg_t)sys_read},        SYSCALL_FLAG_FILE }, // Stub
+    
+    // Advanced networking
+    { "set_tid_address", 1, {.fn1 = (syscall_1arg_t)sys_getpid},   SYSCALL_FLAG_PROCESS }, // Stub
+    { "restart_syscall", 0, {.fn0 = (syscall_0arg_t)sys_sched_yield}, SYSCALL_FLAG_PROCESS }, // Stub
+    { "semtimedop",  4, {.fn4 = (syscall_4arg_t)sys_write},       SYSCALL_FLAG_MEMORY }, // Stub
+    { "fadvise64",  4, {.fn4 = (syscall_4arg_t)sys_mprotect},    SYSCALL_FLAG_MEMORY }, // Stub
+    { "timer_create", 3, {.fn3 = (syscall_3arg_t)sys_pipe},        SYSCALL_FLAG_MEMORY }, // Stub
+    { "timer_settime", 4, {.fn4 = (syscall_4arg_t)sys_time},      SYSCALL_FLAG_MEMORY }, // Stub
+    { "timer_gettime", 2, {.fn2 = (syscall_2arg_t)sys_time},        SYSCALL_FLAG_MEMORY }, // Stub
+    { "timer_getoverrun", 1, {.fn1 = (syscall_1arg_t)sys_time},   SYSCALL_FLAG_MEMORY }, // Stub
+    { "timer_delete", 1, {.fn1 = (syscall_1arg_t)sys_close},       SYSCALL_FLAG_MEMORY }, // Stub
+    { "clock_settime", 2, {.fn2 = (syscall_2arg_t)sys_settimeofday}, SYSCALL_FLAG_ADMIN },
+    { "clock_gettime", 2, {.fn2 = (syscall_2arg_t)sys_gettimeofday}, SYSCALL_FLAG_CRITICAL },
+    { "clock_getres", 1, {.fn1 = (syscall_1arg_t)sys_nanosleep},  SYSCALL_FLAG_MEMORY }, // Stub
+    { "clock_nanosleep", 4, {.fn4 = (syscall_4arg_t)sys_nanosleep}, SYSCALL_FLAG_CRITICAL },
+    
+    // Process management continued
+    { "exit_group",  1, {.fn1 = (syscall_1arg_t)sys_exit},        SYSCALL_FLAG_PROCESS },
+    { "epoll_wait",  4, {.fn4 = (syscall_4arg_t)sys_epoll_wait},  SYSCALL_FLAG_NET },
+    { "epoll_ctl",   4, {.fn4 = (syscall_4arg_t)sys_epoll_ctl},   SYSCALL_FLAG_NET },
+    { "tgkill",      3, {.fn3 = (syscall_3arg_t)sys_kill},        SYSCALL_FLAG_PROCESS }, // Stub
+    { "utimes",      2, {.fn2 = (syscall_2arg_t)sys_chmod},       SYSCALL_FLAG_FILE }, // Stub
+    { "mbind",       4, {.fn4 = (syscall_4arg_t)sys_mprotect},    SYSCALL_FLAG_MEMORY }, // Stub
+    { "set_mempolicy", 3, {.fn3 = (syscall_3arg_t)sys_mprotect},  SYSCALL_FLAG_MEMORY }, // Stub
+    { "get_mempolicy", 5, {.fn5 = (syscall_5arg_t)sys_mprotect},  SYSCALL_FLAG_MEMORY }, // Stub
+    { "mq_open",     3, {.fn3 = (syscall_3arg_t)sys_open},        SYSCALL_FLAG_MEMORY }, // Stub
+    { "mq_unlink",   1, {.fn1 = (syscall_1arg_t)sys_unlink},      SYSCALL_FLAG_MEMORY }, // Stub
+    { "mq_timedsend", 5, {.fn5 = (syscall_5arg_t)sys_sendto},    SYSCALL_FLAG_MEMORY }, // Stub
+    { "mq_timedreceive", 5, {.fn5 = (syscall_5arg_t)sys_recvfrom}, SYSCALL_FLAG_MEMORY }, // Stub
+    { "mq_notify",  2, {.fn2 = (syscall_2arg_t)sys_kill},        SYSCALL_FLAG_MEMORY }, // Stub
+    { "mq_getsetattr", 3, {.fn3 = (syscall_3arg_t)sys_fcntl},      SYSCALL_FLAG_MEMORY }, // Stub
+    
+    // Power and management
+    { "kexec_load",  4, {.fn4 = (syscall_4arg_t)sys_write},       SYSCALL_FLAG_ADMIN }, // Stub
+    { "waitid",      4, {.fn4 = (syscall_4arg_t)sys_wait4},      SYSCALL_FLAG_PROCESS },
+    { "add_key",     5, {.fn5 = (syscall_5arg_t)sys_write},       SYSCALL_FLAG_ADMIN }, // Stub
+    { "request_key", 4, {.fn4 = (syscall_4arg_t)sys_write},       SYSCALL_FLAG_ADMIN }, // Stub
+    { "keyctl",      5, {.fn5 = (syscall_5arg_t)sys_write},       SYSCALL_FLAG_ADMIN }, // Stub
+    { "ioprio_set", 3, {.fn3 = (syscall_3arg_t)sys_setuid},      SYSCALL_FLAG_ADMIN }, // Stub
+    { "ioprio_get",  2, {.fn2 = (syscall_2arg_t)sys_getuid},      SYSCALL_FLAG_PROCESS }, // Stub
+    { "inotify_init", 0, {.fn0 = (syscall_0arg_t)sys_getpid},     SYSCALL_FLAG_MEMORY }, // Stub
+    { "inotify_add_watch", 3, {.fn3 = (syscall_3arg_t)sys_open}, SYSCALL_FLAG_MEMORY }, // Stub
+    { "inotify_rm_watch", 2, {.fn2 = (syscall_2arg_t)sys_close}, SYSCALL_FLAG_MEMORY }, // Stub
+    { "migrate_pages", 4, {.fn4 = (syscall_4arg_t)sys_mprotect},  SYSCALL_FLAG_MEMORY }, // Stub
+    
+    // Modern file operations
+    { "openat",      4, {.fn4 = (syscall_4arg_t)sys_open},        SYSCALL_FLAG_FILE }, // Stub
+    { "mkdirat",     3, {.fn3 = (syscall_3arg_t)sys_mkdir},       SYSCALL_FLAG_FILE }, // Stub
+    { "mknodat",     4, {.fn4 = (syscall_4arg_t)sys_mknod},       SYSCALL_FLAG_FILE }, // Stub
+    { "fchownat",    5, {.fn5 = (syscall_5arg_t)sys_fchown},      SYSCALL_FLAG_FILE }, // Stub
+    { "futimesat",   3, {.fn3 = (syscall_3arg_t)sys_chmod},       SYSCALL_FLAG_FILE }, // Stub
+    { "newfstatat",  4, {.fn4 = (syscall_4arg_t)sys_stat},        SYSCALL_FLAG_FILE }, // Stub
+    { "unlinkat",    3, {.fn3 = (syscall_3arg_t)sys_unlink},      SYSCALL_FLAG_FILE }, // Stub
+    { "renameat",    4, {.fn4 = (syscall_4arg_t)sys_rename},      SYSCALL_FLAG_FILE }, // Stub
+    { "linkat",      5, {.fn5 = (syscall_5arg_t)sys_link},        SYSCALL_FLAG_FILE }, // Stub
+    { "symlinkat",   3, {.fn3 = (syscall_3arg_t)sys_symlink},     SYSCALL_FLAG_FILE }, // Stub
+    { "readlinkat",  4, {.fn4 = (syscall_4arg_t)sys_readlink},    SYSCALL_FLAG_FILE }, // Stub
+    { "fchmodat",    3, {.fn3 = (syscall_3arg_t)sys_fchmod},      SYSCALL_FLAG_FILE }, // Stub
+    { "faccessat",   3, {.fn3 = (syscall_3arg_t)sys_access},      SYSCALL_FLAG_FILE }, // Stub
+    { "pselect6",    6, {.fn6 = (syscall_6arg_t)sys_select},      SYSCALL_FLAG_FILE }, // Stub
+    { "ppoll",       5, {.fn5 = (syscall_5arg_t)sys_ppoll},       SYSCALL_FLAG_FILE },
+    { "unshare",     1, {.fn1 = (syscall_1arg_t)sys_getpid},      SYSCALL_FLAG_PROCESS }, // Stub
+    { "set_robust_list", 2, {.fn2 = (syscall_2arg_t)sys_write},   SYSCALL_FLAG_PROCESS }, // Stub
+    { "get_robust_list", 2, {.fn2 = (syscall_2arg_t)sys_getpid}, SYSCALL_FLAG_PROCESS }, // Stub
+    { "splice",      5, {.fn5 = (syscall_5arg_t)sys_writev},      SYSCALL_FLAG_FILE }, // Stub
+    { "tee",         4, {.fn4 = (syscall_4arg_t)sys_writev},      SYSCALL_FLAG_FILE }, // Stub
+    { "sync_file_range", 4, {.fn4 = (syscall_4arg_t)sys_fsync},   SYSCALL_FLAG_FILE }, // Stub
+    { "vmsplice",    4, {.fn4 = (syscall_4arg_t)sys_writev},      SYSCALL_FLAG_FILE }, // Stub
+    { "move_pages",  6, {.fn6 = (syscall_6arg_t)sys_mprotect},    SYSCALL_FLAG_MEMORY }, // Stub
+    { "utimensat",   4, {.fn4 = (syscall_4arg_t)sys_chmod},       SYSCALL_FLAG_FILE }, // Stub
+    { "epoll_pwait", 6, {.fn6 = (syscall_6arg_t)sys_epoll_wait}, SYSCALL_FLAG_NET },
+    { "signalfd",    3, {.fn3 = (syscall_3arg_t)sys_pipe},        SYSCALL_FLAG_MEMORY }, // Stub
+    { "timerfd_create", 2, {.fn2 = (syscall_2arg_t)sys_pipe},    SYSCALL_FLAG_MEMORY }, // Stub
+    { "eventfd",     2, {.fn2 = (syscall_2arg_t)sys_pipe},       SYSCALL_FLAG_MEMORY }, // Stub
+    { "fallocate",   4, {.fn4 = (syscall_4arg_t)sys_mmap},        SYSCALL_FLAG_FILE }, // Stub
+    
+    // Forest OS specific syscalls (468-473)
+    { "netinfo",     2, {.fn2 = (syscall_2arg_t)sys_netinfo},     SYSCALL_FLAG_NET | SYSCALL_FLAG_FOREST },
+    { "mmap_fb",     0, {.fn0 = (syscall_0arg_t)sys_mmap_fb},     SYSCALL_FLAG_FOREST },
+    { "munmap_fb",   1, {.fn1 = (syscall_1arg_t)sys_munmap_fb},   SYSCALL_FLAG_FOREST },
+    { "get_fb_info", 1, {.fn1 = (syscall_1arg_t)sys_get_fb_info},  SYSCALL_FLAG_FOREST },
+    { "power",       1, {.fn1 = (syscall_1arg_t)sys_power},       SYSCALL_FLAG_FOREST | SYSCALL_FLAG_ADMIN },
+    { "user",        6, {.fn6 = (syscall_6arg_t)sys_user},        SYSCALL_FLAG_FOREST },
+    
+    // Add stub entries for remaining syscalls up to 474
+    // These return ENOSYS but allow proper table indexing
+    { "stub_474",    0, {.fn0 = (syscall_0arg_t)sys_getpid},      SYSCALL_FLAG_NONE }, // Placeholder
+};
+
+#define SYSCALL_TABLE_SIZE (sizeof(syscall_table) / sizeof(syscall_table[0]))
+
+// Static syscall statistics
+static struct {
+    uint32 call_count;
+    uint32 error_count;
+    uint32 last_syscall;
+    uint32 last_error;
+} syscall_stats = {0, 0, 0, 0};
+
+// Initialize syscall table and validation
+void syscall_table_init(void) {
+    debuglog(DEBUG_INFO, "Forest OS syscall table initialized with %d entries\n", (int)SYSCALL_TABLE_SIZE);
+    debuglog(DEBUG_INFO, "Syscall dispatch mechanism: function pointer table\n");
+}
+
+// Efficient syscall dispatch using function pointer table
+int32 syscall_dispatch(uint32 num, uint32 arg1, uint32 arg2, uint32 arg3, uint32 arg4, uint32 arg5, uint32 arg6) {
+    syscall_stats.call_count++;
+    syscall_stats.last_syscall = num;
+    
+    // Bounds check
+    if (num >= SYSCALL_TABLE_SIZE) {
+        syscall_stats.error_count++;
+        syscall_stats.last_error = num;
+        return -38; // -ENOSYS
+    }
+    
+    const syscall_desc_t *desc = &syscall_table[num];
+    
+    // Dispatch based on argument count for efficiency
+    switch (desc->arg_count) {
+        case 0:
+            return desc->func.fn0();
+        case 1:
+            return desc->func.fn1(arg1);
+        case 2:
+            return desc->func.fn2(arg1, arg2);
+        case 3:
+            return desc->func.fn3(arg1, arg2, arg3);
+        case 4:
+            return desc->func.fn4(arg1, arg2, arg3, arg4);
+        case 5:
+            return desc->func.fn5(arg1, arg2, arg3, arg4, arg5);
+        case 6:
+            return desc->func.fn6(arg1, arg2, arg3, arg4, arg5, arg6);
+        default:
+            syscall_stats.error_count++;
+            syscall_stats.last_error = num;
+            return -38; // -ENOSYS
+    }
+}
+
+// Get syscall name for debugging
+const char* syscall_get_name(uint32 num) {
+    if (num >= SYSCALL_TABLE_SIZE) {
+        return "unknown";
+    }
+    return syscall_table[num].name;
+}
+
+// Validate syscall number
+bool syscall_is_valid(uint32 num) {
+    return num < SYSCALL_TABLE_SIZE;
+}
+
+// Print syscall statistics
+void syscall_stats_print(void) {
+    debuglog(DEBUG_INFO, "=== Forest OS Syscall Statistics ===\n");
+    debuglog(DEBUG_INFO, "Total syscalls: %u\n", syscall_stats.call_count);
+    debuglog(DEBUG_INFO, "Total errors: %u\n", syscall_stats.error_count);
+    debuglog(DEBUG_INFO, "Success rate: %u%%\n", 
+               syscall_stats.call_count ? 
+               ((syscall_stats.call_count - syscall_stats.error_count) * 100) / syscall_stats.call_count : 100);
+    debuglog(DEBUG_INFO, "Last syscall: %u (%s)\n", syscall_stats.last_syscall, 
+               syscall_get_name(syscall_stats.last_syscall));
+    if (syscall_stats.error_count > 0) {
+        debuglog(DEBUG_INFO, "Last error: %u (%s)\n", syscall_stats.last_error,
+                   syscall_get_name(syscall_stats.last_error));
+    }
+}

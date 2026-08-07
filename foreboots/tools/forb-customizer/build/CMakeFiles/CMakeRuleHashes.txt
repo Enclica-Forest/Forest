@@ -1,0 +1,5 @@
+# Hashes of file build rules.
+b2de0aa1939fb7250ca3eec90032179c CMakeFiles/forb-customizer_autogen
+b2de0aa1939fb7250ca3eec90032179c CMakeFiles/tst_roundtrip_autogen
+9da8c8fce3190c5cbfbbf57fabab091b forb-customizer_autogen/timestamp
+9b4e38054374ec3c0bb4140ac7683cd1 tst_roundtrip_autogen/timestamp

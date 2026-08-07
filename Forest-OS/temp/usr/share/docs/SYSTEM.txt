@@ -1,0 +1,6 @@
+System Defaults
+- themes: /usr/share/themes
+- locales: /usr/share/locales
+- mime: /usr/share/mime
+- codecs: /usr/share/codecs
+- desktop: /usr/share/desktop

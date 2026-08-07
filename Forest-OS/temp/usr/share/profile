@@ -1,0 +1,4 @@
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+MANPATH=/usr/share/man
+TZ=UTC
+LANG=en_US.UTF-8

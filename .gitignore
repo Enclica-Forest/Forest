@@ -1,0 +1,9 @@
+obj/
+build-dist/
+*.iso
+*.img
+*.o
+*.bin
+*.elf
+OVMF_VARS*
+esp.img

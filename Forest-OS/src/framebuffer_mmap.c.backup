@@ -1,0 +1,727 @@
+#include "include/framebuffer.h"
+#include "include/graphics/graphics_manager.h"
+#include "include/graphics/graphics_types.h"
+#include "include/mm.h"
+#include "include/memory.h"
+#include "include/memory_safe.h"
+#include "include/smep_smap.h"
+#include "include/syscall.h"
+#include "include/task.h"
+#include "include/screen.h"
+#include "include/string.h"
+#include "include/util.h"
+#include "include/debuglog.h"
+#include "include/timer.h"
+
+
+// =============================================================================
+// SHARED MEMORY FRAMEBUFFER IMPLEMENTATION
+// =============================================================================
+// High-performance framebuffer mapping for userspace applications
+// Implements Method 3: Shared Memory Framebuffer with proper cache management
+// =============================================================================
+
+// Framebuffer mapping state per process
+typedef struct fb_mapping {
+    void* virtual_addr;         // Virtual address in process space
+    uintptr_t physical_addr;    // Physical framebuffer address
+    size_t size;                // Size of mapped region
+    uint32_t flags;             // Mapping flags
+    task_t* task;               // Owner task
+    struct fb_mapping* next;     // Linked list for cleanup
+} fb_mapping_t;
+
+// Global framebuffer mapping state
+static struct {
+    bool initialized;
+    fb_mapping_t* mappings;
+    spinlock_t lock;
+    
+    // Framebuffer update state
+    bool auto_refresh_enabled;
+    uint32_t last_flush_time;
+    uint32_t flush_interval_ms;  // ~60 FPS update rate
+} fb_state;
+
+/**
+ * Initialize fb_state with default values
+ */
+static void init_fb_state(void) {
+    fb_state.initialized = false;
+    fb_state.mappings = NULL;
+    fb_state.auto_refresh_enabled = false;
+    fb_state.last_flush_time = 0;
+    fb_state.flush_interval_ms = 16;    // ~60 FPS update rate
+}
+
+// =============================================================================
+// PAGE TABLE MANAGEMENT WITH CACHE CONTROL
+// =============================================================================
+
+// Enhanced page table flags for framebuffer
+#define FB_PAGE_FLAGS    (PAGE_PRESENT | PAGE_USER | PAGE_WRITABLE)
+
+#ifdef ARCH_64BIT
+// For x86_64, we can use PAT for write combining (better performance)
+// PAT entry 0 = Write Combining (PAT=0, PCD=1, PWT=0)
+#define FB_PAGE_FLAGS_PAT    (PAGE_PRESENT | PAGE_USER | PAGE_WRITABLE)
+#else
+// For x86_32, we use cache disable (slower but compatible)
+#define FB_PAGE_FLAGS_PAT    FB_PAGE_FLAGS
+#endif
+
+/**
+ * Map physical framebuffer to user virtual address space
+ * @param phys_addr Physical address of framebuffer
+ * @param virt_start Virtual address to map to (0 = auto-allocate)
+ * @param size Size of region to map
+ * @param flags Mapping flags (cache control, etc.)
+ * @return Virtual address on success, NULL on failure
+ */
+static void* map_framebuffer_to_user(uintptr_t phys_addr, void* virt_start, 
+                                   size_t size, uint32_t flags) {
+    if (!phys_addr || !size) {
+        return NULL;
+    }
+
+    task_t* current = current_task;
+    if (!current || !current->page_directory) {
+        return NULL;
+    }
+
+    // Align addresses and size to page boundaries
+    uintptr_t aligned_phys = phys_addr & ~(PAGE_SIZE - 1);
+    uintptr_t offset = phys_addr - aligned_phys;
+    size_t aligned_size = (size + offset + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+    
+    // Choose virtual address if not specified
+    uintptr_t virt_addr;
+    if (virt_start) {
+        virt_addr = (uintptr_t)virt_start;
+    } else {
+        // Find a suitable gap in user space (starting at 0x40000000)
+        virt_addr = 0x40000000;
+        
+        // Simple linear search for free space (could be improved with VMA system)
+        while (virt_addr < 0xC0000000) { // Stay in user space
+            bool collision = false;
+            for (uintptr_t check = virt_addr; check < virt_addr + aligned_size; check += PAGE_SIZE) {
+                uintptr_t existing = vmm_get_physical_addr(current->page_directory, check);
+                if (existing != 0) {
+                    collision = true;
+                    virt_addr = check + aligned_size;
+                    break;
+                }
+            }
+            if (!collision) break;
+        }
+        
+        if (virt_addr >= 0xC0000000) {
+            return NULL; // No space found
+        }
+    }
+
+    // Choose page flags based on cache preference
+    uint32_t page_flags = (flags & FB_FLAG_WRITE_COMBINING) ? FB_PAGE_FLAGS_PAT : FB_PAGE_FLAGS;
+
+    // Map each page
+    for (size_t i = 0; i < aligned_size; i += PAGE_SIZE) {
+        uintptr_t current_virt = virt_addr + i;
+        uintptr_t current_phys = aligned_phys + i;
+        
+        memory_result_t result = vmm_map_page(current->page_directory,
+                                             current_virt,
+                                             current_phys,
+                                             page_flags);
+        
+        if (result != MEMORY_OK) {
+            // Cleanup partial mapping
+            for (size_t j = 0; j < i; j += PAGE_SIZE) {
+                vmm_unmap_page(current->page_directory, virt_addr + j);
+            }
+            return NULL;
+        }
+    }
+
+    return (void*)(virt_addr + offset);
+}
+
+/**
+ * Unmap framebuffer from user virtual address space
+ * @param virt_addr Virtual address to unmap
+ * @param size Size of region to unmap
+ * @return 0 on success, error code on failure
+ */
+static int unmap_framebuffer_from_user(void* virt_addr, size_t size) {
+    if (!virt_addr || !size) {
+        return FB_ERROR_INVALID_PARAM;
+    }
+
+    task_t* current = current_task;
+    if (!current || !current->page_directory) {
+        return FB_ERROR_PERMISSION;
+    }
+
+    // Align addresses and size to page boundaries
+    uintptr_t aligned_virt = (uintptr_t)virt_addr & ~(PAGE_SIZE - 1);
+    uintptr_t offset = (uintptr_t)virt_addr - aligned_virt;
+    size_t aligned_size = (size + offset + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+
+    // Unmap each page
+    for (size_t i = 0; i < aligned_size; i += PAGE_SIZE) {
+        vmm_unmap_page(current->page_directory, aligned_virt + i);
+    }
+
+    // Flush TLB for this process (implicit in page operations)
+
+    return FB_SUCCESS;
+}
+
+// =============================================================================
+// FRAMEBUFFER MAPPING TRACKING
+// =============================================================================
+
+/**
+ * Find mapping record for given virtual address
+ */
+static fb_mapping_t* find_mapping(void* virt_addr) {
+    fb_mapping_t* mapping = fb_state.mappings;
+    while (mapping) {
+        if (mapping->virtual_addr == virt_addr) {
+            return mapping;
+        }
+        mapping = mapping->next;
+    }
+    return NULL;
+}
+
+/**
+ * Add mapping record
+ */
+static fb_mapping_t* add_mapping(void* virt_addr, uintptr_t phys_addr, 
+                                size_t size, uint32_t flags) {
+    fb_mapping_t* mapping = kmalloc(sizeof(fb_mapping_t));
+    if (!mapping) {
+        return NULL;
+    }
+
+    mapping->virtual_addr = virt_addr;
+    mapping->physical_addr = phys_addr;
+    mapping->size = size;
+    mapping->flags = flags;
+    mapping->task = current_task;
+    mapping->next = fb_state.mappings;
+    fb_state.mappings = mapping;
+
+    return mapping;
+}
+
+/**
+ * Remove mapping record
+ */
+static int remove_mapping(void* virt_addr) {
+    fb_mapping_t **current = &fb_state.mappings;
+    while (*current) {
+        if ((*current)->virtual_addr == virt_addr) {
+            fb_mapping_t* to_remove = *current;
+            *current = (*current)->next;
+            kfree(to_remove);
+            return FB_SUCCESS;
+        }
+        current = &(*current)->next;
+    }
+    return FB_ERROR_NOT_MAPPED;
+}
+
+/**
+ * Cleanup mappings for dead tasks
+ */
+static void cleanup_task_mappings(task_t* task) {
+    fb_mapping_t **current = &fb_state.mappings;
+    while (*current) {
+        if ((*current)->task == task) {
+            fb_mapping_t* to_remove = *current;
+            *current = (*current)->next;
+            unmap_framebuffer_from_user(to_remove->virtual_addr, to_remove->size);
+            kfree(to_remove);
+        } else {
+            current = &(*current)->next;
+        }
+    }
+}
+
+// =============================================================================
+// FRAMEBUFFER UPDATE MONITORING
+// =============================================================================
+
+/**
+ * Force immediate framebuffer update (cache flush)
+ */
+static void flush_framebuffer_update(void) {
+    framebuffer_t* fb = graphics_get_framebuffer();
+    if (!fb) {
+        return;
+    }
+    
+    // Memory barrier to ensure all writes are visible to hardware
+    __asm__ volatile("mfence" ::: "memory");
+    
+    debuglog(DEBUG_INFO, "[FB_REFRESH] Framebuffer update flushed\n");
+}
+    
+    size_t fb_size = fb->size;
+    if (fb_state.shadow_buffer && fb_state.shadow_size >= fb_size) {
+        return FB_SUCCESS; // Existing buffer is large enough
+    }
+    
+    // Free old shadow buffer
+    if (fb_state.shadow_buffer) {
+        kfree(fb_state.shadow_buffer);
+        fb_state.shadow_buffer = NULL;
+    }
+    
+    // Allocate new shadow buffer
+    void* shadow_mem = memory_heap_alloc(fb_size);
+    if (!shadow_mem) {
+        return FB_ERROR_NO_MEMORY;
+    }
+    uint8_t* shadow = (uint8_t*)shadow_mem;
+    if (!shadow) {
+        return FB_ERROR_NO_MEMORY;
+    }
+    
+    // Initialize with current framebuffer content
+    memcpy(shadow, (void*)fb->virtual_addr, fb_size);
+    
+    fb_state.shadow_buffer = shadow;
+    fb_state.shadow_size = fb_size;
+    fb_state.shadow_valid = true;
+    
+    debuglog(DEBUG_INFO, "[FB_WATCHER] Shadow buffer initialized: %u bytes\n", fb_size);
+    return FB_SUCCESS;
+}
+
+/**
+ * Detect changes in framebuffer using shadow buffer
+ */
+static bool detect_framebuffer_changes(void) {
+    if (!fb_state.shadow_valid || !fb_state.shadow_buffer) {
+        return false;
+    }
+    
+    framebuffer_t* fb = graphics_get_framebuffer();
+    if (!fb || !fb->virtual_addr) {
+        return false;
+    }
+    
+    uint8_t* fb_data = (uint8_t*)fb->virtual_addr;
+    uint8_t* shadow_data = fb_state.shadow_buffer;
+    
+    // Simple byte-by-byte comparison (could be optimized with checksums)
+    bool has_changes = false;
+    for (size_t i = 0; i < fb_state.shadow_size; i++) {
+        if (fb_data[i] != shadow_data[i]) {
+            has_changes = true;
+            shadow_data[i] = fb_data[i]; // Update shadow buffer
+        }
+    }
+    
+    return has_changes;
+}
+
+/**
+ * Force immediate framebuffer update (hardware-specific)
+ */
+static void flush_framebuffer_update(void) {
+    framebuffer_t* fb = graphics_get_framebuffer();
+    if (!fb) {
+        return;
+    }
+    
+    // For now, we'll ensure cache coherence
+    // In the future, this could trigger hardware-specific flush operations
+    
+    // Memory barrier to ensure all writes are visible
+    __asm__ volatile("mfence" ::: "memory");
+    
+    debuglog(DEBUG_INFO, "[FB_WATCHER] Framebuffer update flushed\n");
+}
+
+/**
+ * Framebuffer watcher thread - continuously monitors for changes
+ */
+static void framebuffer_watcher_thread(void* arg) {
+    debuglog(DEBUG_INFO, "[FB_WATCHER] Watcher thread started\n");
+    
+    while (fb_state.watcher_enabled) {
+        uint32_t current_time = timer_get_ticks(); // Use kernel timer
+        
+        // Check for changes every update_interval_ms
+        if (current_time - fb_state.last_update_time >= fb_state.update_interval_ms) {
+            if (detect_framebuffer_changes()) {
+                flush_framebuffer_update();
+                fb_state.last_update_time = current_time;
+            }
+        }
+        
+        // Sleep to prevent busy waiting
+        // This would need proper sleep implementation
+        // task_sleep(fb_state.update_interval_ms / 2);
+        
+        // Simple yield for now - use task scheduler
+        // task_yield(); // Would need proper implementation
+    }
+    
+    debuglog(DEBUG_INFO, "[FB_WATCHER] Watcher thread stopped\n");
+}
+
+/**
+ * Start framebuffer watcher
+ */
+static int start_framebuffer_watcher(void) {
+    if (fb_state.watcher_enabled) {
+        return FB_SUCCESS; // Already running
+    }
+    
+    if (init_shadow_buffer() != FB_SUCCESS) {
+        return FB_ERROR_NO_MEMORY;
+    }
+    
+    // Create watcher task (simplified for now)
+    fb_state.watcher_task = NULL; // Will be implemented when task creation is available
+    if (!fb_state.watcher_task) {
+        debuglog(DEBUG_ERROR, "[FB_WATCHER] Failed to create watcher task\n");
+        return FB_ERROR_NO_MEMORY;
+    }
+    
+    fb_state.watcher_enabled = true;
+    fb_state.last_update_time = 0; // Will be set in thread
+    
+    debuglog(DEBUG_INFO, "[FB_WATCHER] Framebuffer watcher started\n");
+    return FB_SUCCESS;
+}
+
+/**
+ * Stop framebuffer watcher
+ */
+static void stop_framebuffer_watcher(void) {
+    if (!fb_state.watcher_enabled) {
+        return;
+    }
+    
+    fb_state.watcher_enabled = false;
+    
+    // Wait for watcher task to finish
+    if (fb_state.watcher_task) {
+        // This would need proper task join/destroy API
+        // task_destroy(fb_state.watcher_task);
+        fb_state.watcher_task = NULL;
+    }
+    
+    // Cleanup shadow buffer
+    if (fb_state.shadow_buffer) {
+        kfree(fb_state.shadow_buffer);
+        fb_state.shadow_buffer = NULL;
+        fb_state.shadow_size = 0;
+        fb_state.shadow_valid = false;
+    }
+    
+    debuglog(DEBUG_INFO, "[FB_WATCHER] Framebuffer watcher stopped\n");
+}
+
+// =============================================================================
+// FRAMEBUFFER ACCESS FUNCTIONS
+// =============================================================================
+
+/**
+ * Get current framebuffer information from graphics system
+ */
+static int get_framebuffer_info(fb_info_t* info) {
+    if (!info) {
+        return FB_ERROR_INVALID_PARAM;
+    }
+
+    framebuffer_t* fb = graphics_get_framebuffer();
+
+    // If no framebuffer is currently mapped, try to map one
+    if (!fb) {
+        debuglog(DEBUG_INFO, "[FB_INFO] No framebuffer mapped, attempting to map...\n");
+        graphics_result_t result = graphics_map_framebuffer(&fb);
+        if (result != GRAPHICS_SUCCESS || !fb) {
+            debuglog(DEBUG_WARN, "[FB_INFO] graphics_map_framebuffer failed: %d\n", result);
+
+            // Final fallback: try multiboot framebuffer directly
+            extern bool kernel_get_multiboot_framebuffer(uintptr_t*, uint32_t*, uint32_t*, uint32_t*, uint32_t*);
+            uintptr_t mb_addr = 0;
+            uint32_t mb_width = 0, mb_height = 0, mb_bpp = 0, mb_pitch = 0;
+
+            if (kernel_get_multiboot_framebuffer(&mb_addr, &mb_width, &mb_height, &mb_bpp, &mb_pitch) &&
+                mb_addr != 0 && mb_width != 0 && mb_height != 0) {
+                debuglog(DEBUG_INFO, "[FB_INFO] Using multiboot framebuffer directly: 0x%llx %ux%u %ubpp\n",
+                        (unsigned long long)mb_addr, mb_width, mb_height, mb_bpp);
+
+                info->phys_addr = mb_addr;
+                info->width = mb_width;
+                info->height = mb_height;
+                info->pitch = mb_pitch;
+                info->bpp = mb_bpp;
+                info->size = mb_pitch * mb_height;
+                info->addr = NULL;
+                info->format = (mb_bpp == 32) ? FB_FORMAT_BGRA_8888 :
+                              (mb_bpp == 24) ? FB_FORMAT_BGR_888 :
+                              (mb_bpp == 16) ? FB_FORMAT_RGB_565 : FB_FORMAT_RGB_888;
+                info->flags = FB_FLAG_USER_ACCESSIBLE;
+                return FB_SUCCESS;
+            }
+
+            debuglog(DEBUG_ERROR, "[FB_INFO] No framebuffer available\n");
+            return FB_ERROR_NOT_FOUND;
+        }
+    }
+
+    // Ensure framebuffer has valid virtual address
+    if (!fb->virtual_addr) {
+        debuglog(DEBUG_WARN, "[FB_INFO] Framebuffer has no virtual address\n");
+        return FB_ERROR_NOT_FOUND;
+    }
+
+    // Fill info structure
+    info->phys_addr = fb->physical_addr;
+    info->width = fb->width;
+    info->height = fb->height;
+    info->pitch = fb->pitch;
+    info->bpp = fb->bpp;
+    info->size = fb->size;
+    info->addr = NULL; // Will be filled by mmap
+
+    debuglog(DEBUG_INFO, "[FB_INFO] Returning fb info: %ux%u %ubpp, phys=0x%llx, size=%u\n",
+            info->width, info->height, info->bpp,
+            (unsigned long long)info->phys_addr, info->size);
+
+    // Convert pixel format
+    switch (fb->format) {
+        case PIXEL_FORMAT_RGB_888:
+            info->format = FB_FORMAT_RGB_888;
+            break;
+        case PIXEL_FORMAT_RGBA_8888:
+            info->format = FB_FORMAT_RGBA_8888;
+            break;
+        case PIXEL_FORMAT_BGR_888:
+            info->format = FB_FORMAT_BGR_888;
+            break;
+        case PIXEL_FORMAT_BGRA_8888:
+            info->format = FB_FORMAT_BGRA_8888;
+            break;
+        case PIXEL_FORMAT_RGB_565:
+            info->format = FB_FORMAT_RGB_565;
+            break;
+        default:
+            info->format = FB_FORMAT_RGB_888;
+            break;
+    }
+
+    // Set flags
+    info->flags = FB_FLAG_USER_ACCESSIBLE;
+    if (fb->double_buffered) {
+        info->flags |= FB_FLAG_DOUBLE_BUFFERED;
+    }
+    if (fb->hw_cursor_available) {
+        info->flags |= FB_FLAG_HARDWARE_CURSOR;
+    }
+
+    return FB_SUCCESS;
+}
+
+// =============================================================================
+// FRAMEBUFFER AUTO-REFRESH SYSCALLS
+// ============================================================================
+
+/**
+ * Syscall: Force immediate framebuffer update
+ */
+long sys_fb_flush(void) {
+    debuglog(DEBUG_INFO, "[FB_REFRESH] sys_fb_flush called by task %d\n",
+            current_task ? current_task->id : -1);
+
+    if (!current_task) {
+        return FB_ERROR_PERMISSION;
+    }
+
+    flush_framebuffer_update();
+    return FB_SUCCESS;
+}
+
+// =============================================================================
+// ORIGINAL SYSCALL IMPLEMENTATIONS
+// =============================================================================
+
+/**
+ * Syscall: Get framebuffer information
+ */
+long sys_get_fb_info(fb_info_t* user_info) {
+    debuglog(DEBUG_INFO, "[FB_SYSCALL] sys_get_fb_info called, user_info=%p\n", (void*)user_info);
+
+    if (!user_info) {
+        debuglog(DEBUG_ERROR, "[FB_SYSCALL] user_info is NULL\n");
+        return FB_ERROR_INVALID_PARAM;
+    }
+
+    fb_info_t info;
+    int result = get_framebuffer_info(&info);
+    if (result != FB_SUCCESS) {
+        debuglog(DEBUG_ERROR, "[FB_SYSCALL] get_framebuffer_info failed: %d\n", result);
+        return result;
+    }
+
+    debuglog(DEBUG_INFO, "[FB_SYSCALL] Got info: %ux%u %ubpp, phys=0x%llx, size=%u\n",
+            info.width, info.height, info.bpp,
+            (unsigned long long)info.phys_addr, info.size);
+
+    // Copy info to userspace using safe user memory access
+    USER_ACCESS_BEGIN();
+    memory_copy((const char*)&info, (char*)user_info, sizeof(fb_info_t));
+    USER_ACCESS_END();
+
+    debuglog(DEBUG_INFO, "[FB_SYSCALL] Copied info to userspace successfully\n");
+    return FB_SUCCESS;
+}
+
+/**
+ * Syscall: Map framebuffer into user space
+ */
+long sys_mmap_fb(void) {
+    debuglog(DEBUG_INFO, "[FB_MMAP] sys_mmap_fb called by task %d\n",
+            current_task ? current_task->id : -1);
+
+    fb_info_t info;
+    int result = get_framebuffer_info(&info);
+    debuglog(DEBUG_INFO, "[FB_MMAP] get_framebuffer_info returned: %d\n", result);
+    if (result != FB_SUCCESS) {
+        debuglog(DEBUG_ERROR, "[FB_MMAP] get_framebuffer_info failed: %d\n", result);
+        return result;
+    }
+
+    debuglog(DEBUG_INFO, "[FB_MMAP] Framebuffer info: %ux%u, phys=0x%llx, size=%u\n",
+            info.width, info.height, (unsigned long long)info.phys_addr, info.size);
+
+    if (!current_task) {
+        debuglog(DEBUG_ERROR, "[FB_MMAP] No current task!\n");
+        return FB_ERROR_PERMISSION;
+    }
+
+    spinlock_acquire(&fb_state.lock);
+
+    // Check if this process already has a mapping
+    fb_mapping_t* m = fb_state.mappings;
+    while (m) {
+        if (m->task == current_task && m->virtual_addr != NULL) {
+            debuglog(DEBUG_INFO, "[FB_MMAP] Returning existing mapping at %p\n", m->virtual_addr);
+            spinlock_release(&fb_state.lock);
+            return (long)m->virtual_addr;
+        }
+        m = m->next;
+    }
+
+    // Validate framebuffer info
+    if (info.phys_addr == 0 || info.size == 0) {
+        debuglog(DEBUG_ERROR, "[FB_MMAP] Invalid framebuffer: phys=0x%llx, size=%u\n",
+                (unsigned long long)info.phys_addr, info.size);
+        spinlock_release(&fb_state.lock);
+        return FB_ERROR_NOT_FOUND;
+    }
+
+    // Map framebuffer to userspace
+    debuglog(DEBUG_INFO, "[FB_MMAP] Mapping framebuffer phys=0x%llx size=%u to userspace\n",
+            (unsigned long long)info.phys_addr, info.size);
+
+    void* virt_addr = map_framebuffer_to_user(info.phys_addr, NULL, info.size,
+                                           info.flags | FB_FLAG_CACHE_DISABLED);
+    if (!virt_addr) {
+        debuglog(DEBUG_ERROR, "[FB_MMAP] map_framebuffer_to_user failed!\n");
+        spinlock_release(&fb_state.lock);
+        return FB_ERROR_NO_MEMORY;
+    }
+
+    debuglog(DEBUG_INFO, "[FB_MMAP] Mapped framebuffer to virtual address %p\n", virt_addr);
+
+    // Add mapping record
+    fb_mapping_t* mapping = add_mapping(virt_addr, info.phys_addr, info.size, info.flags);
+    if (!mapping) {
+        debuglog(DEBUG_ERROR, "[FB_MMAP] Failed to add mapping record\n");
+        unmap_framebuffer_from_user(virt_addr, info.size);
+        spinlock_release(&fb_state.lock);
+        return FB_ERROR_NO_MEMORY;
+    }
+
+    spinlock_release(&fb_state.lock);
+    debuglog(DEBUG_INFO, "[FB_MMAP] Successfully mapped framebuffer, returning 0x%lx\n", (long)virt_addr);
+    
+    // Enable auto-refresh for this mapping
+    if (!fb_state.auto_refresh_enabled) {
+        fb_state.auto_refresh_enabled = true;
+        fb_state.last_flush_time = timer_get_ticks();
+        debuglog(DEBUG_INFO, "[FB_MMAP] Auto-refresh enabled for continuous updates\n");
+    }
+    
+    return (long)virt_addr;
+}
+
+/**
+ * Syscall: Unmap framebuffer from user space
+ */
+long sys_munmap_fb(void* addr) {
+    if (!addr) {
+        return FB_ERROR_INVALID_PARAM;
+    }
+
+    spinlock_acquire(&fb_state.lock);
+
+    fb_mapping_t* mapping = find_mapping(addr);
+    if (!mapping || mapping->task != current_task) {
+        spinlock_release(&fb_state.lock);
+        return FB_ERROR_NOT_MAPPED;
+    }
+
+    int result = unmap_framebuffer_from_user(addr, mapping->size);
+    if (result == FB_SUCCESS) {
+        remove_mapping(addr);
+    }
+
+    spinlock_release(&fb_state.lock);
+    return result;
+}
+
+// =============================================================================
+// INITIALIZATION AND CLEANUP
+// =============================================================================
+
+/**
+ * Initialize framebuffer mapping subsystem
+ */
+int framebuffer_mmap_init(void) {
+    if (fb_state.initialized) {
+        return 0; // Already initialized
+    }
+
+    init_fb_state();
+    
+    fb_state.mappings = NULL;
+    spinlock_init(&fb_state.lock, "fb_mmap");
+    fb_state.initialized = true;
+
+    debuglog(DEBUG_INFO, "[FB_INIT] Framebuffer mmap subsystem initialized\n");
+    return 0;
+}
+
+/**
+ * Cleanup framebuffer mappings for task exit
+ */
+void framebuffer_mmap_task_exit(task_t* task) {
+    if (!fb_state.initialized || !task) {
+        return;
+    }
+
+    spinlock_acquire(&fb_state.lock);
+    cleanup_task_mappings(task);
+    spinlock_release(&fb_state.lock);
+}

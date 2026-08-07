@@ -1,0 +1,10 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=Image Viewer
+Comment=Browse and view images
+Exec=/bin/canopy_app_imgview.elf
+Icon=imgview
+Categories=Graphics;Viewer;
+Terminal=false
+Type=Application
+Hidden=false

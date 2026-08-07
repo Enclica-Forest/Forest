@@ -1,0 +1,297 @@
+/*
+ * syscall_integration_test.c - Comprehensive test for Forest OS syscall integration
+ */
+
+#include "include/syscall.h"
+#include "include/types.h"
+#include "include/string.h"
+#include "include/debuglog.h"
+#include "include/task.h"
+
+// Test results structure
+typedef struct {
+    const char *name;
+    int32 result;
+    int32 expected; // -38 for ENOSYS, >=0 for success, specific negative for specific errors
+    bool passed;
+} syscall_test_t;
+
+static syscall_test_t test_results[100];
+static int test_count = 0;
+static int passed_count = 0;
+
+#define TEST_SYSCALL(name, call, expected_result) do { \
+    test_results[test_count].name = name; \
+    test_results[test_count].result = (call); \
+    test_results[test_count].expected = expected_result; \
+    test_results[test_count].passed = ((expected_result) == -38) ? (test_results[test_count].result == -38) : ((expected_result) >= 0) ? (test_results[test_count].result >= 0) : (test_results[test_count].result == expected_result)); \
+    if (test_results[test_count].passed) passed_count++; \
+    test_count++; \
+} while(0)
+
+// Test all major syscall categories
+void test_basic_file_io(void) {
+    debuglog(DEBUG_INFO, "Testing basic file I/O syscalls\n");
+    
+    // Test write to stdout (fd=1)
+    const char *test_msg = "Forest OS syscall test\n";
+    TEST_SYSCALL("write", sys_write(1, (uint32)test_msg, strlen(test_msg)), 22);
+    
+    // Test read from stdin (fd=0)
+    char buffer[100];
+    TEST_SYSCALL("read", sys_read(0, (uint32)buffer, sizeof(buffer)), -11); // EAGAIN expected
+    
+    // Test open non-existent file
+    TEST_SYSCALL("open", sys_open((uint32)"/nonexistent", 0, 0), -2); // ENOENT expected
+    
+    // Test close invalid fd
+    TEST_SYSCALL("close", sys_close(999), -9); // EBADF expected
+    
+    // Test lseek on stdin
+    TEST_SYSCALL("lseek", sys_lseek(0, 0, 1), 0); // Should succeed
+}
+
+void test_process_management(void) {
+    debuglog(DEBUG_INFO, "Testing process management syscalls\n");
+    
+    // Test getpid
+    TEST_SYSCALL("getpid", sys_getpid(), 1); // Should return >=1
+    
+    // Test getppid (init returns 0)
+    TEST_SYSCALL("getppid", sys_getppid(), 0);
+    
+    // Test getuid
+    TEST_SYSCALL("getuid", sys_getuid(), 0); // Root user returns 0
+    
+    // Test getgid  
+    TEST_SYSCALL("getgid", sys_getgid(), 0); // Root group returns 0
+    
+    // Test geteuid
+    TEST_SYSCALL("geteuid", sys_geteuid(), 0);
+    
+    // Test getegid
+    TEST_SYSCALL("getegid", sys_getegid(), 0);
+    
+    // Test fork
+    TEST_SYSCALL("fork", sys_fork(), -38); // ENOSYS expected for now
+    
+    // Test kill (non-existent pid)
+    TEST_SYSCALL("kill", sys_kill(9999, 9), -3); // ESRCH expected
+}
+
+void test_memory_management(void) {
+    debuglog(DEBUG_INFO, "Testing memory management syscalls\n");
+    
+    // Test brk with NULL (get current break)
+    TEST_SYSCALL("brk", sys_brk(0), 0); // Should return current break
+    
+    // Test brk with invalid address (too high)
+    TEST_SYSCALL("brk", sys_brk(0xFFFFFFFF), -12); // ENOMEM expected
+    
+    // Test mmap anonymous
+    TEST_SYSCALL("mmap", sys_mmap(0, 4096, 3, 34, -1, 0), -38); // ENOSYS expected for now
+    
+    // Test munmap
+    TEST_SYSCALL("munmap", sys_munmap(0x100000, 4096), 0); // Should succeed or fail gracefully
+    
+    // Test mprotect
+    TEST_SYSCALL("mprotect", sys_mprotect(0x100000, 4096, 3), -38); // ENOSYS expected
+}
+
+void test_time_management(void) {
+    debuglog(DEBUG_INFO, "Testing time management syscalls\n");
+    
+    // Test time
+    TEST_SYSCALL("time", sys_time(0), 1730000000); // Should return reasonable timestamp
+    
+    // Test gettimeofday
+    TEST_SYSCALL("gettimeofday", sys_gettimeofday(0, 0), 0); // Should succeed
+    
+    // Test nanosleep
+    struct timespec req = {.tv_sec = 0, .tv_nsec = 1000000}; // 1ms
+    TEST_SYSCALL("nanosleep", sys_nanosleep((uint32)&req, 0), 0); // Should succeed
+    
+    // Test settimeofday (should fail without root)
+    TEST_SYSCALL("settimeofday", sys_settimeofday(0, 0), -1); // EPERM expected
+}
+
+void test_filesystem_operations(void) {
+    debuglog(DEBUG_INFO, "Testing filesystem operations\n");
+    
+    // Test stat on non-existent file
+    TEST_SYSCALL("stat", sys_stat((uint32)"/nonexistent", 0), -2); // ENOENT expected
+    
+    // Test fstat on invalid fd
+    TEST_SYSCALL("fstat", sys_fstat(999, 0), -9); // EBADF expected
+    
+    // Test access on non-existent file
+    TEST_SYSCALL("access", sys_access((uint32)"/nonexistent", 0), -2); // ENOENT expected
+    
+    // Test unlink on non-existent file
+    TEST_SYSCALL("unlink", sys_unlink((uint32)"/nonexistent"), -1); // EPERM expected (read-only FS)
+    
+    // Test mknod (should work in /dev)
+    TEST_SYSCALL("mknod", sys_mknod((uint32)"/test", 0, 0), -38); // ENOSYS for now
+    
+    // Test pipe
+    int pipefd[2];
+    TEST_SYSCALL("pipe", sys_pipe((uint32)pipefd), 0); // Should succeed
+    
+    // Test dup
+    TEST_SYSCALL("dup", sys_dup(1), 0); // Should duplicate stdout
+    
+    // Test dup2
+    TEST_SYSCALL("dup2", sys_dup2(1, 100), 0); // Should duplicate stdout to 100
+}
+
+void test_working_directory(void) {
+    debuglog(DEBUG_INFO, "Testing working directory operations\n");
+    
+    // Test getcwd
+    char cwd_buf[256];
+    TEST_SYSCALL("getcwd", sys_getcwd((uint32)cwd_buf, sizeof(cwd_buf)), 2); // Should return 2 for "/"
+    
+    // Test chdir to root
+    TEST_SYSCALL("chdir", sys_chdir((uint32)"/"), 0); // Should succeed
+    
+    // Test chdir to invalid path
+    TEST_SYSCALL("chdir", sys_chdir((uint32)"/nonexistent"), -2); // ENOENT expected
+    
+    // Test fchdir
+    TEST_SYSCALL("fchdir", sys_fchdir(1), -38); // ENOSYS expected
+}
+
+void test_file_permissions(void) {
+    debuglog(DEBUG_INFO, "Testing file permission operations\n");
+    
+    // Test chmod (should return 0 for compatibility)
+    TEST_SYSCALL("chmod", sys_chmod((uint32)"/test", 0o644), 0);
+    
+    // Test fchmod (should return 0 for compatibility)
+    TEST_SYSCALL("fchmod", sys_fchmod(1, 0o644), 0);
+    
+    // Test chown (should return 0 for compatibility)
+    TEST_SYSCALL("chown", sys_chown((uint32)"/test", 0, 0), 0);
+    
+    // Test fchown (should return 0 for compatibility)
+    TEST_SYSCALL("fchown", sys_fchown(1, 0, 0), 0);
+    
+    // Test umask
+    TEST_SYSCALL("umask", sys_umask(0o022), 0o022); // Should return old mask
+    
+    // Test lchown
+    TEST_SYSCALL("lchown", sys_lchown((uint32)"/test", 0, 0), 0);
+}
+
+void test_network_operations(void) {
+    debuglog(DEBUG_INFO, "Testing network operations\n");
+    
+    // Test socket creation
+    TEST_SYSCALL("socket", sys_socket(2, 2, 0), 0); // AF_INET, SOCK_DGRAM should succeed
+    
+    // Test bind
+    TEST_SYSCALL("bind", sys_bind(3, 0, 0), -9); // EBADF expected (invalid fd)
+    
+    // Test connect
+    TEST_SYSCALL("connect", sys_connect(3, 0, 0), -9); // EBADF expected
+    
+    // Test sendto
+    TEST_SYSCALL("sendto", sys_sendto(3, (uint32)"test", 4, 0, 0, 0), -9); // EBADF expected
+    
+    // Test recvfrom
+    TEST_SYSCALL("recvfrom", sys_recvfrom(3, 0, 4, 0, 0, 0), -9); // EBADF expected
+    
+    // Test netinfo
+    net_socket_info_t net_buf[10];
+    TEST_SYSCALL("netinfo", sys_netinfo((uint32)net_buf, 10), 0); // Should succeed
+}
+
+void test_forest_os_specific(void) {
+    debuglog(DEBUG_INFO, "Testing Forest OS specific syscalls\n");
+    
+    // Test framebuffer mmap
+    TEST_SYSCALL("mmap_fb", sys_mmap_fb(), -38); // ENOSYS expected for now
+    
+    // Test framebuffer munmap
+    TEST_SYSCALL("munmap_fb", sys_munmap_fb((void*)0x100000), -38); // ENOSYS expected for now
+    
+    // Test get framebuffer info
+    TEST_SYSCALL("get_fb_info", sys_get_fb_info(0), -38); // ENOSYS expected for now
+    
+    // Test userctl
+    TEST_SYSCALL("user", sys_user(0, 0, 0, 0, 0, 0), -38); // ENOSYS expected for now
+    
+    // Test power (should fail without root)
+    TEST_SYSCALL("power", sys_power(1), -1); // EPERM expected
+    
+    // Test uname
+    TEST_SYSCALL("uname", sys_uname(0), 0); // Should succeed
+}
+
+void test_advanced_operations(void) {
+    debuglog(DEBUG_INFO, "Testing advanced operations (should return ENOSYS)\n");
+    
+    // Test select
+    TEST_SYSCALL("select", sys_select(1, 0, 0, 0, 0), 0); // Should timeout
+    
+    // Test poll
+    TEST_SYSCALL("poll", sys_poll(0, 0, 0), 0); // Should succeed with 0 fds
+    
+    // Test readv
+    TEST_SYSCALL("readv", sys_readv(1, 0, 0), -14); // EFAULT expected
+    
+    // Test writev
+    TEST_SYSCALL("writev", sys_writev(1, 0, 0), -14); // EFAULT expected
+    
+    // Test pread64
+    TEST_SYSCALL("pread64", sys_pread64(1, 0, 4, 0), -38); // ENOSYS expected
+    
+    // Test pwrite64
+    TEST_SYSCALL("pwrite64", sys_pwrite64(1, 0, 4, 0), -38); // ENOSYS expected
+    
+    // Test epoll (should return ENOSYS)
+    TEST_SYSCALL("epoll_create", sys_epoll_create(1), -38);
+    TEST_SYSCALL("epoll_wait", sys_epoll_wait(1, 0, 0, 0), -38);
+}
+
+void print_test_results(void) {
+    debuglog(DEBUG_INFO, "=== Forest OS Syscall Integration Test Results ===\n");
+    debuglog(DEBUG_INFO, "Tests run: %d\n", test_count);
+    debuglog(DEBUG_INFO, "Tests passed: %d\n", passed_count);
+    debuglog(DEBUG_INFO, "Success rate: %d%%\n", (passed_count * 100) / test_count);
+    
+    debuglog(DEBUG_INFO, "Detailed results:\n");
+    for (int i = 0; i < test_count; i++) {
+        const char *status = test_results[i].passed ? "PASS" : "FAIL";
+        debuglog(DEBUG_INFO, "%s: %s (result=%d, expected=%d)\n", 
+                   test_results[i].name, status, test_results[i].result, test_results[i].expected);
+    }
+    
+    if (passed_count == test_count) {
+        debuglog(DEBUG_INFO, "All tests PASSED! Syscall integration is working correctly.\n");
+    } else {
+        debuglog(DEBUG_ERROR, "Some tests FAILED. Review syscall implementations.\n");
+    }
+}
+
+// Main test function
+void run_syscall_integration_tests(void) {
+    debuglog(DEBUG_INFO, "Starting Forest OS syscall integration tests...\n");
+    
+    test_count = 0;
+    passed_count = 0;
+    
+    // Run all test categories
+    test_basic_file_io();
+    test_process_management();
+    test_memory_management();
+    test_time_management();
+    test_filesystem_operations();
+    test_working_directory();
+    test_file_permissions();
+    test_network_operations();
+    test_forest_os_specific();
+    test_advanced_operations();
+    
+    print_test_results();
+}

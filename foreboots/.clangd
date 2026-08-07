@@ -1,0 +1,13 @@
+CompileFlags:
+  Add:
+    - -xc
+    - --target=x86_64-unknown-windows
+    - -ffreestanding
+    - -fshort-wchar
+    - -mno-red-zone
+    - -mno-mmx
+    - -mno-sse
+    - -std=c11
+    - -Iinclude
+    - -Iuefi
+  Compiler: clang

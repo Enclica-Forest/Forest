@@ -1,0 +1,6 @@
+text/plain=notes
+text/markdown=notes
+image/bmp=files
+image/png=files
+audio/wav=monitor
+application/x-elf=terminal

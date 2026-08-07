@@ -1,0 +1,56 @@
+#ifndef LIBC_STDIO_H
+#define LIBC_STDIO_H
+
+#define __STDC_VERSION_STDIO_H__ 202311L
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "../../../libs/forestcore/include/types.h"
+#include <stddef.h>
+#include <stdarg.h>
+
+// Standard I/O functions
+#define EOF (-1)
+int printf(const char *format, ...);
+int snprintf(char *buffer, size_t size, const char *format, ...);
+int vsnprintf(char *buffer, size_t size, const char *format, va_list args);
+int vsprintf(char *buffer, const char *format, va_list args);
+int sprintf(char *buffer, const char *format, ...);
+int puts(const char *str);
+int sscanf(const char *str, const char *format, ...);
+int putchar(int c);
+int getchar(void);
+char *gets(char *str);
+
+// File operations (stubs for now)
+typedef struct {
+    int fd;
+    int flags;
+    char *buffer;
+} FILE;
+
+extern FILE *stdin;
+extern FILE *stdout;
+extern FILE *stderr;
+
+int fprintf(FILE *stream, const char *format, ...);
+int vfprintf(FILE *stream, const char *format, va_list args);
+int fscanf(FILE *stream, const char *format, ...);
+
+FILE *fopen(const char *filename, const char *mode);
+int fclose(FILE *file);
+int fflush(FILE *stream); /* implemented in userspace/libc/stdio.c, just missing here */
+int fgetc(FILE *file);
+int fputc(int c, FILE *file);
+char *fgets(char *str, int n, FILE *file);
+int fputs(const char *str, FILE *file);
+size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
+size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

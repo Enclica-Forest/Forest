@@ -1,0 +1,60 @@
+/*
+ * syscall_integration.c - Simple integration verification for Forest OS syscalls
+ */
+
+#include "include/syscall.h"
+#include "include/types.h"
+#include "include/debuglog.h"
+
+// Simple verification that works with existing kernel
+void verify_syscall_integration(void) {
+    debuglog(DEBUG_INFO, "=== Forest OS Syscall Integration Verification ===\n");
+    
+    debuglog(DEBUG_INFO, "Testing syscall dispatcher...\n");
+    
+    // Test basic syscalls that we know work
+    debuglog(DEBUG_INFO, "1. Testing write syscall:\n");
+    int32 write_result = sys_write(1, (uint32)"Forest OS Integration Test\n", 28);
+    debuglog(DEBUG_INFO, "   write(stdout, 28 bytes) = %d\n", write_result);
+    
+    debuglog(DEBUG_INFO, "2. Testing process info:\n");
+    int32 pid = sys_getpid();
+    debuglog(DEBUG_INFO, "   getpid() = %d\n", pid);
+    
+    int32 ppid = sys_getppid();
+    debuglog(DEBUG_INFO, "   getppid() = %d\n", ppid);
+    
+    debuglog(DEBUG_INFO, "3. Testing user info:\n");
+    int32 uid = sys_getuid();
+    debuglog(DEBUG_INFO, "   getuid() = %d\n", uid);
+    
+    int32 gid = sys_getgid();
+    debuglog(DEBUG_INFO, "   getgid() = %d\n", gid);
+    
+    debuglog(DEBUG_INFO, "4. Testing time functions:\n");
+    int32 current_time = sys_time(0);
+    debuglog(DEBUG_INFO, "   time() = %d\n", current_time);
+    
+    int32 tv_result = sys_gettimeofday(0, 0);
+    debuglog(DEBUG_INFO, "   gettimeofday() = %d\n", tv_result);
+    
+    debuglog(DEBUG_INFO, "5. Testing memory management:\n");
+    uint32 current_brk = sys_brk(0);
+    debuglog(DEBUG_INFO, "   brk(0) = 0x%x\n", current_brk);
+    
+    debuglog(DEBUG_INFO, "6. Testing system info:\n");
+    int32 uname_result = sys_uname(0);
+    debuglog(DEBUG_INFO, "   uname() = %d\n", uname_result);
+    
+    debuglog(DEBUG_INFO, "7. Testing exit syscall:\n");
+    sys_exit(0); // This will not return, but tests that exit works
+    
+    // Note: Execution should not reach here
+    debuglog(DEBUG_INFO, "WARNING: sys_exit did not terminate execution\n");
+}
+
+// Initialize syscall verification
+void init_syscall_integration(void) {
+    debuglog(DEBUG_INFO, "Initializing Forest OS syscall integration verification...\n");
+    verify_syscall_integration();
+}

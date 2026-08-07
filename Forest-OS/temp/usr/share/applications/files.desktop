@@ -1,0 +1,10 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=Files
+Comment=File browser and manager
+Exec=/bin/ls.elf
+Icon=files
+Categories=System;Utility;
+Terminal=true
+Type=Application
+Hidden=false

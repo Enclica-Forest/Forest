@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Example App
+Exec=/bin/example.elf
+Icon=app
+Comment=Example desktop entry

@@ -1,0 +1,4 @@
+# Forest OS Session Configuration
+profile=/usr/share/images/profile/dog.bmp
+wallpaper=/usr/share/images/background/login.bmp
+DE=/bin/canopyde.elf

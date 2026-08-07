@@ -1,0 +1,11 @@
+# type ext
+text/plain txt text conf log md
+text/markdown md markdown
+image/bmp bmp
+image/png png
+image/jpeg jpg jpeg
+audio/wav wav
+audio/ogg ogg
+audio/mpeg mp3
+application/octet-stream bin
+application/x-elf elf

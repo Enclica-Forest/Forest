@@ -1,0 +1,101 @@
+#include "include/init_system.h"
+
+#include "include/debuglog.h"
+#include "include/graphics_init.h"
+#include "include/graphics/graphics_manager.h"
+#include "include/tty.h"
+
+static struct {
+    init_display_config_t display;
+    bool display_applied;
+    bool using_graphics;
+} init_state = {
+    .display = {
+        .graphics_requested = false,
+        .width = 0,
+        .height = 0,
+        .bpp = 0,
+    },
+    .display_applied = false,
+    .using_graphics = false,
+};
+
+void init_system_init(void) {
+    init_state.display.graphics_requested = true;
+    /* Preserve the bootloader-selected mode unless explicitly overridden. */
+    init_state.display.width = 0;
+    init_state.display.height = 0;
+    init_state.display.bpp = 0;
+    init_state.display_applied = false;
+    init_state.using_graphics = false;
+}
+
+void init_system_request_graphics(uint32_t width, uint32_t height, uint32_t bpp) {
+    init_state.display.graphics_requested = true;
+    if (width) init_state.display.width = width;
+    if (height) init_state.display.height = height;
+    if (bpp) init_state.display.bpp = bpp;
+}
+
+bool init_system_graphics_requested(void) {
+    return init_state.display.graphics_requested;
+}
+
+bool init_system_apply_display(void) {
+    if (init_state.display_applied) {
+        return init_state.using_graphics;
+    }
+
+    init_state.display_applied = true;
+
+    if (!init_state.display.graphics_requested) {
+        debuglog(DEBUG_INFO, "Init: graphics not requested; staying in text mode\n");
+        return false;
+    }
+
+    if (graphics_is_display_ready()) {
+        debuglog(DEBUG_INFO, "Init: graphics already initialized and display ready\n");
+        init_state.using_graphics = true;
+        return true;
+    }
+
+    if (graphics_is_initialized()) {
+        debuglog(DEBUG_INFO, "Init: graphics subsystem already initialized, waiting for display ready\n");
+        init_state.using_graphics = true;
+        return true;
+    }
+
+    if (kernel_framebuffer_disabled()) {
+        debuglog(DEBUG_INFO, "Init: framebuffer disabled (nofb mode), skipping graphics init\n");
+        init_state.using_graphics = false;
+        return false;
+    }
+
+    graphics_result_t gres = initialize_graphics_subsystem();
+    if (gres != GRAPHICS_SUCCESS) {
+        debuglog(DEBUG_WARN, "Init: graphics init failed (%d); using legacy TTY\n", gres);
+        init_state.using_graphics = false;
+        return false;
+    }
+
+    // Apply an explicit resolution override only when one was requested.
+    // Otherwise keep the bootloader-selected mode (GRUB gfxpayload).
+    if (init_state.display.width && init_state.display.height && init_state.display.bpp) {
+        graphics_set_mode(init_state.display.width, init_state.display.height,
+                          init_state.display.bpp, 60);
+    }
+
+    if (!tty_try_enable_graphics_backend()) {
+        debuglog(DEBUG_WARN, "Init: graphics backend unavailable; using legacy TTY\n");
+        init_state.using_graphics = false;
+        return false;
+    }
+
+    graphics_clear_screen(COLOR_BLACK);
+    tty_clear();
+    tty_write_ansi("\x1b[36m[INIT]\x1b[0m Graphics console activated via init system\n");
+    tty_write_ansi("\x1b[90m[hint]\x1b[0m Defaulting to TTY unless explicitly requested.\n\n");
+
+    init_state.using_graphics = true;
+    return true;
+}

@@ -1,0 +1,4 @@
+[Service]
+Name=example
+Exec=/bin/example.elf
+Type=simple

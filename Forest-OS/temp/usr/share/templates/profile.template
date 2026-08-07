@@ -1,0 +1,4 @@
+# User profile defaults
+shell=/bin/forestsh.elf
+home=/home/USER
+groups=users
