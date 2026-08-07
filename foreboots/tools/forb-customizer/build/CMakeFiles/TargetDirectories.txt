@@ -1,9 +1,0 @@
-/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/forb-customizer.dir
-/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/tst_roundtrip.dir
-/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/test.dir
-/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/edit_cache.dir
-/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/rebuild_cache.dir
-/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/forb-customizer_autogen_timestamp_deps.dir
-/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/forb-customizer_autogen.dir
-/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/tst_roundtrip_autogen_timestamp_deps.dir
-/home/bluet/forest/foreboots/tools/forb-customizer/build/CMakeFiles/tst_roundtrip_autogen.dir

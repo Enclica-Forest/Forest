@@ -12,3 +12,5 @@ forestos-toolchain/
 /.fern-*.wf.js
 /*.wf.js
 .DS_Store
+foreboots/tools/*/build/
+foreboots/tools/**/build/
