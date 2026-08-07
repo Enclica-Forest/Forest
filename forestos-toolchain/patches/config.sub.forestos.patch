@@ -1,0 +1,23 @@
+Reference diff: teach config.sub the *-forestos OS.
+
+This documents the change build-toolchain.sh applies idempotently (via a
+guarded sed insertion) to BOTH the binutils and gcc top-level config.sub.
+The relevant anchor line differs slightly between binutils 2.43 and
+gcc 13.2.0 (extra OS names after `fiwix*`), so the script keys off the
+`fiwix*` token rather than applying this context diff verbatim.
+
+--- a/config.sub
++++ b/config.sub
+@@ (OS validation list, near the `fiwix*` entry)
+ 	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx* | zephyr* \
+-	     | fiwix* )
++	     | forestos* | fiwix* )
+ 		;;
+
+For binutils 2.43 the same token line reads:
+-	     | fiwix* | mlibc* | cos* | mbr* | ironclad* )
++	     | forestos* | fiwix* | mlibc* | cos* | mbr* | ironclad* )
+
+Effect: `config.sub i686-forestos` and `config.sub x86_64-forestos`
+canonicalize successfully instead of failing with
+"Invalid configuration ... OS `forestos' not recognized".

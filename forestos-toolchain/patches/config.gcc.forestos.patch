@@ -1,0 +1,30 @@
+Reference diff: add i686-forestos / x86_64-forestos targets to gcc/config.gcc.
+
+This documents the change build-toolchain.sh applies idempotently (via a
+guarded sed insertion just before the `i[34567]86-*-elf*)` case in the big
+`case ${target} in` block, ~line 1864 of gcc-13.2.0/gcc/config.gcc).
+
+The Forest-OS targets mirror the bare i386/x86_64 ELF configuration
+(newlib-stdint, i386elf.h) and additionally pull in config/forestos.h,
+which is installed from patches/gcc/config/forestos.h.
+
+--- a/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ (in `case ${target} in`, immediately before the i[34567]86-*-elf*) case)
++i[34567]86-*-forestos*)
++	tm_file="${tm_file} i386/unix.h i386/att.h elfos.h newlib-stdint.h i386/i386elf.h forestos.h"
++	;;
++x86_64-*-forestos*)
++	tm_file="${tm_file} i386/unix.h i386/att.h elfos.h newlib-stdint.h i386/i386elf.h i386/x86-64.h forestos.h"
++	;;
+ i[34567]86-*-elf*)
+ 	tm_file="${tm_file} i386/unix.h i386/att.h elfos.h newlib-stdint.h i386/i386elf.h"
+ 	;;
+ x86_64-*-elf*)
+ 	tm_file="${tm_file} i386/unix.h i386/att.h elfos.h newlib-stdint.h i386/i386elf.h i386/x86-64.h"
+ 	;;
+
+Note: cpu_type and --with-abi handling for these triples is already covered
+by the generic `i[34567]86-*-* | x86_64-*-*)` cpu block and the
+`i[34567]86-*-*)` / `x86_64-*-*)` abi blocks earlier in config.gcc, so no
+further edits are required there.

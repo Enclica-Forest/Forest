@@ -74,9 +74,9 @@ forebo-qemu: forebo-image
 	@$(MAKE) -C $(FOREBO_DIR) qemu KERNEL=$(FOREBO_KERNEL) QEMU_MEMORY=$(FOREBO_QEMU_MEMORY)
 
 # Verify ForeB binary sizes and MBR signature
+# (foreboots' own `check` target validates the 0x55AA MBR signature internally.)
 forebo-check: forebo
 	@$(MAKE) -C $(FOREBO_DIR) check
-	@$(MAKE) -C $(FOREBO_DIR) check-mbr
 
 # Clean ForeB build outputs
 forebo-clean:

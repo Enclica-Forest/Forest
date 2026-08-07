@@ -7,7 +7,23 @@ build-dist/
 *.elf
 OVMF_VARS*
 esp.img
-forestos-toolchain/
+# forestos-toolchain: track SOURCE (build script, patches, sysroot skeleton, README);
+# ignore all build/download/output dirs (multi-GB, GitHub-hostile).
+forestos-toolchain/build/
+forestos-toolchain/build-*/
+forestos-toolchain/install/
+forestos-toolchain/src/
+forestos-toolchain/sysroot/
+# extracted source trees or stray tarballs anywhere under the toolchain dir
+forestos-toolchain/**/*.tar.*
+forestos-toolchain/**/binutils-*/
+forestos-toolchain/**/gcc-*/
+# do NOT ignore the tracked source package:
+!forestos-toolchain/build-toolchain.sh
+!forestos-toolchain/patches/
+!forestos-toolchain/sysroot-skeleton/
+!forestos-toolchain/README.md
+!forestos-toolchain/checksums.txt
 .claude/
 /.fern-*.wf.js
 /*.wf.js

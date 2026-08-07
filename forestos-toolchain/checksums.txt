@@ -1,0 +1,14 @@
+# SHA-256 checksums for the toolchain source tarballs.
+# Format: "<sha256>  <filename>" (compatible with `sha256sum -c`).
+# build-toolchain.sh verifies every downloaded/pre-present tarball against
+# the matching line here and aborts on mismatch.
+#
+# These are the official upstream GNU release checksums.
+
+b53606f443ac8f01d1d5fc9c39497f2af322d99e14cea5c0b4b124d630379365  binutils-2.43.tar.xz
+e275e76442a6067341a27f04c5c6b83d8613144004c0413528863dc6b5c743da  gcc-13.2.0.tar.xz
+
+# Older versions kept for reference / alternate pins (not built by default):
+645c25f563b8adc0a81dbd6a41cffbf4d37083a382e02d5d3df4f65c09516d00  binutils-2.39.tar.xz
+e549cf9cf3594a00e27b6589d4322d70e0720cdd213f39beb4181e06926230ff  gcc-12.2.0.tar.xz
+3f2db222b007e8a4a23cd5ba56726ef08e8b1f1eb2055ee72c1402cea73a8dd9  gcc-11.4.0.tar.xz

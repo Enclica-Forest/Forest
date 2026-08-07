@@ -17,10 +17,10 @@
 #
 # Note: clean-all removes `obj/ build/ *.iso` verbatim (per original Makefile).
 # build-config.mk is config, NOT removed. The `build/` path here is the
-# original build-output tree; in the new layout OUTDIR lives under build/
-# (e.g. build/32-bios-debug/), so clean-all also wipes build/*.mk fragments —
-# they are source, not generated, so this is destructive. Kept verbatim per
-# spec; orchestrator may later narrow to `rm -rf obj/ $(OUTDIR) *.iso`.
+# original build-output tree. OUTDIR lives under build/ (e.g.
+# build/32bit-bios-debug/), so clean-all removes only the generated arch
+# output dirs (build/*bit-*) — NOT the build/*.mk fragments, which are source.
+# A bare `rm -rf build/` would delete the whole build system; do not do that.
 
 .PHONY: clean clean-all clean-kernel maybe-clean-before-build
 
@@ -30,7 +30,7 @@ clean:
 
 clean-all:
 	@echo "$(OK_COLOR)Cleaning all build files...$(NO_COLOR)"
-	@rm -rf obj/ build/ *.iso
+	@rm -rf obj/ iso/ *.iso build/*bit-*
 	@rm -rf $(DISTDIR)
 
 clean-kernel:

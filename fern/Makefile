@@ -67,7 +67,7 @@ endif
 # PHONY TARGET DECLARATIONS (rules owned by this file)
 # =============================================================================
 .PHONY: help help-advanced all build show-config \
-        ensure-toolchain validate-toolchain toolchain-setup \
+        ensure-toolchain validate-toolchain toolchain toolchain-setup \
         build32 build64 buildarm buildaarch64 \
         build32-bios build32-uefi build64-bios build64-uefi \
         buildall crossarcinterpret \
@@ -101,6 +101,7 @@ help:
 	@echo "  dist          Create distribution package"
 	@echo "  clean         Clean build files for current config"
 	@echo ""
+	@echo "$(OK_COLOR)Toolchain:$(NO_COLOR)        toolchain (build cross-gcc for current ARCH) / validate-toolchain"
 	@echo "$(OK_COLOR)ForeB bootloader:$(NO_COLOR)  forebo / forebo-image / forebo-qemu / forebo-check / forebo-clean"
 	@echo "$(OK_COLOR)Multi-arch:$(NO_COLOR)       build32 build64 buildarm buildaarch64 buildall crossarcinterpret"
 	@echo "$(OK_COLOR)Run in QEMU:$(NO_COLOR)      run run-bios run-uefi run32 run64 runarm runaarch64 debug"
@@ -206,11 +207,8 @@ validate-toolchain:
 		fi; \
 		if [ ! -d "$(TOOLCHAIN_ARCH_DIR)" ]; then \
 			echo "$(ERROR_COLOR)Architecture toolchain not found: $(TOOLCHAIN_ARCH_DIR)$(NO_COLOR)"; \
-			if [ "$(ARCH)" = "64" ]; then \
-				echo "$(ERROR_COLOR)Please install x86_64-forestos toolchain (see './build-64bit-toolchain.sh')$(NO_COLOR)"; \
-			else \
-				echo "$(ERROR_COLOR)Please install $(FORESTOS_TOOLCHAIN_PREFIX) toolchain$(NO_COLOR)"; \
-			fi; \
+			echo "$(ERROR_COLOR)Please build the $(FORESTOS_TOOLCHAIN_PREFIX) toolchain: run 'make toolchain'$(NO_COLOR)"; \
+			echo "$(INFO_COLOR)  (or ARCH=$(ARCH) make toolchain; see forestos-toolchain/README.md)$(NO_COLOR)"; \
 			exit 1; \
 		fi; \
 	fi
@@ -231,6 +229,38 @@ validate-toolchain:
 	@$(CC) --version | head -1
 	@echo "$(INFO_COLOR)LD version: $(NO_COLOR)"
 	@$(LD) --version | head -1
+
+# Build the Forest OS cross-toolchain from source for the configured ARCH.
+# Delegates to the canonical consolidated builder in the toolchain source
+# package. Honors FORESTOS_TOOLCHAIN_DIR (so overrides / the symlink both work)
+# and forwards the current ARCH. Extra flags via TOOLCHAIN_ARGS, e.g.:
+#   make toolchain ARCH=64
+#   make toolchain TOOLCHAIN_ARGS="--jobs 4 --clean"
+#   make toolchain TOOLCHAIN_ARGS="--arch both"
+TOOLCHAIN_SCRIPT := $(FORESTOS_TOOLCHAIN_DIR)/build-toolchain.sh
+# Map kernel ARCH (32/64/arm/aarch64) to the builder's --arch (32/64 only).
+ifeq ($(ARCH),64)
+    TOOLCHAIN_BUILD_ARCH := 64
+else
+    TOOLCHAIN_BUILD_ARCH := 32
+endif
+
+.PHONY: toolchain
+toolchain:
+	@if [ "$(ARCH)" != "32" ] && [ "$(ARCH)" != "64" ]; then \
+		echo "$(WARN_COLOR)ARCH=$(ARCH) has no Forest OS cross-toolchain; building for $(TOOLCHAIN_BUILD_ARCH)-bit instead.$(NO_COLOR)"; \
+		echo "$(INFO_COLOR)(ARM/AArch64 use a system cross-compiler, not this builder.)$(NO_COLOR)"; \
+	fi
+	@if [ ! -x "$(TOOLCHAIN_SCRIPT)" ]; then \
+		echo "$(ERROR_COLOR)Toolchain build script not found or not executable:$(NO_COLOR)"; \
+		echo "$(ERROR_COLOR)  $(TOOLCHAIN_SCRIPT)$(NO_COLOR)"; \
+		echo "$(INFO_COLOR)Set FORESTOS_TOOLCHAIN_DIR to the toolchain source package, e.g.$(NO_COLOR)"; \
+		echo "$(INFO_COLOR)  make toolchain FORESTOS_TOOLCHAIN_DIR=$(REPO_ROOT)/../forestos-toolchain$(NO_COLOR)"; \
+		exit 1; \
+	fi
+	@echo "$(INFO_COLOR)Building Forest OS cross-toolchain (arch=$(TOOLCHAIN_BUILD_ARCH)) via $(TOOLCHAIN_SCRIPT)$(NO_COLOR)"
+	"$(TOOLCHAIN_SCRIPT)" --arch $(TOOLCHAIN_BUILD_ARCH) $(TOOLCHAIN_ARGS)
+	@echo "$(OK_COLOR)Toolchain build finished. Verify with: make validate-toolchain$(NO_COLOR)"
 
 .PHONY: toolchain-setup
 toolchain-setup:
