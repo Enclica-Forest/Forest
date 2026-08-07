@@ -30,6 +30,14 @@ void tty_write_ansi(const char* text);
 // callers don't need to choose between the two entry points.
 void tty_write(const char* text);
 
+// Convenience string output. Alias for tty_write().
+void tty_puts(const char* text);
+
+// Set text colors using 0x00RRGGBB packed values. When the cross-architecture
+// console backend is active the colors are forwarded to arch_console_set_color().
+// On x86 framebuffer TTY the nearest VGA 4-bit palette entry is chosen.
+void tty_set_color(uint32_t fg, uint32_t bg);
+
 // Update the current text attribute (foreground/background pair encoded using
 // the existing text attribute nibble layout).
 void tty_set_attr(uint8_t attr);
@@ -235,8 +243,12 @@ extern virtual_tty_t g_virtual_ttys[MAX_VIRTUAL_TTYS];
 #define TIOCSETA    0x5402  /* Set termios structure (drain) */
 #define TIOCSETAW   0x5403  /* Set termios structure (wait) */
 #define TIOCSETAF   0x5404  /* Set termios structure (flush) */
+#ifndef TIOCGWINSZ
 #define TIOCGWINSZ  0x5413  /* Get window size */
+#endif
+#ifndef TIOCSWINSZ
 #define TIOCSWINSZ  0x5414  /* Set window size */
+#endif
 #define TIOCOUTQ    0x5411  /* Get output queue size */
 #define TIOCINQ     0x5412  /* Get input queue size */
 

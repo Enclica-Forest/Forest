@@ -385,6 +385,7 @@ bool corruption_verify_poison(void *ptr, size_t size, uint8_t poison_value) {
 
 // Report corruption violation
 void corruption_report_violation(const char *type, void *ptr, const char *details) {
+    (void)ptr;
     corruption_stats.corruption_detected++;
     
     // Use emergency reporting to avoid recursion

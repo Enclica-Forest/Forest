@@ -419,6 +419,7 @@ static gfx_result_t software_3d_use_program(gfx_device_t* dev, void* program) {
  * ============================================================================ */
 
 static gfx_result_t software_3d_create_buffer(gfx_device_t* dev, uint32_t target, size_t size, const void* data, uint32_t usage, void** buffer) {
+    (void)usage;
     if (!dev || !buffer) {
         return GFX_ERR_INVALID_PARAM;
     }
@@ -728,6 +729,7 @@ static gfx_result_t software_3d_draw_arrays(gfx_device_t* dev, uint32_t mode, in
             int32_t y2 = 200;
             int32_t x3 = 50 + i * 20;
             int32_t y3 = 200;
+            (void)x1; (void)y1; (void)x2; (void)y2; (void)x3; (void)y3;
             
             /* Draw triangle (software fallback) */
             if (dev->fb && dev->fb->virt_addr) {

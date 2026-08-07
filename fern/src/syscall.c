@@ -416,16 +416,16 @@ typedef struct {
 } syscall_entry_t;
 
 static syscall_entry_t syscall_table[SYS_MAX];
-static bool syscall_warned[SYS_MAX];
+static bool syscall_warned[SYS_MAX] __attribute__((unused));
 
 // Forward declarations
-static int32 sys_dup(sys_arg_t fd);
-static int32 sys_dup2(sys_arg_t oldfd, sys_arg_t newfd);
-static int32 sys_stat(sys_arg_t path_ptr, sys_arg_t stat_ptr);
-static int32 sys_access(sys_arg_t path_ptr, sys_arg_t mode);
-static int32 sys_mkdir(sys_arg_t pathname, sys_arg_t mode);
-static int32 sys_unlink(sys_arg_t path_ptr);
-static int32 sys_munmap(sys_arg_t addr, sys_arg_t length);
+int32 sys_dup(sys_arg_t fd);
+int32 sys_dup2(sys_arg_t oldfd, sys_arg_t newfd);
+int32 sys_stat(sys_arg_t path_ptr, sys_arg_t stat_ptr);
+int32 sys_access(sys_arg_t path_ptr, sys_arg_t mode);
+int32 sys_mkdir(sys_arg_t pathname, sys_arg_t mode);
+int32 sys_unlink(sys_arg_t path_ptr);
+int32 sys_munmap(sys_arg_t addr, sys_arg_t length);
 static inline uint32 pipe_available_bytes(pipe_t* pipe);
 static inline uint32 pipe_free_bytes(pipe_t* pipe);
 static pipe_t* find_pipe_by_fd(int fd, bool* is_write_end);
@@ -451,10 +451,10 @@ static bool fd_exists_local_or_stdio(int32 fd);
 static int32 alloc_alias_fd_slot(int32 target_fd);
 static task_t* find_task_by_pid_local(uint32 pid);
 static int32 futex_wake_addr(uint32 addr, int32 max_wake);
-static int32 sys_shmget(sys_arg_t key, sys_arg_t size, sys_arg_t shmflg);
-static int32 sys_shmat(sys_arg_t shmid, sys_arg_t shmaddr, sys_arg_t shmflg);
-static int32 sys_shmctl(sys_arg_t shmid, sys_arg_t cmd, sys_arg_t buf);
-static int32 sys_shmdt(sys_arg_t shmaddr);
+int32 sys_shmget(sys_arg_t key, sys_arg_t size, sys_arg_t shmflg);
+int32 sys_shmat(sys_arg_t shmid, sys_arg_t shmaddr, sys_arg_t shmflg);
+int32 sys_shmctl(sys_arg_t shmid, sys_arg_t cmd, sys_arg_t buf);
+int32 sys_shmdt(sys_arg_t shmaddr);
 
 static bool user_buffer_readable(const void* ptr, size_t len) {
     if (!ptr || len == 0) {
@@ -605,7 +605,7 @@ static int32 futex_wake_addr(uint32 addr, int32 max_wake) {
     return woken;
 }
 
-static int32 sys_unimplemented(sys_arg_t arg1, sys_arg_t arg2, sys_arg_t arg3,
+int32 sys_unimplemented(sys_arg_t arg1, sys_arg_t arg2, sys_arg_t arg3,
                                sys_arg_t arg4, sys_arg_t arg5, sys_arg_t arg6) {
     (void)arg1;
     (void)arg2;
@@ -616,7 +616,7 @@ static int32 sys_unimplemented(sys_arg_t arg1, sys_arg_t arg2, sys_arg_t arg3,
     return SYSCALL_ENOSYS;
 }
 
-static void syscall_register(uint32 num, syscall_func_t func) {
+__attribute__((unused)) static void syscall_register(uint32 num, syscall_func_t func) {
     if (num >= SYS_MAX) {
         return;
     }
@@ -624,7 +624,7 @@ static void syscall_register(uint32 num, syscall_func_t func) {
     syscall_table[num].implemented = (func != 0 && func != sys_unimplemented);
 }
 
-static int32 sys_write(sys_arg_t fd, sys_arg_t buf_ptr, sys_arg_t len) {
+int32 sys_write(sys_arg_t fd, sys_arg_t buf_ptr, sys_arg_t len) {
     fd = (sys_arg_t)resolve_fd_alias((int32)fd);
     if (!buf_ptr || len == 0) {
         return 0;
@@ -751,7 +751,7 @@ static int32 sys_write(sys_arg_t fd, sys_arg_t buf_ptr, sys_arg_t len) {
     return SYSCALL_EPERM;
 }
 
-static int32 sys_read(sys_arg_t fd, sys_arg_t buf_ptr, sys_arg_t len) {
+int32 sys_read(sys_arg_t fd, sys_arg_t buf_ptr, sys_arg_t len) {
     fd = (sys_arg_t)resolve_fd_alias((int32)fd);
     if (!buf_ptr || len == 0) {
         return 0;
@@ -935,7 +935,7 @@ static int32 sys_read(sys_arg_t fd, sys_arg_t buf_ptr, sys_arg_t len) {
     return (int32)to_copy;
 }
 
-static int32 sys_open(sys_arg_t path_ptr, sys_arg_t flags, sys_arg_t mode) {
+int32 sys_open(sys_arg_t path_ptr, sys_arg_t flags, sys_arg_t mode) {
     (void)flags;
     (void)mode;
 
@@ -1117,7 +1117,7 @@ static int32 close_underlying_resource(sys_arg_t fd) {
             pipe->read_closed = true;
         }
         if (pipe->read_closed && pipe->write_closed) {
-            memory_set(pipe->buffer, 0, PIPE_BUFFER_SIZE);
+            memory_set((uint8*)pipe->buffer, 0, PIPE_BUFFER_SIZE);
             pipe->used = false;
         }
     }
@@ -1209,7 +1209,7 @@ static void finalize_slot_if_orphaned(int32 fd) {
     close_underlying_resource((sys_arg_t)fd);
 }
 
-static int32 sys_close(sys_arg_t fd) {
+int32 sys_close(sys_arg_t fd) {
     if ((int32)fd < 0) {
         return SYSCALL_EBADF;
     }
@@ -1258,7 +1258,7 @@ void syscall_close_all_fds_for_task(uint32 pid) {
     }
 }
 
-static int32 sys_lseek(sys_arg_t fd, sys_arg_t offset, sys_arg_t whence) {
+int32 sys_lseek(sys_arg_t fd, sys_arg_t offset, sys_arg_t whence) {
     fd = (sys_arg_t)resolve_fd_alias((int32)fd);
     if (fd < 3) {
         return SYSCALL_EBADF;
@@ -1287,21 +1287,21 @@ static int32 sys_lseek(sys_arg_t fd, sys_arg_t offset, sys_arg_t whence) {
     return (int32)new_offset;
 }
 
-static int32 sys_getpid(void) {
+int32 sys_getpid(void) {
     if (current_task) {
         return (int32)current_task->id;
     }
     return 0;
 }
 
-static int32 sys_getpgrp(void) {
+int32 sys_getpgrp(void) {
     if (current_task) {
         return (int32)current_task->pgrp;
     }
     return 0;
 }
 
-static int32 sys_getpgid(sys_arg_t pid) {
+int32 sys_getpgid(sys_arg_t pid) {
     if (pid == 0) {
         if (current_task) {
             return (int32)current_task->pgrp;
@@ -1322,7 +1322,7 @@ static int32 sys_getpgid(sys_arg_t pid) {
     return SYSCALL_ESRCH;
 }
 
-static int32 sys_tcgetpgrp(sys_arg_t fd) {
+int32 sys_tcgetpgrp(sys_arg_t fd) {
     if (!current_task) {
         return SYSCALL_EPERM;
     }
@@ -1345,7 +1345,7 @@ static int32 sys_tcgetpgrp(sys_arg_t fd) {
     return SYSCALL_ENOTTY;
 }
 
-static int32 sys_tcsetpgrp(sys_arg_t fd, sys_arg_t pgrp) {
+int32 sys_tcsetpgrp(sys_arg_t fd, sys_arg_t pgrp) {
     if (!current_task) {
         return SYSCALL_EPERM;
     }
@@ -1393,7 +1393,7 @@ static int32 sys_tcsetpgrp(sys_arg_t fd, sys_arg_t pgrp) {
 // (like a shell's foreground child) of real scheduling time. Restricted to
 // same-session tasks, mirroring sys_tcsetpgrp()'s session check, so an
 // unrelated process can't grab scheduling priority for itself.
-static int32 sys_set_foreground_task(sys_arg_t pid) {
+int32 sys_set_foreground_task(sys_arg_t pid) {
     if (!current_task) {
         return SYSCALL_EPERM;
     }
@@ -1408,7 +1408,7 @@ static int32 sys_set_foreground_task(sys_arg_t pid) {
     return 0;
 }
 
-static int32 sys_setpgid(sys_arg_t pid, sys_arg_t pgid) {
+int32 sys_setpgid(sys_arg_t pid, sys_arg_t pgid) {
     if (!current_task) {
         return SYSCALL_EPERM;
     }
@@ -1471,7 +1471,7 @@ static int32 sys_setpgid(sys_arg_t pid, sys_arg_t pgid) {
     return 0;
 }
 
-static int32 sys_setsid(void) {
+int32 sys_setsid(void) {
     if (!current_task) {
         return SYSCALL_EPERM;
     }
@@ -1489,7 +1489,7 @@ static int32 sys_setsid(void) {
     return (int32)current_task->id;
 }
 
-static int32 sys_getsid(sys_arg_t pid) {
+int32 sys_getsid(sys_arg_t pid) {
     task_t* target_task = NULL;
 
     if (pid == 0) {
@@ -1515,7 +1515,7 @@ static int32 sys_getsid(sys_arg_t pid) {
     return (int32)target_task->session;
 }
 
-static int32 sys_time(sys_arg_t user_ptr) {
+int32 sys_time(sys_arg_t user_ptr) {
     uint32 current_time = epoch_get_current();
     if (user_ptr) {
         uint32* t = (uint32*)user_ptr;
@@ -1527,7 +1527,7 @@ static int32 sys_time(sys_arg_t user_ptr) {
     return (int32)current_time;
 }
 
-static int32 sys_brk(sys_arg_t new_break) {
+int32 sys_brk(sys_arg_t new_break) {
     task_t* task = current_user_task_ptr();
     if (!task) {
         return SYSCALL_ENOMEM;
@@ -1593,7 +1593,7 @@ static void busy_wait(uint32 iterations) {
     }
 }
 
-static int32 sys_nanosleep(sys_arg_t req_ptr, sys_arg_t rem_ptr) {
+int32 sys_nanosleep(sys_arg_t req_ptr, sys_arg_t rem_ptr) {
     (void)rem_ptr;
 
     if (!req_ptr) {
@@ -1631,7 +1631,7 @@ typedef struct {
     char machine[32];
 } utsname_t;
 
-static int32 sys_uname(sys_arg_t user_ptr) {
+int32 sys_uname(sys_arg_t user_ptr) {
     if (!user_ptr) {
         return SYSCALL_EINVAL;
     }
@@ -1659,7 +1659,7 @@ static int32 sys_uname(sys_arg_t user_ptr) {
     return 0;
 }
 
-static int32 sys_exit(sys_arg_t code) {
+int32 sys_exit(sys_arg_t code) {
     if (!current_task) {
         // Kernel task exiting - this is unusual but allowed
         return 0;
@@ -1687,7 +1687,7 @@ static int32 sys_exit(sys_arg_t code) {
     return 0; // Unreachable, but silences compiler warning
 }
 
-static int32 sys_exit_group(sys_arg_t code) {
+int32 sys_exit_group(sys_arg_t code) {
     if (!current_task) {
         return 0;
     }
@@ -1735,7 +1735,7 @@ static int32 sys_exit_group(sys_arg_t code) {
     return 0;
 }
 
-static int32 sys_socket(sys_arg_t domain, sys_arg_t type, sys_arg_t protocol) {
+int32 sys_socket(sys_arg_t domain, sys_arg_t type, sys_arg_t protocol) {
     if (domain == AF_UNIX || domain == AF_LOCAL) {
         if (!(type == SOCK_STREAM || type == SOCK_DGRAM)) {
             return SYSCALL_EINVAL;
@@ -1760,7 +1760,7 @@ static int32 sys_socket(sys_arg_t domain, sys_arg_t type, sys_arg_t protocol) {
     return net_socket_create(domain, type, protocol);
 }
 
-static int32 sys_bind(sys_arg_t fd, sys_arg_t addr_ptr, sys_arg_t addr_len) {
+int32 sys_bind(sys_arg_t fd, sys_arg_t addr_ptr, sys_arg_t addr_len) {
     unix_path_socket_t* usock = find_unix_path_socket_by_fd((int)fd);
     if (usock) {
         if (!addr_ptr || addr_len < sizeof(sockaddr_un_t)) {
@@ -1806,7 +1806,7 @@ static int32 sys_bind(sys_arg_t fd, sys_arg_t addr_ptr, sys_arg_t addr_len) {
     return net_bind(fd, port);
 }
 
-static int32 sys_sendto(sys_arg_t fd, sys_arg_t buf_ptr, sys_arg_t len, sys_arg_t flags,
+int32 sys_sendto(sys_arg_t fd, sys_arg_t buf_ptr, sys_arg_t len, sys_arg_t flags,
                         sys_arg_t addr_ptr, sys_arg_t addr_len) {
     (void)flags;
 
@@ -1879,7 +1879,7 @@ static int32 sys_sendto(sys_arg_t fd, sys_arg_t buf_ptr, sys_arg_t len, sys_arg_
     return net_send_datagram(fd, (const uint8*)buf_ptr, len, dest_addr, dest_port);
 }
 
-static int32 sys_recvfrom(sys_arg_t fd, sys_arg_t buf_ptr, sys_arg_t len, sys_arg_t flags,
+int32 sys_recvfrom(sys_arg_t fd, sys_arg_t buf_ptr, sys_arg_t len, sys_arg_t flags,
                           sys_arg_t addr_ptr, sys_arg_t addr_len_ptr) {
     (void)flags;
 
@@ -1952,7 +1952,7 @@ static int32 sys_recvfrom(sys_arg_t fd, sys_arg_t buf_ptr, sys_arg_t len, sys_ar
     return received;
 }
 
-static int32 sys_netinfo(sys_arg_t buffer_ptr, sys_arg_t max_entries) {
+int32 sys_netinfo(sys_arg_t buffer_ptr, sys_arg_t max_entries) {
     if (!buffer_ptr || max_entries == 0) {
         return SYSCALL_EINVAL;
     }
@@ -1967,7 +1967,7 @@ static int32 sys_netinfo(sys_arg_t buffer_ptr, sys_arg_t max_entries) {
 }
 
 // File system operations
-static int32 sys_stat(sys_arg_t path_ptr, sys_arg_t stat_ptr) {
+int32 sys_stat(sys_arg_t path_ptr, sys_arg_t stat_ptr) {
     // Basic stat implementation - all files report as regular files
     if (!path_ptr || !stat_ptr) {
         return SYSCALL_EFAULT;
@@ -2020,7 +2020,7 @@ static int32 sys_stat(sys_arg_t path_ptr, sys_arg_t stat_ptr) {
     return 0;
 }
 
-static int32 sys_fstat(sys_arg_t fd, sys_arg_t stat_ptr) {
+int32 sys_fstat(sys_arg_t fd, sys_arg_t stat_ptr) {
     fd = (sys_arg_t)resolve_fd_alias((int32)fd);
     if (!stat_ptr) {
         return SYSCALL_EFAULT;
@@ -2086,7 +2086,7 @@ static int32 sys_fstat(sys_arg_t fd, sys_arg_t stat_ptr) {
     return 0;
 }
 
-static int32 sys_lstat(sys_arg_t path_ptr, sys_arg_t stat_ptr) {
+int32 sys_lstat(sys_arg_t path_ptr, sys_arg_t stat_ptr) {
     // Symlink metadata is not tracked separately yet.
     return sys_stat(path_ptr, stat_ptr);
 }
@@ -2098,7 +2098,7 @@ typedef struct {
 } iovec_t;
 
 // File system operations - vectorized I/O
-static int32 sys_readv(sys_arg_t fd, sys_arg_t iov, sys_arg_t iovcnt) {
+int32 sys_readv(sys_arg_t fd, sys_arg_t iov, sys_arg_t iovcnt) {
     if (!iov || iovcnt == 0) {
         return SYSCALL_EINVAL;
     }
@@ -2150,7 +2150,7 @@ static int32 sys_readv(sys_arg_t fd, sys_arg_t iov, sys_arg_t iovcnt) {
     return total_read;
 }
 
-static int32 sys_writev(sys_arg_t fd, sys_arg_t iov, sys_arg_t iovcnt) {
+int32 sys_writev(sys_arg_t fd, sys_arg_t iov, sys_arg_t iovcnt) {
     if (!iov || iovcnt == 0) {
         return SYSCALL_EINVAL;
     }
@@ -2202,7 +2202,7 @@ static int32 sys_writev(sys_arg_t fd, sys_arg_t iov, sys_arg_t iovcnt) {
     return total_written;
 }
 
-static int32 sys_pread64(sys_arg_t fd, sys_arg_t buf, sys_arg_t count, sys_arg_t offset) {
+int32 sys_pread64(sys_arg_t fd, sys_arg_t buf, sys_arg_t count, sys_arg_t offset) {
     if (!buf || count == 0) {
         return 0;
     }
@@ -2241,7 +2241,7 @@ static int32 sys_pread64(sys_arg_t fd, sys_arg_t buf, sys_arg_t count, sys_arg_t
     return result;
 }
 
-static int32 sys_pwrite64(sys_arg_t fd, sys_arg_t buf, sys_arg_t count, sys_arg_t offset) {
+int32 sys_pwrite64(sys_arg_t fd, sys_arg_t buf, sys_arg_t count, sys_arg_t offset) {
     if (!buf || count == 0) {
         return 0;
     }
@@ -2281,7 +2281,7 @@ static int32 sys_pwrite64(sys_arg_t fd, sys_arg_t buf, sys_arg_t count, sys_arg_
 }
 
 // File system operations - extended
-static int32 sys_fsync(sys_arg_t fd) {
+int32 sys_fsync(sys_arg_t fd) {
     if (fd < 3) {
         return SYSCALL_EBADF;
     }
@@ -2296,7 +2296,7 @@ static int32 sys_fsync(sys_arg_t fd) {
     return 0;
 }
 
-static int32 sys_fdatasync(sys_arg_t fd) {
+int32 sys_fdatasync(sys_arg_t fd) {
     if (fd < 3) {
         return SYSCALL_EBADF;
     }
@@ -2311,7 +2311,8 @@ static int32 sys_fdatasync(sys_arg_t fd) {
     return 0;
 }
 
-static int32 sys_ftruncate(sys_arg_t fd, sys_arg_t length) {
+int32 sys_ftruncate(sys_arg_t fd, sys_arg_t length) {
+    (void)length;
     if (fd < 3) {
         return SYSCALL_EBADF;
     }
@@ -2322,13 +2323,14 @@ static int32 sys_ftruncate(sys_arg_t fd, sys_arg_t length) {
     }
 
     vfs_handle_t* handle = &vfs_handles[slot];
+    (void)handle;
     
     // Our VFS is read-only, so truncation is not supported
     // In a writable filesystem, this would shrink/extend the file
     return SYSCALL_EPERM;
 }
 
-static int32 sys_truncate(sys_arg_t path_ptr, sys_arg_t length) {
+int32 sys_truncate(sys_arg_t path_ptr, sys_arg_t length) {
     (void)length;
     if (!path_ptr) {
         return SYSCALL_EFAULT;
@@ -2360,7 +2362,7 @@ static inline void set_cwd(const char* path) {
     dest[255] = '\0';
 }
 
-static int32 sys_getcwd(sys_arg_t buf, sys_arg_t size) {
+int32 sys_getcwd(sys_arg_t buf, sys_arg_t size) {
     if (!buf || size == 0) {
         return SYSCALL_EINVAL;
     }
@@ -2410,7 +2412,7 @@ static bool resolve_at_path(sys_arg_t dirfd, sys_arg_t path_ptr, char* out, uint
     return true;
 }
 
-static int32 sys_openat(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t flags, sys_arg_t mode) {
+int32 sys_openat(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t flags, sys_arg_t mode) {
     char resolved[256];
     if (!resolve_at_path(dirfd, pathname, resolved, sizeof(resolved))) {
         return SYSCALL_EINVAL;
@@ -2418,7 +2420,7 @@ static int32 sys_openat(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t flags, sy
     return sys_open((sys_arg_t)resolved, flags, mode);
 }
 
-static int32 sys_mkdirat(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t mode) {
+int32 sys_mkdirat(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t mode) {
     char resolved[256];
     if (!resolve_at_path(dirfd, pathname, resolved, sizeof(resolved))) {
         return SYSCALL_EINVAL;
@@ -2426,7 +2428,7 @@ static int32 sys_mkdirat(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t mode) {
     return sys_mkdir((sys_arg_t)resolved, mode);
 }
 
-static int32 sys_unlinkat(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t flags) {
+int32 sys_unlinkat(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t flags) {
     (void)flags;
     char resolved[256];
     if (!resolve_at_path(dirfd, pathname, resolved, sizeof(resolved))) {
@@ -2435,7 +2437,7 @@ static int32 sys_unlinkat(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t flags) 
     return sys_unlink((sys_arg_t)resolved);
 }
 
-static int32 sys_newfstatat(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t statbuf, sys_arg_t flags) {
+int32 sys_newfstatat(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t statbuf, sys_arg_t flags) {
     (void)flags;
     char resolved[256];
     if (!resolve_at_path(dirfd, pathname, resolved, sizeof(resolved))) {
@@ -2444,7 +2446,7 @@ static int32 sys_newfstatat(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t statb
     return sys_stat((sys_arg_t)resolved, statbuf);
 }
 
-static int32 sys_faccessat(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t mode, sys_arg_t flags) {
+int32 sys_faccessat(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t mode, sys_arg_t flags) {
     (void)flags;
     char resolved[256];
     if (!resolve_at_path(dirfd, pathname, resolved, sizeof(resolved))) {
@@ -2453,7 +2455,7 @@ static int32 sys_faccessat(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t mode, 
     return sys_access((sys_arg_t)resolved, mode);
 }
 
-static int32 sys_chdir(sys_arg_t path) {
+int32 sys_chdir(sys_arg_t path) {
     if (!path) {
         return SYSCALL_EFAULT;
     }
@@ -2524,7 +2526,7 @@ static int32 sys_chdir(sys_arg_t path) {
     return 0;
 }
 
-static int32 sys_fchdir(sys_arg_t fd) {
+int32 sys_fchdir(sys_arg_t fd) {
     if (fd < 3) {
         return SYSCALL_EBADF;
     }
@@ -2539,7 +2541,7 @@ static int32 sys_fchdir(sys_arg_t fd) {
     return SYSCALL_ENOTDIR; // Not a directory
 }
 
-static int32 sys_rename(sys_arg_t oldpath, sys_arg_t newpath) {
+int32 sys_rename(sys_arg_t oldpath, sys_arg_t newpath) {
     if (!oldpath || !newpath) {
         return SYSCALL_EFAULT;
     }
@@ -2554,7 +2556,7 @@ static int32 sys_rename(sys_arg_t oldpath, sys_arg_t newpath) {
     return SYSCALL_EPERM;
 }
 
-static int32 sys_mkdir(sys_arg_t pathname, sys_arg_t mode) {
+int32 sys_mkdir(sys_arg_t pathname, sys_arg_t mode) {
     if (!pathname) {
         return SYSCALL_EFAULT;
     }
@@ -2570,7 +2572,7 @@ static int32 sys_mkdir(sys_arg_t pathname, sys_arg_t mode) {
     return SYSCALL_EPERM;
 }
 
-static int32 sys_rmdir(sys_arg_t pathname) {
+int32 sys_rmdir(sys_arg_t pathname) {
     if (!pathname) {
         return SYSCALL_EFAULT;
     }
@@ -2584,7 +2586,7 @@ static int32 sys_rmdir(sys_arg_t pathname) {
     return SYSCALL_EPERM;
 }
 
-static int32 sys_creat(sys_arg_t pathname, sys_arg_t mode) {
+int32 sys_creat(sys_arg_t pathname, sys_arg_t mode) {
     if (!pathname) {
         return SYSCALL_EFAULT;
     }
@@ -2600,7 +2602,7 @@ static int32 sys_creat(sys_arg_t pathname, sys_arg_t mode) {
     return SYSCALL_EPERM;
 }
 
-static int32 sys_link(sys_arg_t oldpath, sys_arg_t newpath) {
+int32 sys_link(sys_arg_t oldpath, sys_arg_t newpath) {
     if (!oldpath || !newpath) {
         return SYSCALL_EFAULT;
     }
@@ -2615,7 +2617,7 @@ static int32 sys_link(sys_arg_t oldpath, sys_arg_t newpath) {
     return SYSCALL_EPERM;
 }
 
-static int32 sys_symlink(sys_arg_t target, sys_arg_t linkpath) {
+int32 sys_symlink(sys_arg_t target, sys_arg_t linkpath) {
     if (!target || !linkpath) {
         return SYSCALL_EFAULT;
     }
@@ -2630,7 +2632,7 @@ static int32 sys_symlink(sys_arg_t target, sys_arg_t linkpath) {
     return SYSCALL_EPERM;
 }
 
-static int32 sys_readlink(sys_arg_t path, sys_arg_t buf, sys_arg_t bufsiz) {
+int32 sys_readlink(sys_arg_t path, sys_arg_t buf, sys_arg_t bufsiz) {
     if (!path || !buf || bufsiz == 0) {
         return SYSCALL_EINVAL;
     }
@@ -2648,7 +2650,7 @@ static int32 sys_readlink(sys_arg_t path, sys_arg_t buf, sys_arg_t bufsiz) {
     return SYSCALL_ENOENT;
 }
 
-static int32 sys_chmod(sys_arg_t pathname, sys_arg_t mode) {
+int32 sys_chmod(sys_arg_t pathname, sys_arg_t mode) {
     if (!pathname) {
         return SYSCALL_EFAULT;
     }
@@ -2664,7 +2666,7 @@ static int32 sys_chmod(sys_arg_t pathname, sys_arg_t mode) {
     return SYSCALL_EPERM;
 }
 
-static int32 sys_fchmod(sys_arg_t fd, sys_arg_t mode) {
+int32 sys_fchmod(sys_arg_t fd, sys_arg_t mode) {
     (void)mode; // Mode is ignored for our read-only VFS
     
     if (fd < 3) {
@@ -2680,7 +2682,7 @@ static int32 sys_fchmod(sys_arg_t fd, sys_arg_t mode) {
     return SYSCALL_EPERM;
 }
 
-static int32 sys_chown(sys_arg_t pathname, sys_arg_t owner, sys_arg_t group) {
+int32 sys_chown(sys_arg_t pathname, sys_arg_t owner, sys_arg_t group) {
     if (!pathname) {
         return SYSCALL_EFAULT;
     }
@@ -2697,7 +2699,7 @@ static int32 sys_chown(sys_arg_t pathname, sys_arg_t owner, sys_arg_t group) {
     return SYSCALL_EPERM;
 }
 
-static int32 sys_fchown(sys_arg_t fd, sys_arg_t owner, sys_arg_t group) {
+int32 sys_fchown(sys_arg_t fd, sys_arg_t owner, sys_arg_t group) {
     (void)owner; // Owner is ignored for our read-only VFS
     (void)group; // Group is ignored for our read-only VFS
     
@@ -2714,7 +2716,7 @@ static int32 sys_fchown(sys_arg_t fd, sys_arg_t owner, sys_arg_t group) {
     return SYSCALL_EPERM;
 }
 
-static int32 sys_lchown(sys_arg_t pathname, sys_arg_t owner, sys_arg_t group) {
+int32 sys_lchown(sys_arg_t pathname, sys_arg_t owner, sys_arg_t group) {
     if (!pathname) {
         return SYSCALL_EFAULT;
     }
@@ -2731,7 +2733,7 @@ static int32 sys_lchown(sys_arg_t pathname, sys_arg_t owner, sys_arg_t group) {
     return SYSCALL_EPERM;
 }
 
-static int32 sys_umask(sys_arg_t mask) {
+int32 sys_umask(sys_arg_t mask) {
     // For our simple implementation, just return the previous umask (default 022)
     // In a real implementation, we'd track the current umask per process
     static int32 current_umask = 022; // Default umask
@@ -2751,7 +2753,7 @@ typedef struct {
     char d_name[256];  // Filename
 } linux_dirent_t;
 
-static int32 sys_getdents(sys_arg_t fd, sys_arg_t dirp, sys_arg_t count) {
+int32 sys_getdents(sys_arg_t fd, sys_arg_t dirp, sys_arg_t count) {
     if (!dirp || count == 0) {
         return 0;
     }
@@ -2860,7 +2862,7 @@ typedef struct {
 #define SPAWN_FLAG_BACKGROUND 0x1u
 #define SPAWN_FLAG_FOREGROUND 0x2u
 
-static int32 sys_spawn_task(sys_arg_t path_ptr, sys_arg_t flags) {
+int32 sys_spawn_task(sys_arg_t path_ptr, sys_arg_t flags) {
     if (!path_ptr) {
         return SYSCALL_EFAULT;
     }
@@ -2893,7 +2895,7 @@ static int32 sys_spawn_task(sys_arg_t path_ptr, sys_arg_t flags) {
     return (int32)task->id;
 }
 
-static int32 sys_dlopen(sys_arg_t path_ptr, sys_arg_t flags) {
+int32 sys_dlopen(sys_arg_t path_ptr, sys_arg_t flags) {
     char path[256];
     uint32 handle = 0;
     int rc;
@@ -2916,7 +2918,7 @@ static int32 sys_dlopen(sys_arg_t path_ptr, sys_arg_t flags) {
     return (int32)handle;
 }
 
-static int32 sys_dlsym(sys_arg_t handle_ptr, sys_arg_t symbol_ptr) {
+int32 sys_dlsym(sys_arg_t handle_ptr, sys_arg_t symbol_ptr) {
     char symbol[128];
     uint32 addr = 0;
     int rc;
@@ -2937,7 +2939,7 @@ static int32 sys_dlsym(sys_arg_t handle_ptr, sys_arg_t symbol_ptr) {
     return (int32)addr;
 }
 
-static int32 sys_dlclose(sys_arg_t handle_ptr) {
+int32 sys_dlclose(sys_arg_t handle_ptr) {
     int rc = ldso_dlclose_handle((uint32)handle_ptr);
     if (rc != LDSO_OK) {
         if (rc == LDSO_ERR_NOT_FOUND) return SYSCALL_ENOENT;
@@ -2948,7 +2950,7 @@ static int32 sys_dlclose(sys_arg_t handle_ptr) {
 }
 
 // Process management
-static int32 sys_fork(void) {
+int32 sys_fork(void) {
     task_t* child_task = task_clone_current();
     if (!child_task) {
         return SYSCALL_ENOMEM; // Out of memory
@@ -2961,7 +2963,7 @@ static int32 sys_fork(void) {
     return child_task->id;
 }
 
-static int32 sys_vfork(void) {
+int32 sys_vfork(void) {
     // For simplicity, implement vfork as fork
     // In a real implementation, vfork would share address space with parent
     return sys_fork();
@@ -2980,7 +2982,7 @@ static bool exec_collect_elf_traits(const uint8* elf_data, uint32 elf_size, exec
         return false;
     }
 
-    memory_set((char*)traits, 0, sizeof(*traits));
+    memory_set((uint8*)traits, 0, sizeof(*traits));
 
     const elf32_ehdr_t* eh = (const elf32_ehdr_t*)elf_data;
     if (elf_validate_header(eh) != 0) {
@@ -3083,7 +3085,7 @@ static int exec_resolve_entry_with_ldso(const uint8* elf_data, uint32 elf_size,
     return 0;
 }
 
-static int32 sys_execve(sys_arg_t filename, sys_arg_t argv, sys_arg_t envp) {
+int32 sys_execve(sys_arg_t filename, sys_arg_t argv, sys_arg_t envp) {
     if (!filename) {
         return SYSCALL_EFAULT;
     }
@@ -3355,7 +3357,7 @@ execve_cleanup:
     return exec_rc;
 }
 
-static int32 sys_wait4(sys_arg_t pid, sys_arg_t stat_addr, sys_arg_t options, sys_arg_t rusage) {
+int32 sys_wait4(sys_arg_t pid, sys_arg_t stat_addr, sys_arg_t options, sys_arg_t rusage) {
     if (!current_task) {
         return SYSCALL_EINVAL;
     }
@@ -3421,7 +3423,7 @@ static int32 sys_wait4(sys_arg_t pid, sys_arg_t stat_addr, sys_arg_t options, sy
     return SYSCALL_ECHILD;
 }
 
-static int32 sys_waitpid(sys_arg_t pid, sys_arg_t stat_addr, sys_arg_t options) {
+int32 sys_waitpid(sys_arg_t pid, sys_arg_t stat_addr, sys_arg_t options) {
     return sys_wait4(pid, stat_addr, options, 0);
 }
 
@@ -3436,7 +3438,7 @@ typedef struct {
     int32 pad[8];
 } waitid_siginfo_t;
 
-static int32 sys_waitid(sys_arg_t idtype, sys_arg_t id, sys_arg_t infop, sys_arg_t options, sys_arg_t rusage) {
+int32 sys_waitid(sys_arg_t idtype, sys_arg_t id, sys_arg_t infop, sys_arg_t options, sys_arg_t rusage) {
     // Minimal support for P_PID (1), P_PGID (2), P_ALL (0).
     // Returns 0 on success, populating siginfo-like payload.
     (void)rusage;
@@ -3522,8 +3524,8 @@ static int32 sys_waitid(sys_arg_t idtype, sys_arg_t id, sys_arg_t infop, sys_arg
     return 0;
 }
 
-static int32 sys_kill(sys_arg_t pid, sys_arg_t sig) {
-    if (sig < 0 || sig > 31) {
+int32 sys_kill(sys_arg_t pid, sys_arg_t sig) {
+    if (sig > 31) {
         return SYSCALL_EINVAL;
     }
 
@@ -3548,7 +3550,7 @@ static int32 sys_kill(sys_arg_t pid, sys_arg_t sig) {
         return 0;
     }
 
-    if (pid < 0) {
+    if (pid) {
         // Send to process group (absolute value of pid)
         uint32 pgrp = (uint32)-pid;
         task_t* task = ready_queue_head;
@@ -3593,9 +3595,9 @@ static int32 sys_kill(sys_arg_t pid, sys_arg_t sig) {
     return 0;
 }
 
-static int32 sys_tkill(sys_arg_t tid, sys_arg_t sig) {
+int32 sys_tkill(sys_arg_t tid, sys_arg_t sig) {
     // tkill sends a signal to a specific thread
-    if (sig < 0 || sig > 31) {
+    if (sig > 31) {
         return SYSCALL_EINVAL;
     }
     
@@ -3611,9 +3613,9 @@ static int32 sys_tkill(sys_arg_t tid, sys_arg_t sig) {
     return SYSCALL_ESRCH; // No such thread
 }
 
-static int32 sys_tgkill(sys_arg_t tgid, sys_arg_t tid, sys_arg_t sig) {
+int32 sys_tgkill(sys_arg_t tgid, sys_arg_t tid, sys_arg_t sig) {
     // tgkill sends signal to thread tid in thread group tgid
-    if (sig < 0 || sig > 31) {
+    if (sig > 31) {
         return SYSCALL_EINVAL;
     }
     
@@ -3629,7 +3631,7 @@ static int32 sys_tgkill(sys_arg_t tgid, sys_arg_t tid, sys_arg_t sig) {
     return SYSCALL_ESRCH;
 }
 
-static int32 sys_gettid(void) {
+int32 sys_gettid(void) {
     // Return thread ID (same as PID in our single-threaded implementation)
     if (current_task) {
         return (int32)current_task->id;
@@ -3637,7 +3639,7 @@ static int32 sys_gettid(void) {
     return 0;
 }
 
-static int32 sys_set_tid_address(sys_arg_t tidptr) {
+int32 sys_set_tid_address(sys_arg_t tidptr) {
     if (tidptr && !user_buffer_writable((void*)tidptr, sizeof(int32))) {
         return SYSCALL_EFAULT;
     }
@@ -3653,7 +3655,7 @@ static int32 sys_set_tid_address(sys_arg_t tidptr) {
 
 
 
-static int32 sys_setuid(sys_arg_t uid) {
+int32 sys_setuid(sys_arg_t uid) {
     // Set user ID
     if (!current_task) {
         return SYSCALL_EPERM;
@@ -3669,7 +3671,7 @@ static int32 sys_setuid(sys_arg_t uid) {
     return 0;
 }
 
-static int32 sys_setgid(sys_arg_t gid) {
+int32 sys_setgid(sys_arg_t gid) {
     // Set group ID
     if (!current_task) {
         return SYSCALL_EPERM;
@@ -3684,7 +3686,7 @@ static int32 sys_setgid(sys_arg_t gid) {
     return 0;
 }
 
-static int32 sys_setreuid(sys_arg_t ruid, sys_arg_t euid) {
+int32 sys_setreuid(sys_arg_t ruid, sys_arg_t euid) {
     // Set real and effective user ID
     if (!current_task) {
         return SYSCALL_EPERM;
@@ -3713,7 +3715,7 @@ static int32 sys_setreuid(sys_arg_t ruid, sys_arg_t euid) {
     return 0;
 }
 
-static int32 sys_setregid(sys_arg_t rgid, sys_arg_t egid) {
+int32 sys_setregid(sys_arg_t rgid, sys_arg_t egid) {
     // Set real and effective group ID
     if (!current_task) {
         return SYSCALL_EPERM;
@@ -3740,7 +3742,7 @@ static int32 sys_setregid(sys_arg_t rgid, sys_arg_t egid) {
     return 0;
 }
 
-static int32 sys_setresuid(sys_arg_t ruid, sys_arg_t euid, sys_arg_t suid) {
+int32 sys_setresuid(sys_arg_t ruid, sys_arg_t euid, sys_arg_t suid) {
     // Set real, effective, and saved user ID
     if (!current_task) {
         return SYSCALL_EPERM;
@@ -3766,7 +3768,7 @@ static int32 sys_setresuid(sys_arg_t ruid, sys_arg_t euid, sys_arg_t suid) {
     return 0;
 }
 
-static int32 sys_getresuid(sys_arg_t ruid_ptr, sys_arg_t euid_ptr, sys_arg_t suid_ptr) {
+int32 sys_getresuid(sys_arg_t ruid_ptr, sys_arg_t euid_ptr, sys_arg_t suid_ptr) {
     // Get real, effective, and saved user ID
     if (!current_task) {
         return SYSCALL_EPERM;
@@ -3791,7 +3793,7 @@ static int32 sys_getresuid(sys_arg_t ruid_ptr, sys_arg_t euid_ptr, sys_arg_t sui
     return 0;
 }
 
-static int32 sys_setresgid(sys_arg_t rgid, sys_arg_t egid, sys_arg_t sgid) {
+int32 sys_setresgid(sys_arg_t rgid, sys_arg_t egid, sys_arg_t sgid) {
     // Set real, effective, and saved group ID
     if (!current_task) {
         return SYSCALL_EPERM;
@@ -3814,7 +3816,7 @@ static int32 sys_setresgid(sys_arg_t rgid, sys_arg_t egid, sys_arg_t sgid) {
     return 0;
 }
 
-static int32 sys_getresgid(sys_arg_t rgid_ptr, sys_arg_t egid_ptr, sys_arg_t sgid_ptr) {
+int32 sys_getresgid(sys_arg_t rgid_ptr, sys_arg_t egid_ptr, sys_arg_t sgid_ptr) {
     // Get real, effective, and saved group ID
     if (!current_task) {
         return SYSCALL_EPERM;
@@ -3839,7 +3841,7 @@ static int32 sys_getresgid(sys_arg_t rgid_ptr, sys_arg_t egid_ptr, sys_arg_t sgi
     return 0;
 }
 
-static int32 sys_setfsuid(sys_arg_t uid) {
+int32 sys_setfsuid(sys_arg_t uid) {
     // Set filesystem user ID (used for filesystem access checks)
     if (!current_task) {
         return SYSCALL_EPERM;
@@ -3858,7 +3860,7 @@ static int32 sys_setfsuid(sys_arg_t uid) {
     return (int32)old_uid; // Return old fsuid on failure too
 }
 
-static int32 sys_setfsgid(sys_arg_t gid) {
+int32 sys_setfsgid(sys_arg_t gid) {
     // Set filesystem group ID
     if (!current_task) {
         return SYSCALL_EPERM;
@@ -3873,7 +3875,7 @@ static int32 sys_setfsgid(sys_arg_t gid) {
     return (int32)old_gid;
 }
 
-static int32 sys_getgroups(sys_arg_t size, sys_arg_t list) {
+int32 sys_getgroups(sys_arg_t size, sys_arg_t list) {
     // Get supplementary group IDs
     if (!current_task) {
         return SYSCALL_EPERM;
@@ -3905,7 +3907,7 @@ static int32 sys_getgroups(sys_arg_t size, sys_arg_t list) {
     return written;
 }
 
-static int32 sys_setgroups(sys_arg_t size, sys_arg_t list) {
+int32 sys_setgroups(sys_arg_t size, sys_arg_t list) {
     // Set supplementary group IDs (requires root)
     if (!current_task) {
         return SYSCALL_EPERM;
@@ -3936,7 +3938,7 @@ static int32 sys_setgroups(sys_arg_t size, sys_arg_t list) {
 }
 
 // Memory management
-static int32 sys_mmap(sys_arg_t addr, sys_arg_t length, sys_arg_t prot, sys_arg_t flags, sys_arg_t fd, sys_arg_t offset) {
+int32 sys_mmap(sys_arg_t addr, sys_arg_t length, sys_arg_t prot, sys_arg_t flags, sys_arg_t fd, sys_arg_t offset) {
     (void)prot; // Page permission bits are coarse in current pager.
 
     task_t* task = current_user_task_ptr();
@@ -4024,7 +4026,7 @@ static int32 sys_mmap(sys_arg_t addr, sys_arg_t length, sys_arg_t prot, sys_arg_
     return (int32)va_start;
 }
 
-static int32 sys_munmap(sys_arg_t addr, sys_arg_t length) {
+int32 sys_munmap(sys_arg_t addr, sys_arg_t length) {
     task_t* task = current_user_task_ptr();
     if (!task) {
         return SYSCALL_EINVAL;
@@ -4050,7 +4052,8 @@ static int32 sys_munmap(sys_arg_t addr, sys_arg_t length) {
     return 0;
 }
 
-static int32 sys_mprotect(sys_arg_t addr, sys_arg_t len, sys_arg_t prot) {
+int32 sys_mprotect(sys_arg_t addr, sys_arg_t len, sys_arg_t prot) {
+    (void)prot;
     if (len == 0) {
         return 0;
     }
@@ -4080,7 +4083,7 @@ static int32 sys_mprotect(sys_arg_t addr, sys_arg_t len, sys_arg_t prot) {
     return 0;
 }
 
-static int32 sys_madvise(sys_arg_t addr, sys_arg_t length, sys_arg_t advice) {
+int32 sys_madvise(sys_arg_t addr, sys_arg_t length, sys_arg_t advice) {
     if (length == 0) {
         return 0;
     }
@@ -4092,7 +4095,7 @@ static int32 sys_madvise(sys_arg_t addr, sys_arg_t length, sys_arg_t advice) {
     return 0;
 }
 
-static int32 sys_msync(sys_arg_t addr, sys_arg_t length, sys_arg_t flags) {
+int32 sys_msync(sys_arg_t addr, sys_arg_t length, sys_arg_t flags) {
     if (length == 0) {
         return 0;
     }
@@ -4134,7 +4137,7 @@ typedef struct {
     uint32 shm_ctime;
 } shmid_ds_stub_t;
 
-static int32 sys_shmget(sys_arg_t key, sys_arg_t size, sys_arg_t shmflg) {
+int32 sys_shmget(sys_arg_t key, sys_arg_t size, sys_arg_t shmflg) {
     int32 k = (int32)key;
     uint32 seg_size = (uint32)size;
     if (seg_size == 0) {
@@ -4159,7 +4162,7 @@ static int32 sys_shmget(sys_arg_t key, sys_arg_t size, sys_arg_t shmflg) {
             if (!shm_segments[i].data) {
                 return SYSCALL_ENOMEM;
             }
-            memory_set(shm_segments[i].data, 0, seg_size);
+            memory_set((uint8*)shm_segments[i].data, 0, seg_size);
             shm_segments[i].used = true;
             shm_segments[i].key = k;
             shm_segments[i].shmid = (int32)(i + 1);
@@ -4172,7 +4175,7 @@ static int32 sys_shmget(sys_arg_t key, sys_arg_t size, sys_arg_t shmflg) {
     return SYSCALL_ENFILE;
 }
 
-static int32 sys_shmat(sys_arg_t shmid, sys_arg_t shmaddr, sys_arg_t shmflg) {
+int32 sys_shmat(sys_arg_t shmid, sys_arg_t shmaddr, sys_arg_t shmflg) {
     (void)shmaddr;
     (void)shmflg;
     shm_segment_t* seg = find_shm_segment_by_id((int32)shmid);
@@ -4207,7 +4210,7 @@ static int32 sys_shmat(sys_arg_t shmid, sys_arg_t shmaddr, sys_arg_t shmflg) {
     return SYSCALL_ENFILE;
 }
 
-static int32 sys_shmctl(sys_arg_t shmid, sys_arg_t cmd, sys_arg_t buf) {
+int32 sys_shmctl(sys_arg_t shmid, sys_arg_t cmd, sys_arg_t buf) {
     shm_segment_t* seg = find_shm_segment_by_id((int32)shmid);
     if (!seg) {
         return SYSCALL_EINVAL;
@@ -4245,7 +4248,7 @@ static int32 sys_shmctl(sys_arg_t shmid, sys_arg_t cmd, sys_arg_t buf) {
     return SYSCALL_EINVAL;
 }
 
-static int32 sys_shmdt(sys_arg_t shmaddr) {
+int32 sys_shmdt(sys_arg_t shmaddr) {
     uint32 task_id = current_task ? current_task->id : 0;
     shm_attachment_t* att = find_shm_attachment(task_id, (uint32)shmaddr);
     if (!att) {
@@ -4301,7 +4304,7 @@ void syscall_detach_all_shm_for_task(uint32 pid) {
     }
 }
 
-static int32 sys_mlock(sys_arg_t addr, sys_arg_t len) {
+int32 sys_mlock(sys_arg_t addr, sys_arg_t len) {
     if (len == 0) {
         return 0;
     }
@@ -4323,7 +4326,7 @@ static int32 sys_mlock(sys_arg_t addr, sys_arg_t len) {
     return 0;
 }
 
-static int32 sys_munlock(sys_arg_t addr, sys_arg_t len) {
+int32 sys_munlock(sys_arg_t addr, sys_arg_t len) {
     if (len == 0) {
         return 0;
     }
@@ -4345,7 +4348,7 @@ static int32 sys_munlock(sys_arg_t addr, sys_arg_t len) {
     return 0;
 }
 
-static int32 sys_mlockall(sys_arg_t flags) {
+int32 sys_mlockall(sys_arg_t flags) {
     (void)flags; // Flags are ignored in our simple implementation
     
     // For our simple implementation, mlockall is a no-op but succeeds
@@ -4353,13 +4356,13 @@ static int32 sys_mlockall(sys_arg_t flags) {
     return 0;
 }
 
-static int32 sys_munlockall(void) {
+int32 sys_munlockall(void) {
     // For our simple implementation, munlockall is a no-op but succeeds
     // In a real implementation, we would unlock all locked pages
     return 0;
 }
 
-static int32 sys_mremap(sys_arg_t old_addr, sys_arg_t old_size, sys_arg_t new_size, sys_arg_t flags, sys_arg_t new_addr) {
+int32 sys_mremap(sys_arg_t old_addr, sys_arg_t old_size, sys_arg_t new_size, sys_arg_t flags, sys_arg_t new_addr) {
     task_t* task = current_user_task_ptr();
     if (!task) {
         return SYSCALL_EINVAL;
@@ -4473,7 +4476,7 @@ static int32 sys_mremap(sys_arg_t old_addr, sys_arg_t old_size, sys_arg_t new_si
     return (int32)new_mapping;
 }
 
-static int32 sys_mincore(sys_arg_t addr, sys_arg_t length, sys_arg_t vec) {
+int32 sys_mincore(sys_arg_t addr, sys_arg_t length, sys_arg_t vec) {
     if (length == 0 || !vec) {
         return SYSCALL_EINVAL;
     }
@@ -4545,7 +4548,7 @@ bool signal_is_ignored(int signum) {
 }
 
 // Signals
-static int32 sys_pause(void) {
+int32 sys_pause(void) {
     // Suspend until a signal is received
     if (!current_task) {
         return SYSCALL_EPERM;
@@ -4570,8 +4573,9 @@ static int32 sys_pause(void) {
     }
 }
 
-static int32 sys_rt_sigaction(sys_arg_t signum, sys_arg_t act, sys_arg_t oldact, sys_arg_t sigsetsize) {
+int32 sys_rt_sigaction(sys_arg_t signum, sys_arg_t act, sys_arg_t oldact, sys_arg_t sigsetsize) {
     // Set/get signal handler
+    (void)sigsetsize;
     if (signum < 1 || signum >= 32) {
         return SYSCALL_EINVAL;
     }
@@ -4604,7 +4608,7 @@ static int32 sys_rt_sigaction(sys_arg_t signum, sys_arg_t act, sys_arg_t oldact,
     return 0;
 }
 
-static int32 sys_rt_sigprocmask(sys_arg_t how, sys_arg_t set_ptr, sys_arg_t oldset_ptr, sys_arg_t sigsetsize) {
+int32 sys_rt_sigprocmask(sys_arg_t how, sys_arg_t set_ptr, sys_arg_t oldset_ptr, sys_arg_t sigsetsize) {
     // Modify blocked signal mask
     (void)sigsetsize;
     
@@ -4642,7 +4646,7 @@ static int32 sys_rt_sigprocmask(sys_arg_t how, sys_arg_t set_ptr, sys_arg_t olds
     return 0;
 }
 
-static int32 sys_rt_sigpending(sys_arg_t set_ptr, sys_arg_t sigsetsize) {
+int32 sys_rt_sigpending(sys_arg_t set_ptr, sys_arg_t sigsetsize) {
     // Return set of pending signals
     (void)sigsetsize;
     
@@ -4663,9 +4667,11 @@ static int32 sys_rt_sigpending(sys_arg_t set_ptr, sys_arg_t sigsetsize) {
     return 0;
 }
 
-static int32 sys_rt_sigtimedwait(sys_arg_t uthese, sys_arg_t uinfo, sys_arg_t uts, sys_arg_t sigsetsize) {
+int32 sys_rt_sigtimedwait(sys_arg_t uthese, sys_arg_t uinfo, sys_arg_t uts, sys_arg_t sigsetsize) {
     // Wait for one of the signals in set
     (void)sigsetsize;
+    (void)uinfo;
+    (void)uts;
     
     if (!uthese) {
         return SYSCALL_EFAULT;
@@ -4697,7 +4703,7 @@ static int32 sys_rt_sigtimedwait(sys_arg_t uthese, sys_arg_t uinfo, sys_arg_t ut
     return -11; // EAGAIN
 }
 
-static int32 sys_rt_sigqueueinfo(sys_arg_t pid, sys_arg_t sig, sys_arg_t uinfo) {
+int32 sys_rt_sigqueueinfo(sys_arg_t pid, sys_arg_t sig, sys_arg_t uinfo) {
     // Queue a signal to a process
     (void)uinfo; // Signal info not fully supported
     
@@ -4713,7 +4719,7 @@ static int32 sys_rt_sigqueueinfo(sys_arg_t pid, sys_arg_t sig, sys_arg_t uinfo) 
     return SYSCALL_ESRCH;
 }
 
-static int32 sys_rt_sigsuspend(sys_arg_t unewset_ptr, sys_arg_t sigsetsize) {
+int32 sys_rt_sigsuspend(sys_arg_t unewset_ptr, sys_arg_t sigsetsize) {
     // Temporarily replace signal mask and suspend
     (void)sigsetsize;
     
@@ -4743,12 +4749,12 @@ static int32 sys_rt_sigsuspend(sys_arg_t unewset_ptr, sys_arg_t sigsetsize) {
     return -4; // EINTR - always returns EINTR
 }
 
-static int32 sys_rt_sigreturn(void) {
+int32 sys_rt_sigreturn(void) {
     // Full signal frame restore is not implemented yet.
     return 0;
 }
 
-static int32 sys_sigaltstack(sys_arg_t uss_ptr, sys_arg_t uoss_ptr) {
+int32 sys_sigaltstack(sys_arg_t uss_ptr, sys_arg_t uoss_ptr) {
     // Set/get alternate signal stack
     // Our simple implementation doesn't use alternate stacks
     
@@ -4792,13 +4798,13 @@ typedef struct {
 } sched_param_t;
 
 // Scheduling
-static int32 sys_sched_yield(void) {
+int32 sys_sched_yield(void) {
     // Yield to the scheduler - allow other tasks to run
     task_schedule();
     return 0;
 }
 
-static int32 sys_sched_get_priority_max(sys_arg_t policy) {
+__attribute__((unused)) static int32 sys_sched_get_priority_max(sys_arg_t policy) {
     // Return maximum priority for scheduling policy
     switch (policy) {
         case SCHED_NORMAL:
@@ -4813,7 +4819,7 @@ static int32 sys_sched_get_priority_max(sys_arg_t policy) {
     }
 }
 
-static int32 sys_sched_get_priority_min(sys_arg_t policy) {
+__attribute__((unused)) static int32 sys_sched_get_priority_min(sys_arg_t policy) {
     // Return minimum priority for scheduling policy
     switch (policy) {
         case SCHED_NORMAL:
@@ -4828,7 +4834,7 @@ static int32 sys_sched_get_priority_min(sys_arg_t policy) {
     }
 }
 
-static int32 sys_sched_setparam(sys_arg_t pid, sys_arg_t param_ptr) {
+__attribute__((unused)) static int32 sys_sched_setparam(sys_arg_t pid, sys_arg_t param_ptr) {
     // Set scheduling parameters
     if (!param_ptr) {
         return SYSCALL_EINVAL;
@@ -4860,7 +4866,7 @@ static int32 sys_sched_setparam(sys_arg_t pid, sys_arg_t param_ptr) {
     return 0;
 }
 
-static int32 sys_sched_getparam(sys_arg_t pid, sys_arg_t param_ptr) {
+__attribute__((unused)) static int32 sys_sched_getparam(sys_arg_t pid, sys_arg_t param_ptr) {
     // Get scheduling parameters
     if (!param_ptr) {
         return SYSCALL_EINVAL;
@@ -4884,9 +4890,9 @@ static int32 sys_sched_getparam(sys_arg_t pid, sys_arg_t param_ptr) {
     return 0;
 }
 
-static int32 sys_sched_setscheduler(sys_arg_t pid, sys_arg_t policy, sys_arg_t param_ptr) {
+__attribute__((unused)) static int32 sys_sched_setscheduler(sys_arg_t pid, sys_arg_t policy, sys_arg_t param_ptr) {
     // Set scheduling policy and parameters
-    if (policy < 0 || policy > 5) {
+    if (policy > 5) {
         return SYSCALL_EINVAL;
     }
     
@@ -4928,7 +4934,7 @@ static int32 sys_sched_setscheduler(sys_arg_t pid, sys_arg_t policy, sys_arg_t p
     return 0;
 }
 
-static int32 sys_sched_getscheduler(sys_arg_t pid) {
+__attribute__((unused)) static int32 sys_sched_getscheduler(sys_arg_t pid) {
     // Get scheduling policy
     if (pid != 0 && (!current_task || current_task->id != (uint32)pid)) {
         return SYSCALL_ESRCH;
@@ -4943,7 +4949,7 @@ static int32 sys_sched_getscheduler(sys_arg_t pid) {
     return SCHED_NORMAL;
 }
 
-static int32 sys_sched_setaffinity(sys_arg_t pid, sys_arg_t len, sys_arg_t user_mask_ptr) {
+__attribute__((unused)) static int32 sys_sched_setaffinity(sys_arg_t pid, sys_arg_t len, sys_arg_t user_mask_ptr) {
     // Set CPU affinity mask (not fully supported - single CPU system)
     if (!user_mask_ptr || len == 0) {
         return SYSCALL_EINVAL;
@@ -4966,7 +4972,7 @@ static int32 sys_sched_setaffinity(sys_arg_t pid, sys_arg_t len, sys_arg_t user_
     return SYSCALL_EINVAL; // Must include at least CPU 0
 }
 
-static int32 sys_sched_getaffinity(sys_arg_t pid, sys_arg_t len, sys_arg_t user_mask_ptr) {
+__attribute__((unused)) static int32 sys_sched_getaffinity(sys_arg_t pid, sys_arg_t len, sys_arg_t user_mask_ptr) {
     // Get CPU affinity mask
     if (!user_mask_ptr || len == 0) {
         return SYSCALL_EINVAL;
@@ -4982,7 +4988,7 @@ static int32 sys_sched_getaffinity(sys_arg_t pid, sys_arg_t len, sys_arg_t user_
     
     // Return mask with only CPU 0 set (single CPU system)
     uint8* mask = (uint8*)user_mask_ptr;
-    memory_set((char*)mask, 0, len);
+    memory_set((uint8*)mask, 0, len);
     if (len >= 1) {
         mask[0] = 1; // CPU 0 bit set
     }
@@ -4991,7 +4997,7 @@ static int32 sys_sched_getaffinity(sys_arg_t pid, sys_arg_t len, sys_arg_t user_
     return 8;
 }
 
-static int32 sys_sched_rr_get_interval(sys_arg_t pid, sys_arg_t interval_ptr) {
+__attribute__((unused)) static int32 sys_sched_rr_get_interval(sys_arg_t pid, sys_arg_t interval_ptr) {
     // Get round-robin time quantum
     if (!interval_ptr) {
         return SYSCALL_EINVAL;
@@ -5095,7 +5101,7 @@ static char system_hostname[64] = "forestos";
 static char system_domainname[64] = "(none)";
 
 // System information
-static int32 sys_gettimeofday(sys_arg_t tv, sys_arg_t tz) {
+int32 sys_gettimeofday(sys_arg_t tv, sys_arg_t tz) {
     (void)tz; // Timezone not supported yet
 
     if (tv && !user_buffer_writable((void*)tv, sizeof(struct timeval))) {
@@ -5113,7 +5119,7 @@ static int32 sys_gettimeofday(sys_arg_t tv, sys_arg_t tz) {
     return 0;
 }
 
-static int32 sys_clock_gettime(sys_arg_t clock_id, sys_arg_t tp) {
+int32 sys_clock_gettime(sys_arg_t clock_id, sys_arg_t tp) {
     (void)clock_id;
     if (!tp) {
         return SYSCALL_EFAULT;
@@ -5129,7 +5135,7 @@ static int32 sys_clock_gettime(sys_arg_t clock_id, sys_arg_t tp) {
     return 0;
 }
 
-static int32 sys_clock_settime(sys_arg_t clock_id, sys_arg_t tp) {
+int32 sys_clock_settime(sys_arg_t clock_id, sys_arg_t tp) {
     (void)clock_id;
     if (!current_task || current_task->uid != 0) {
         return SYSCALL_EPERM;
@@ -5152,7 +5158,7 @@ static int32 sys_clock_settime(sys_arg_t clock_id, sys_arg_t tp) {
     return 0;
 }
 
-static int32 sys_clock_getres(sys_arg_t clock_id, sys_arg_t res_ptr) {
+int32 sys_clock_getres(sys_arg_t clock_id, sys_arg_t res_ptr) {
     (void)clock_id;
     if (!res_ptr) {
         return SYSCALL_EFAULT;
@@ -5167,7 +5173,7 @@ static int32 sys_clock_getres(sys_arg_t clock_id, sys_arg_t res_ptr) {
     return 0;
 }
 
-static int32 sys_clock_nanosleep(sys_arg_t clock_id, sys_arg_t flags, sys_arg_t req_ptr, sys_arg_t rem_ptr) {
+int32 sys_clock_nanosleep(sys_arg_t clock_id, sys_arg_t flags, sys_arg_t req_ptr, sys_arg_t rem_ptr) {
     (void)clock_id;
     if (!req_ptr) {
         return SYSCALL_EINVAL;
@@ -5205,7 +5211,7 @@ static int32 sys_clock_nanosleep(sys_arg_t clock_id, sys_arg_t flags, sys_arg_t 
     return 0;
 }
 
-static int32 sys_settimeofday(sys_arg_t tv, sys_arg_t tz) {
+int32 sys_settimeofday(sys_arg_t tv, sys_arg_t tz) {
     // Set system time (requires root)
     (void)tz;
     
@@ -5227,7 +5233,7 @@ static int32 sys_settimeofday(sys_arg_t tv, sys_arg_t tz) {
     return 0;
 }
 
-static int32 sys_timer_create(sys_arg_t clockid, sys_arg_t sevp_ptr, sys_arg_t timerid_ptr) {
+int32 sys_timer_create(sys_arg_t clockid, sys_arg_t sevp_ptr, sys_arg_t timerid_ptr) {
     (void)sevp_ptr;
     if (!timerid_ptr) {
         return SYSCALL_EFAULT;
@@ -5247,7 +5253,7 @@ static int32 sys_timer_create(sys_arg_t clockid, sys_arg_t sevp_ptr, sys_arg_t t
     return 0;
 }
 
-static int32 sys_timer_settime(sys_arg_t timerid, sys_arg_t flags, sys_arg_t new_ptr, sys_arg_t old_ptr) {
+int32 sys_timer_settime(sys_arg_t timerid, sys_arg_t flags, sys_arg_t new_ptr, sys_arg_t old_ptr) {
     if (!new_ptr) {
         return SYSCALL_EFAULT;
     }
@@ -5261,7 +5267,7 @@ static int32 sys_timer_settime(sys_arg_t timerid, sys_arg_t flags, sys_arg_t new
     return timerfd_settime((int)timerid, (int)flags, (const struct itimerspec*)new_ptr, (struct itimerspec*)old_ptr);
 }
 
-static int32 sys_timer_gettime(sys_arg_t timerid, sys_arg_t curr_value_ptr) {
+int32 sys_timer_gettime(sys_arg_t timerid, sys_arg_t curr_value_ptr) {
     if (!curr_value_ptr) {
         return SYSCALL_EFAULT;
     }
@@ -5271,11 +5277,11 @@ static int32 sys_timer_gettime(sys_arg_t timerid, sys_arg_t curr_value_ptr) {
     return timerfd_gettime((int)timerid, (struct itimerspec*)curr_value_ptr);
 }
 
-static int32 sys_timer_delete(sys_arg_t timerid) {
+int32 sys_timer_delete(sys_arg_t timerid) {
     return timerfd_close((int)timerid);
 }
 
-static int32 sys_getrlimit(sys_arg_t resource, sys_arg_t rlim_ptr) {
+int32 sys_getrlimit(sys_arg_t resource, sys_arg_t rlim_ptr) {
     // Get resource limits
     if (resource >= RLIM_NLIMITS) {
         return SYSCALL_EINVAL;
@@ -5328,7 +5334,7 @@ static int32 sys_getrlimit(sys_arg_t resource, sys_arg_t rlim_ptr) {
     return 0;
 }
 
-static int32 sys_setrlimit(sys_arg_t resource, sys_arg_t rlim_ptr) {
+__attribute__((unused)) static int32 sys_setrlimit(sys_arg_t resource, sys_arg_t rlim_ptr) {
     // Set resource limits
     if (resource >= RLIM_NLIMITS) {
         return SYSCALL_EINVAL;
@@ -5356,8 +5362,9 @@ static int32 sys_setrlimit(sys_arg_t resource, sys_arg_t rlim_ptr) {
     return 0;
 }
 
-static int32 sys_getrusage(sys_arg_t who, sys_arg_t usage_ptr) {
+__attribute__((unused)) static int32 sys_getrusage(sys_arg_t who, sys_arg_t usage_ptr) {
     // Get resource usage
+    (void)who;
     if (!usage_ptr) {
         return SYSCALL_EFAULT;
     }
@@ -5367,7 +5374,7 @@ static int32 sys_getrusage(sys_arg_t who, sys_arg_t usage_ptr) {
     }
     
     rusage_t* usage = (rusage_t*)usage_ptr;
-    memory_set((char*)usage, 0, sizeof(rusage_t));
+    memory_set((uint8*)usage, 0, sizeof(rusage_t));
     
     // Fill in basic usage info
     if (current_task) {
@@ -5392,7 +5399,7 @@ static int32 sys_getrusage(sys_arg_t who, sys_arg_t usage_ptr) {
 #define SYSLOG_ACTION_SIZE_UNREAD 9
 #define SYSLOG_ACTION_SIZE_BUFFER 10
 
-static int32 sys_syslog(sys_arg_t type, sys_arg_t bufp, sys_arg_t len) {
+int32 sys_syslog(sys_arg_t type, sys_arg_t bufp, sys_arg_t len) {
     switch (type) {
         case SYSLOG_ACTION_CLOSE:
         case SYSLOG_ACTION_OPEN:
@@ -5441,7 +5448,7 @@ static int32 sys_syslog(sys_arg_t type, sys_arg_t bufp, sys_arg_t len) {
     }
 }
 
-static int32 sys_sysinfo(sys_arg_t info_ptr) {
+__attribute__((unused)) static int32 sys_sysinfo(sys_arg_t info_ptr) {
     // Get system info
     if (!info_ptr) {
         return SYSCALL_EFAULT;
@@ -5452,7 +5459,7 @@ static int32 sys_sysinfo(sys_arg_t info_ptr) {
     }
     
     sysinfo_t* info = (sysinfo_t*)info_ptr;
-    memory_set((char*)info, 0, sizeof(sysinfo_t));
+    memory_set((uint8*)info, 0, sizeof(sysinfo_t));
     
     uint32 ticks = timer_get_ticks();
     info->uptime = ticks / 1000;
@@ -5483,7 +5490,7 @@ static int32 sys_sysinfo(sys_arg_t info_ptr) {
     return 0;
 }
 
-static int32 sys_times(sys_arg_t tbuf_ptr) {
+__attribute__((unused)) static int32 sys_times(sys_arg_t tbuf_ptr) {
     // Get process times
     if (!tbuf_ptr) {
         // Return current clock ticks if no buffer
@@ -5505,7 +5512,7 @@ static int32 sys_times(sys_arg_t tbuf_ptr) {
     return (int32)ticks;
 }
 
-static int32 sys_getpriority(sys_arg_t which, sys_arg_t who) {
+int32 sys_getpriority(sys_arg_t which, sys_arg_t who) {
     // Get scheduling priority
     if (which > PRIO_USER) {
         return SYSCALL_EINVAL;
@@ -5529,7 +5536,7 @@ static int32 sys_getpriority(sys_arg_t which, sys_arg_t who) {
     return SYSCALL_ESRCH;
 }
 
-static int32 sys_setpriority(sys_arg_t which, sys_arg_t who, sys_arg_t prio) {
+int32 sys_setpriority(sys_arg_t which, sys_arg_t who, sys_arg_t prio) {
     // Set scheduling priority (nice value)
     if (which > PRIO_USER) {
         return SYSCALL_EINVAL;
@@ -5558,7 +5565,7 @@ static int32 sys_setpriority(sys_arg_t which, sys_arg_t who, sys_arg_t prio) {
     return SYSCALL_ESRCH;
 }
 
-static int32 sys_sethostname(sys_arg_t name_ptr, sys_arg_t len) {
+int32 sys_sethostname(sys_arg_t name_ptr, sys_arg_t len) {
     // Set system hostname (requires root)
     if (!current_task || current_task->uid != 0) {
         return SYSCALL_EPERM;
@@ -5578,7 +5585,7 @@ static int32 sys_sethostname(sys_arg_t name_ptr, sys_arg_t len) {
     return 0;
 }
 
-static int32 sys_setdomainname(sys_arg_t name_ptr, sys_arg_t len) {
+int32 sys_setdomainname(sys_arg_t name_ptr, sys_arg_t len) {
     // Set NIS/YP domain name (requires root)
     if (!current_task || current_task->uid != 0) {
         return SYSCALL_EPERM;
@@ -5621,7 +5628,7 @@ typedef struct {
 } utimbuf_t;
 
 // File system attributes
-static int32 sys_statfs(sys_arg_t path_ptr, sys_arg_t buf_ptr) {
+int32 sys_statfs(sys_arg_t path_ptr, sys_arg_t buf_ptr) {
     // Get filesystem statistics
     if (!path_ptr || !buf_ptr) {
         return SYSCALL_EFAULT;
@@ -5643,7 +5650,7 @@ static int32 sys_statfs(sys_arg_t path_ptr, sys_arg_t buf_ptr) {
     }
     
     statfs_t* buf = (statfs_t*)buf_ptr;
-    memory_set((char*)buf, 0, sizeof(statfs_t));
+    memory_set((uint8*)buf, 0, sizeof(statfs_t));
     
     // Return info for our RAM-based VFS
     buf->f_type = 0x01021994;   // RAMFS magic number
@@ -5662,7 +5669,7 @@ static int32 sys_statfs(sys_arg_t path_ptr, sys_arg_t buf_ptr) {
     return 0;
 }
 
-static int32 sys_fstatfs(sys_arg_t fd, sys_arg_t buf_ptr) {
+int32 sys_fstatfs(sys_arg_t fd, sys_arg_t buf_ptr) {
     // Get filesystem statistics by file descriptor
     if (!buf_ptr) {
         return SYSCALL_EFAULT;
@@ -5683,7 +5690,7 @@ static int32 sys_fstatfs(sys_arg_t fd, sys_arg_t buf_ptr) {
     }
     
     statfs_t* buf = (statfs_t*)buf_ptr;
-    memory_set((char*)buf, 0, sizeof(statfs_t));
+    memory_set((uint8*)buf, 0, sizeof(statfs_t));
     
     // Same info as statfs - we have one unified VFS
     buf->f_type = 0x01021994;
@@ -5700,7 +5707,7 @@ static int32 sys_fstatfs(sys_arg_t fd, sys_arg_t buf_ptr) {
     return 0;
 }
 
-static int32 sys_utime(sys_arg_t filename_ptr, sys_arg_t times_ptr) {
+int32 sys_utime(sys_arg_t filename_ptr, sys_arg_t times_ptr) {
     // Set file access and modification times (legacy interface)
     if (!filename_ptr) {
         return SYSCALL_EFAULT;
@@ -5729,7 +5736,7 @@ static int32 sys_utime(sys_arg_t filename_ptr, sys_arg_t times_ptr) {
     return 0;
 }
 
-static int32 sys_utimes(sys_arg_t filename_ptr, sys_arg_t times_ptr) {
+int32 sys_utimes(sys_arg_t filename_ptr, sys_arg_t times_ptr) {
     // Set file times with microsecond precision
     if (!filename_ptr) {
         return SYSCALL_EFAULT;
@@ -5755,7 +5762,7 @@ static int32 sys_utimes(sys_arg_t filename_ptr, sys_arg_t times_ptr) {
     return 0;
 }
 
-static int32 sys_utimensat(sys_arg_t dirfd, sys_arg_t pathname_ptr, sys_arg_t times_ptr, sys_arg_t flags) {
+int32 sys_utimensat(sys_arg_t dirfd, sys_arg_t pathname_ptr, sys_arg_t times_ptr, sys_arg_t flags) {
     // Set file times with nanosecond precision
     (void)dirfd;   // We don't support AT_FDCWD yet
     (void)flags;   // AT_SYMLINK_NOFOLLOW not needed
@@ -5789,7 +5796,7 @@ static int32 sys_utimensat(sys_arg_t dirfd, sys_arg_t pathname_ptr, sys_arg_t ti
 #define SYSCALL_ENODATA (-61)  // No data available
 
 // Extended attributes
-static int32 sys_setxattr(sys_arg_t path_ptr, sys_arg_t name_ptr, sys_arg_t value_ptr, sys_arg_t size, sys_arg_t flags) {
+int32 sys_setxattr(sys_arg_t path_ptr, sys_arg_t name_ptr, sys_arg_t value_ptr, sys_arg_t size, sys_arg_t flags) {
     // Set extended attribute on file
     (void)value_ptr;
     (void)size;
@@ -5814,7 +5821,7 @@ static int32 sys_setxattr(sys_arg_t path_ptr, sys_arg_t name_ptr, sys_arg_t valu
     return SYSCALL_ENOTSUP;
 }
 
-static int32 sys_getxattr(sys_arg_t path_ptr, sys_arg_t name_ptr, sys_arg_t value_ptr, sys_arg_t size) {
+int32 sys_getxattr(sys_arg_t path_ptr, sys_arg_t name_ptr, sys_arg_t value_ptr, sys_arg_t size) {
     // Get extended attribute value
     (void)value_ptr;
     (void)size;
@@ -5837,7 +5844,7 @@ static int32 sys_getxattr(sys_arg_t path_ptr, sys_arg_t name_ptr, sys_arg_t valu
     return SYSCALL_ENODATA;
 }
 
-static int32 sys_listxattr(sys_arg_t path_ptr, sys_arg_t list_ptr, sys_arg_t size) {
+int32 sys_listxattr(sys_arg_t path_ptr, sys_arg_t list_ptr, sys_arg_t size) {
     // List extended attribute names
     (void)list_ptr;
     (void)size;
@@ -5860,7 +5867,7 @@ static int32 sys_listxattr(sys_arg_t path_ptr, sys_arg_t list_ptr, sys_arg_t siz
     return 0;
 }
 
-static int32 sys_removexattr(sys_arg_t path_ptr, sys_arg_t name_ptr) {
+int32 sys_removexattr(sys_arg_t path_ptr, sys_arg_t name_ptr) {
     // Remove extended attribute
     if (!path_ptr || !name_ptr) {
         return SYSCALL_EFAULT;
@@ -5880,27 +5887,27 @@ static int32 sys_removexattr(sys_arg_t path_ptr, sys_arg_t name_ptr) {
     return SYSCALL_ENODATA;
 }
 
-static int32 sys_lsetxattr(sys_arg_t path_ptr, sys_arg_t name_ptr, sys_arg_t value_ptr, sys_arg_t size, sys_arg_t flags) {
+int32 sys_lsetxattr(sys_arg_t path_ptr, sys_arg_t name_ptr, sys_arg_t value_ptr, sys_arg_t size, sys_arg_t flags) {
     // Set xattr, don't follow symlinks (same as setxattr for us - no symlink support)
     return sys_setxattr(path_ptr, name_ptr, value_ptr, size, flags);
 }
 
-static int32 sys_lgetxattr(sys_arg_t path_ptr, sys_arg_t name_ptr, sys_arg_t value_ptr, sys_arg_t size) {
+int32 sys_lgetxattr(sys_arg_t path_ptr, sys_arg_t name_ptr, sys_arg_t value_ptr, sys_arg_t size) {
     // Get xattr, don't follow symlinks
     return sys_getxattr(path_ptr, name_ptr, value_ptr, size);
 }
 
-static int32 sys_llistxattr(sys_arg_t path_ptr, sys_arg_t list_ptr, sys_arg_t size) {
+int32 sys_llistxattr(sys_arg_t path_ptr, sys_arg_t list_ptr, sys_arg_t size) {
     // List xattrs, don't follow symlinks
     return sys_listxattr(path_ptr, list_ptr, size);
 }
 
-static int32 sys_lremovexattr(sys_arg_t path_ptr, sys_arg_t name_ptr) {
+int32 sys_lremovexattr(sys_arg_t path_ptr, sys_arg_t name_ptr) {
     // Remove xattr, don't follow symlinks
     return sys_removexattr(path_ptr, name_ptr);
 }
 
-static int32 sys_fsetxattr(sys_arg_t fd, sys_arg_t name_ptr, sys_arg_t value_ptr, sys_arg_t size, sys_arg_t flags) {
+int32 sys_fsetxattr(sys_arg_t fd, sys_arg_t name_ptr, sys_arg_t value_ptr, sys_arg_t size, sys_arg_t flags) {
     // Set xattr by file descriptor
     (void)name_ptr;
     (void)value_ptr;
@@ -5919,7 +5926,7 @@ static int32 sys_fsetxattr(sys_arg_t fd, sys_arg_t name_ptr, sys_arg_t value_ptr
     return SYSCALL_ENOTSUP;
 }
 
-static int32 sys_fgetxattr(sys_arg_t fd, sys_arg_t name_ptr, sys_arg_t value_ptr, sys_arg_t size) {
+int32 sys_fgetxattr(sys_arg_t fd, sys_arg_t name_ptr, sys_arg_t value_ptr, sys_arg_t size) {
     // Get xattr by file descriptor
     (void)name_ptr;
     (void)value_ptr;
@@ -5937,7 +5944,7 @@ static int32 sys_fgetxattr(sys_arg_t fd, sys_arg_t name_ptr, sys_arg_t value_ptr
     return SYSCALL_ENODATA;
 }
 
-static int32 sys_flistxattr(sys_arg_t fd, sys_arg_t list_ptr, sys_arg_t size) {
+int32 sys_flistxattr(sys_arg_t fd, sys_arg_t list_ptr, sys_arg_t size) {
     // List xattrs by file descriptor
     (void)list_ptr;
     (void)size;
@@ -5954,7 +5961,7 @@ static int32 sys_flistxattr(sys_arg_t fd, sys_arg_t list_ptr, sys_arg_t size) {
     return 0; // Empty list
 }
 
-static int32 sys_fremovexattr(sys_arg_t fd, sys_arg_t name_ptr) {
+int32 sys_fremovexattr(sys_arg_t fd, sys_arg_t name_ptr) {
     // Remove xattr by file descriptor
     (void)name_ptr;
     
@@ -5976,6 +5983,7 @@ static int32 sys_fremovexattr(sys_arg_t fd, sys_arg_t name_ptr) {
 #define SHUT_RDWR 2
 
 // Socket options levels
+#undef SOL_SOCKET
 #define SOL_SOCKET  1
 #define IPPROTO_TCP 6
 #define IPPROTO_UDP 17
@@ -6012,7 +6020,7 @@ typedef struct {
 static socket_state_t socket_states[16]; // State for up to 16 sockets
 
 // Networking (continued)
-static int32 sys_connect(sys_arg_t fd, sys_arg_t addr_ptr, sys_arg_t addrlen) {
+int32 sys_connect(sys_arg_t fd, sys_arg_t addr_ptr, sys_arg_t addrlen) {
     unix_path_socket_t* usock = find_unix_path_socket_by_fd((int)fd);
     if (usock) {
         if (!addr_ptr || addrlen < sizeof(sockaddr_un_t)) {
@@ -6075,7 +6083,7 @@ static int32 sys_connect(sys_arg_t fd, sys_arg_t addr_ptr, sys_arg_t addrlen) {
     return 0;
 }
 
-static int32 sys_accept(sys_arg_t fd, sys_arg_t addr_ptr, sys_arg_t addrlen_ptr) {
+int32 sys_accept(sys_arg_t fd, sys_arg_t addr_ptr, sys_arg_t addrlen_ptr) {
     unix_path_socket_t* listener = find_unix_path_socket_by_fd((int)fd);
     if (listener) {
         if (!listener->listening) {
@@ -6146,7 +6154,7 @@ static int32 sys_accept(sys_arg_t fd, sys_arg_t addr_ptr, sys_arg_t addrlen_ptr)
     return -11; // EAGAIN
 }
 
-static int32 sys_sendmsg(sys_arg_t fd, sys_arg_t msg_ptr, sys_arg_t flags) {
+int32 sys_sendmsg(sys_arg_t fd, sys_arg_t msg_ptr, sys_arg_t flags) {
     // Send message on socket
     (void)flags;
 
@@ -6243,7 +6251,7 @@ static int32 sys_sendmsg(sys_arg_t fd, sys_arg_t msg_ptr, sys_arg_t flags) {
     return total_sent;
 }
 
-static int32 sys_recvmsg(sys_arg_t fd, sys_arg_t msg_ptr, sys_arg_t flags) {
+int32 sys_recvmsg(sys_arg_t fd, sys_arg_t msg_ptr, sys_arg_t flags) {
     // Receive message from socket
     (void)flags;
 
@@ -6323,7 +6331,7 @@ static int32 sys_recvmsg(sys_arg_t fd, sys_arg_t msg_ptr, sys_arg_t flags) {
     return 0;
 }
 
-static int32 sys_shutdown(sys_arg_t fd, sys_arg_t how) {
+int32 sys_shutdown(sys_arg_t fd, sys_arg_t how) {
     unix_path_socket_t* usock = find_unix_path_socket_by_fd((int)fd);
     if (usock) {
         if (how > SHUT_RDWR) {
@@ -6360,7 +6368,7 @@ static int32 sys_shutdown(sys_arg_t fd, sys_arg_t how) {
     return 0;
 }
 
-static int32 sys_listen(sys_arg_t fd, sys_arg_t backlog) {
+int32 sys_listen(sys_arg_t fd, sys_arg_t backlog) {
     unix_path_socket_t* usock = find_unix_path_socket_by_fd((int)fd);
     if (usock) {
         (void)backlog;
@@ -6379,7 +6387,7 @@ static int32 sys_listen(sys_arg_t fd, sys_arg_t backlog) {
     return 0;
 }
 
-static int32 sys_getsockname(sys_arg_t fd, sys_arg_t addr_ptr, sys_arg_t addrlen_ptr) {
+int32 sys_getsockname(sys_arg_t fd, sys_arg_t addr_ptr, sys_arg_t addrlen_ptr) {
     unix_path_socket_t* usock = find_unix_path_socket_by_fd((int)fd);
     if (usock) {
         if (!addr_ptr || !addrlen_ptr) {
@@ -6433,14 +6441,14 @@ static int32 sys_getsockname(sys_arg_t fd, sys_arg_t addr_ptr, sys_arg_t addrlen
     addr->sin_family = AF_INET;
     addr->sin_port = 0;  // Would need to track bound port
     addr->sin_addr = INADDR_LOOPBACK;
-    memory_set((char*)addr->sin_zero, 0, 8);
+    memory_set((uint8*)addr->sin_zero, 0, 8);
     
     *addrlen = sizeof(sockaddr_in_t);
     
     return 0;
 }
 
-static int32 sys_getpeername(sys_arg_t fd, sys_arg_t addr_ptr, sys_arg_t addrlen_ptr) {
+int32 sys_getpeername(sys_arg_t fd, sys_arg_t addr_ptr, sys_arg_t addrlen_ptr) {
     unix_path_socket_t* usock = find_unix_path_socket_by_fd((int)fd);
     if (usock) {
         if (!usock->connected) {
@@ -6498,14 +6506,14 @@ static int32 sys_getpeername(sys_arg_t fd, sys_arg_t addr_ptr, sys_arg_t addrlen
     addr->sin_family = AF_INET;
     addr->sin_port = htons(socket_states[idx].peer_port);
     addr->sin_addr = socket_states[idx].peer_addr;
-    memory_set((char*)addr->sin_zero, 0, 8);
+    memory_set((uint8*)addr->sin_zero, 0, 8);
     
     *addrlen = sizeof(sockaddr_in_t);
     
     return 0;
 }
 
-static int32 sys_socketpair(sys_arg_t domain, sys_arg_t type, sys_arg_t protocol, sys_arg_t sv_ptr) {
+int32 sys_socketpair(sys_arg_t domain, sys_arg_t type, sys_arg_t protocol, sys_arg_t sv_ptr) {
     // Minimal AF_UNIX socketpair implementation with in-kernel ring buffers.
     (void)protocol;
     
@@ -6579,7 +6587,7 @@ static int32 sys_socketpair(sys_arg_t domain, sys_arg_t type, sys_arg_t protocol
     return 0;
 }
 
-static int32 sys_setsockopt(sys_arg_t fd, sys_arg_t level, sys_arg_t optname, sys_arg_t optval_ptr, sys_arg_t optlen) {
+int32 sys_setsockopt(sys_arg_t fd, sys_arg_t level, sys_arg_t optname, sys_arg_t optval_ptr, sys_arg_t optlen) {
     // Set socket option
     if (find_unix_path_socket_by_fd((int)fd)) {
         (void)level;
@@ -6610,7 +6618,7 @@ static int32 sys_setsockopt(sys_arg_t fd, sys_arg_t level, sys_arg_t optname, sy
 #endif
 }
 
-static int32 sys_getsockopt(sys_arg_t fd, sys_arg_t level, sys_arg_t optname, sys_arg_t optval_ptr, sys_arg_t optlen_ptr) {
+int32 sys_getsockopt(sys_arg_t fd, sys_arg_t level, sys_arg_t optname, sys_arg_t optval_ptr, sys_arg_t optlen_ptr) {
     // Get socket option
     if (find_unix_path_socket_by_fd((int)fd)) {
         if (!optval_ptr || !optlen_ptr) {
@@ -6682,7 +6690,7 @@ static int32 sys_getsockopt(sys_arg_t fd, sys_arg_t level, sys_arg_t optname, sy
     return 0;
 }
 
-static int32 sys_clone(sys_arg_t clone_flags, sys_arg_t newsp, sys_arg_t parent_tidptr, sys_arg_t child_tidptr, sys_arg_t tls_val) {
+int32 sys_clone(sys_arg_t clone_flags, sys_arg_t newsp, sys_arg_t parent_tidptr, sys_arg_t child_tidptr, sys_arg_t tls_val) {
     // For simplicity, implement clone as fork with lightweight flag support.
     (void)tls_val; // TLS switching is not supported yet.
 
@@ -6741,7 +6749,7 @@ static int32 sys_clone(sys_arg_t clone_flags, sys_arg_t newsp, sys_arg_t parent_
 #define FUTEX_WAIT_REQUEUE_PI 11
 #define FUTEX_CMP_REQUEUE_PI 12
 
-static int32 sys_futex(sys_arg_t uaddr, sys_arg_t op, sys_arg_t val, sys_arg_t utime, sys_arg_t uaddr2, sys_arg_t val3) {
+int32 sys_futex(sys_arg_t uaddr, sys_arg_t op, sys_arg_t val, sys_arg_t utime, sys_arg_t uaddr2, sys_arg_t val3) {
     if (!uaddr) {
         return SYSCALL_EFAULT;
     }
@@ -6863,7 +6871,7 @@ typedef struct {
 #endif
 
 // I/O multiplexing
-static int32 sys_poll(sys_arg_t ufds, sys_arg_t nfds, sys_arg_t timeout) {
+int32 sys_poll(sys_arg_t ufds, sys_arg_t nfds, sys_arg_t timeout) {
     if (!ufds || nfds == 0) {
         return SYSCALL_EINVAL;
     }
@@ -6985,7 +6993,7 @@ typedef struct {
     uint32 fds_bits[32]; // 1024 file descriptors (32 * 32 bits)
 } fd_set_t;
 
-static int32 sys_select(sys_arg_t n, sys_arg_t inp, sys_arg_t outp, sys_arg_t exp, sys_arg_t tvp) {
+int32 sys_select(sys_arg_t n, sys_arg_t inp, sys_arg_t outp, sys_arg_t exp, sys_arg_t tvp) {
     if (n == 0) {
         return 0;
     }
@@ -7031,7 +7039,7 @@ static int32 sys_select(sys_arg_t n, sys_arg_t inp, sys_arg_t outp, sys_arg_t ex
     int32 ready_count = 0;
     
     // Check file descriptors up to n
-    for (int32 fd = 0; fd < n && fd < 1024; fd++) {
+    for (sys_arg_t fd = 0; fd < n && fd < 1024; fd++) {
         int32 fd_bit_index = fd / 32;
         int32 fd_bit_offset = fd % 32;
         uint32 fd_mask = 1U << fd_bit_offset;
@@ -7132,7 +7140,7 @@ static int32 sys_select(sys_arg_t n, sys_arg_t inp, sys_arg_t outp, sys_arg_t ex
     return ready_count;
 }
 
-static int32 sys_ppoll(sys_arg_t fds, sys_arg_t nfds, sys_arg_t timeout_ts, sys_arg_t sigmask) {
+int32 sys_ppoll(sys_arg_t fds, sys_arg_t nfds, sys_arg_t timeout_ts, sys_arg_t sigmask) {
     (void)sigmask; // Per-call signal masking not supported yet.
 
     int32 timeout_ms = -1;
@@ -7147,7 +7155,7 @@ static int32 sys_ppoll(sys_arg_t fds, sys_arg_t nfds, sys_arg_t timeout_ts, sys_
     return sys_poll(fds, nfds, (sys_arg_t)timeout_ms);
 }
 
-static int32 sys_access(sys_arg_t path_ptr, sys_arg_t mode) {
+int32 sys_access(sys_arg_t path_ptr, sys_arg_t mode) {
     if (!path_ptr) {
         return SYSCALL_EFAULT;
     }
@@ -7165,40 +7173,40 @@ static int32 sys_access(sys_arg_t path_ptr, sys_arg_t mode) {
 }
 
 // Process operations
-static int32 sys_getuid(void) {
+int32 sys_getuid(void) {
     if (current_task) {
         return (int32)current_task->uid;
     }
     return 0;
 }
 
-static int32 sys_getgid(void) {
+int32 sys_getgid(void) {
     if (current_task) {
         return (int32)current_task->gid;
     }
     return 0;
 }
 
-static int32 sys_geteuid(void) {
+int32 sys_geteuid(void) {
     if (current_task) {
         return (int32)current_task->uid;
     }
     return 0;
 }
 
-static int32 sys_getegid(void) {
+int32 sys_getegid(void) {
     if (current_task) {
         return (int32)current_task->gid;
     }
     return 0;
 }
 
-static int32 sys_getppid(void) {
+int32 sys_getppid(void) {
     return 0; // Parent PID (init)
 }
 
 // I/O control and misc
-static int32 sys_ioctl(sys_arg_t fd, sys_arg_t request, sys_arg_t arg) {
+int32 sys_ioctl(sys_arg_t fd, sys_arg_t request, sys_arg_t arg) {
     fd = (sys_arg_t)resolve_fd_alias((int32)fd);
     enum {
         IOCTL_TCGETS = 0x5401,
@@ -7321,7 +7329,7 @@ static int32 sys_ioctl(sys_arg_t fd, sys_arg_t request, sys_arg_t arg) {
     }
 }
 
-static int32 sys_fcntl(sys_arg_t fd, sys_arg_t cmd, sys_arg_t arg) {
+int32 sys_fcntl(sys_arg_t fd, sys_arg_t cmd, sys_arg_t arg) {
     if ((int32)fd < 0) {
         return SYSCALL_EBADF;
     }
@@ -7376,7 +7384,7 @@ static int32 sys_fcntl(sys_arg_t fd, sys_arg_t cmd, sys_arg_t arg) {
     }
 }
 
-static int32 sys_dup(sys_arg_t fd) {
+int32 sys_dup(sys_arg_t fd) {
     if ((int32)fd < 0) {
         return SYSCALL_EBADF;
     }
@@ -7402,7 +7410,7 @@ void syscall_reset_stdio_redirect(void) {
     stdio_alias[2] = -1;
 }
 
-static int32 sys_dup2(sys_arg_t oldfd, sys_arg_t newfd) {
+int32 sys_dup2(sys_arg_t oldfd, sys_arg_t newfd) {
     if ((int32)oldfd < 0 || (int32)newfd < 0) {
         return SYSCALL_EBADF;
     }
@@ -7447,7 +7455,7 @@ static int32 sys_dup2(sys_arg_t oldfd, sys_arg_t newfd) {
     return (int32)newfd;
 }
 
-static int32 sys_dup3(sys_arg_t oldfd, sys_arg_t newfd, sys_arg_t flags) {
+int32 sys_dup3(sys_arg_t oldfd, sys_arg_t newfd, sys_arg_t flags) {
     // Only O_CLOEXEC is accepted; CLOEXEC is currently ignored.
     const sys_arg_t O_CLOEXEC_MASK = 0x80000U;
     if ((flags & ~O_CLOEXEC_MASK) != 0) {
@@ -7589,7 +7597,7 @@ int32 sys_user(sys_arg_t op, sys_arg_t arg2, sys_arg_t arg3, sys_arg_t arg4, sys
     return (int32)res;
 }
 
-static int32 sys_unlink(sys_arg_t path_ptr) {
+int32 sys_unlink(sys_arg_t path_ptr) {
     if (!path_ptr) {
         return SYSCALL_EFAULT;
     }
@@ -7604,7 +7612,7 @@ static int32 sys_unlink(sys_arg_t path_ptr) {
     return SYSCALL_EPERM;
 }
 
-static int32 sys_mknod(sys_arg_t path_ptr, sys_arg_t mode, sys_arg_t dev) {
+int32 sys_mknod(sys_arg_t path_ptr, sys_arg_t mode, sys_arg_t dev) {
     if (!path_ptr) {
         return SYSCALL_EFAULT;
     }
@@ -7929,7 +7937,7 @@ static shm_attachment_t* find_shm_attachment(uint32 task_id, uint32 addr) {
     return NULL;
 }
 
-static int32 sys_pipe(sys_arg_t pipefd_ptr) {
+int32 sys_pipe(sys_arg_t pipefd_ptr) {
     if (!pipefd_ptr) {
         return SYSCALL_EFAULT;
     }
@@ -7977,7 +7985,7 @@ static int32 sys_pipe(sys_arg_t pipefd_ptr) {
     pipe->write_fd = write_fd + 3;
     pipe->read_closed = false;
     pipe->write_closed = false;
-    memory_set(pipe->buffer, 0, PIPE_BUFFER_SIZE);
+    memory_set((uint8*)pipe->buffer, 0, PIPE_BUFFER_SIZE);
 
     // Set up read handle (special marker: fd >= 3 and data == NULL means pipe)
     vfs_handles[read_fd].used = true;
@@ -8005,7 +8013,8 @@ static int32 sys_pipe(sys_arg_t pipefd_ptr) {
     return 0;
 }
 
-static int32 sys_pipe2(sys_arg_t pipefd_ptr, sys_arg_t flags) {
+int32 sys_pipe2(sys_arg_t pipefd_ptr, sys_arg_t flags) {
+    (void)flags;
     if (!pipefd_ptr) {
         return SYSCALL_EFAULT;
     }
@@ -8022,7 +8031,7 @@ static int32 sys_pipe2(sys_arg_t pipefd_ptr, sys_arg_t flags) {
     return 0;
 }
 
-static int32 sys_seteuid(sys_arg_t uid) {
+int32 sys_seteuid(sys_arg_t uid) {
     if (current_task) {
         current_task->uid = uid;
         return 0;
@@ -8030,7 +8039,7 @@ static int32 sys_seteuid(sys_arg_t uid) {
     return SYSCALL_EPERM;
 }
 
-static int32 sys_setegid(sys_arg_t gid) {
+int32 sys_setegid(sys_arg_t gid) {
     if (current_task) {
         current_task->gid = gid;
         return 0;
@@ -8384,7 +8393,7 @@ static long sys_get_fb_modes(video_mode_t* user_modes, uint32_t* user_count) {
  * memory), then copy just the entries actually written out to
  * userspace. Returns the number of entries written, or -errno. */
 #define SYS_GET_TASKS_CAP 256
-static int32 sys_get_tasks(void* user_buf, uint32 max_entries) {
+int32 sys_get_tasks(void* user_buf, uint32 max_entries) {
     if (!user_buf || max_entries == 0) {
         return 0;
     }
@@ -8433,7 +8442,7 @@ typedef struct {
 /*
  * sys_old_mmap - i386 syscall 90: mmap with struct-pointer argument.
  */
-static int32 sys_old_mmap(sys_arg_t args_ptr) {
+int32 sys_old_mmap(sys_arg_t args_ptr) {
     if (!args_ptr) {
         return SYSCALL_EFAULT;
     }
@@ -8449,7 +8458,7 @@ static int32 sys_old_mmap(sys_arg_t args_ptr) {
  * This is the mmap syscall used by 32-bit ELF binaries (i386 syscall 192).
  * Convert page-unit offset back to bytes and call sys_mmap.
  */
-static int32 sys_mmap2(sys_arg_t addr, sys_arg_t length, sys_arg_t prot,
+int32 sys_mmap2(sys_arg_t addr, sys_arg_t length, sys_arg_t prot,
                        sys_arg_t flags, sys_arg_t fd, sys_arg_t pgoffset) {
     /* pgoffset is in units of 4096; convert to byte offset */
     sys_arg_t byte_offset = pgoffset * 4096U;
@@ -8461,7 +8470,7 @@ static int32 sys_mmap2(sys_arg_t addr, sys_arg_t length, sys_arg_t prot,
  * Syscall 140 on i386: llseek(fd, offset_high, offset_low, result, whence)
  * We only support 32-bit offsets for now; offset_high must be 0 or ~0.
  */
-static int32 sys_llseek(sys_arg_t fd, sys_arg_t offset_high, sys_arg_t offset_low,
+int32 sys_llseek(sys_arg_t fd, sys_arg_t offset_high, sys_arg_t offset_low,
                         sys_arg_t result_ptr, sys_arg_t whence) {
     /* For simplicity only handle offsets that fit in 32 bits */
     if (offset_high != 0 && offset_high != (sys_arg_t)0xFFFFFFFF) {
@@ -8488,7 +8497,7 @@ static int32 sys_llseek(sys_arg_t fd, sys_arg_t offset_high, sys_arg_t offset_lo
  * i386 syscall 102: socketcall(call, args[])
  * args[] is a user-space pointer to an array of uint32 arguments.
  */
-static int32 sys_socketcall(sys_arg_t call, sys_arg_t args_ptr) {
+int32 sys_socketcall(sys_arg_t call, sys_arg_t args_ptr) {
     /* Maximum arguments for any socketcall sub-call is 6 */
     uint32 args[6] = {0, 0, 0, 0, 0, 0};
     int nargs = 0;
@@ -8575,7 +8584,7 @@ static int32 sys_socketcall(sys_arg_t call, sys_arg_t args_ptr) {
  * sys_newselect - i386 "new select" (syscall 142).
  * Same calling convention as sys_select but called via a different number.
  */
-static int32 sys_newselect(sys_arg_t nfds, sys_arg_t readfds, sys_arg_t writefds,
+int32 sys_newselect(sys_arg_t nfds, sys_arg_t readfds, sys_arg_t writefds,
                            sys_arg_t exceptfds, sys_arg_t timeout) {
     return sys_select(nfds, readfds, writefds, exceptfds, timeout);
 }
@@ -8587,7 +8596,7 @@ static int32 sys_newselect(sys_arg_t nfds, sys_arg_t readfds, sys_arg_t writefds
  * the case separately).
  *
  * We return a sentinel value of 0x7FFFFFFF to signal "not handled" so the
- * caller can detect whether to keep the default -ENOSYS.  We use a simpler
+ * caller can detect whether to keep the default -38.  We use a simpler
  * approach: set a flag.
  */
 static int32 i386_dispatch(sys_arg_t num,
@@ -8993,7 +9002,7 @@ void syscall_handle(syscall_frame_t* frame) {
     sys_arg_t arg6 = frame->ebp;  // Sixth argument
 #endif
     
-    // Default result: -ENOSYS
+    // Default result: -38
     int32 result = -38;
 
 #if !ARCH_64BIT
@@ -9553,9 +9562,51 @@ syscall_done:
         print("[SYSCALL] Task terminated during syscall, halting instead of returning to userspace\n");
         // Disable interrupts and halt - task_schedule() should have switched away
         // but if we're here, we can't safely return to userspace
-        __asm__ __volatile__("cli");
+         __asm__ __volatile__("cli");
         while (1) {
             __asm__ __volatile__("hlt");
         }
     }
+}
+
+/* Stub implementations for missing syscalls referenced by arch/syscall.c */
+int32 sys_renameat(sys_arg_t olddirfd, sys_arg_t oldpath, sys_arg_t newdirfd, sys_arg_t newpath) {
+    (void)olddirfd; (void)oldpath; (void)newdirfd; (void)newpath;
+    return -38;
+}
+int32 sys_linkat(sys_arg_t olddirfd, sys_arg_t oldpath, sys_arg_t newdirfd, sys_arg_t newpath, sys_arg_t flags) {
+    (void)olddirfd; (void)oldpath; (void)newdirfd; (void)newpath; (void)flags;
+    return -38;
+}
+int32 sys_readlinkat(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t buf, sys_arg_t bufsiz) {
+    (void)dirfd; (void)pathname; (void)buf; (void)bufsiz;
+    return -38;
+}
+int32 sys_copy_file_range(sys_arg_t fd_in, sys_arg_t off_in, sys_arg_t fd_out, sys_arg_t off_out, sys_arg_t len, sys_arg_t flags) {
+    (void)fd_in; (void)off_in; (void)fd_out; (void)off_out; (void)len; (void)flags;
+    return -38;
+}
+int32 sys_fadvise64(sys_arg_t fd, sys_arg_t offset, sys_arg_t len, sys_arg_t advice) {
+    (void)fd; (void)offset; (void)len; (void)advice;
+    return 0;
+}
+int32 sys_memfd_create(sys_arg_t name, sys_arg_t flags) {
+    (void)name; (void)flags;
+    return -38;
+}
+int32 sys_statx(sys_arg_t dirfd, sys_arg_t pathname, sys_arg_t flags, sys_arg_t mask, sys_arg_t statxbuf) {
+    (void)dirfd; (void)pathname; (void)flags; (void)mask; (void)statxbuf;
+    return -38;
+}
+int32 sys_close_range(sys_arg_t fd, sys_arg_t max_fd, sys_arg_t flags) {
+    (void)fd; (void)max_fd; (void)flags;
+    return -38;
+}
+int32 sys_accept4(sys_arg_t sockfd, sys_arg_t addr, sys_arg_t addrlen, sys_arg_t flags) {
+    (void)sockfd; (void)addr; (void)addrlen; (void)flags;
+    return -38;
+}
+int32 sys_getdents64(sys_arg_t fd, sys_arg_t dirp, sys_arg_t count) {
+    (void)fd; (void)dirp; (void)count;
+    return -38;
 }

@@ -14,6 +14,7 @@
 #include "memory.h"
 #include "atomic.h"
 #include "spinlock.h"
+#include "include/apic.h"
 
 /* Page flags if not already defined */
 #ifndef PAGE_PRESENT
@@ -646,4 +647,10 @@ void ioapic_debug_dump(void)
     }
     
     debuglog_printf("=== END I/O APIC DEBUG ===\n\n");
+}
+
+void x86_ioapic_eoi(uint32_t irq)
+{
+    (void)irq;
+    apic_send_eoi();
 }

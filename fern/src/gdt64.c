@@ -9,8 +9,8 @@
  *     0   0x00      Null descriptor (mandatory)
  *     1   0x08      Kernel code  (64-bit, DPL=0, L=1, type=0xA)
  *     2   0x10      Kernel data  (DPL=0, type=0x2)
- *     3   0x18      User code    (64-bit, DPL=3, L=1, type=0xA)
- *     4   0x20      User data    (DPL=3, type=0x2)
+ *     3   0x18      User data    (DPL=3, type=0x2)     ← STAR SYSRET base+8
+ *     4   0x20      User code    (64-bit, DPL=3, L=1)  ← STAR SYSRET base+16
  *     5   0x28      TSS low  8 bytes  \  Together a 16-byte system descriptor
  *     6   0x30      TSS high 8 bytes  /
  *
@@ -274,8 +274,8 @@ void gdt64_init(uintptr_t kernel_stack_top)
     s_gdt[0] = 0;                /* Index 0: null descriptor (mandatory) */
     s_gdt[1] = SEG_KERNEL_CODE;  /* Index 1: kernel code  (0x08) */
     s_gdt[2] = SEG_KERNEL_DATA;  /* Index 2: kernel data  (0x10) */
-    s_gdt[3] = SEG_USER_CODE;    /* Index 3: user code    (0x18) */
-    s_gdt[4] = SEG_USER_DATA;    /* Index 4: user data    (0x20) */
+    s_gdt[3] = SEG_USER_DATA;    /* Index 3: user data    (0x18) — SYSRET SS */
+    s_gdt[4] = SEG_USER_CODE;    /* Index 4: user code    (0x20) — SYSRET CS */
     /* Slots 5 and 6 are filled by gdt64_load_tss() below. */
 
     /* ------------------------------------------------------------------
@@ -335,6 +335,21 @@ void gdt64_init(uintptr_t kernel_stack_top)
 
     print("[GDT64] IST stacks: IST1=#DF, IST2=NMI, IST3=#MC, IST4=#DB\n");
     print("[GDT64] Initialization complete\n");
+}
+
+/**
+ * @brief Set an IST entry in the internally-managed TSS.
+ *
+ * Convenience wrapper around gdt64_set_ist() that operates on the
+ * static TSS managed by gdt64_init().  Called during context switch
+ * to point an IST slot at a per-task stack.
+ *
+ * @param ist_num   IST index, 1-based (1..7).
+ * @param stack_top Top-of-stack address for this IST slot.
+ */
+void gdt64_update_ist(int ist_num, uint64_t stack_top)
+{
+    gdt64_set_ist(&s_tss, ist_num, stack_top);
 }
 
 /**

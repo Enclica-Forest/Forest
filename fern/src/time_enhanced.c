@@ -66,10 +66,6 @@ static uint64_t time_pit_read(void);
 static uint64_t time_virtualbox_read(void);
 static uint64_t time_kvm_read(void);
 static int time_convert_to_enhanced(uint64_t timestamp, time_format_t format, enhanced_time_t *time);
-static int time_convert_from_enhanced(const enhanced_time_t *time, time_format_t format, void *output);
-static void time_update_statistics(time_source_t source, int32_t drift_ms);
-static time_alarm_t *time_find_alarm(uint32_t id);
-static int time_process_alarms(void);
 
 /* Time Source Definitions */
 static time_source_info_t g_default_sources[] = {
@@ -629,7 +625,7 @@ int time_cancel_alarm(uint32_t alarm_id)
 /*
  * Process alarms (called periodically)
  */
-static int time_process_alarms(void)
+__attribute__((unused)) static int time_process_alarms(void)
 {
     enhanced_time_t current_time;
     time_alarm_t *current, *next;

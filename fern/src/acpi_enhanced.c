@@ -299,6 +299,7 @@ acpi_object_t *acpi_aml_parse_object(acpi_parser_state_t *parser)
     acpi_object_t *object;
     uint8_t opcode;
     uint32_t pkg_length;
+    (void)pkg_length;
     
     if (!parser || parser->current_pos >= parser->aml_end) {
         return NULL;
@@ -385,6 +386,7 @@ acpi_object_t *acpi_aml_parse_object(acpi_parser_state_t *parser)
             /* Handle extended opcodes and other cases */
             if (opcode == AML_EXT_OP && parser->current_pos + 1 < parser->aml_end) {
                 uint16_t ext_opcode = AML_EXT_PREFIX(parser->current_pos[1]);
+                (void)ext_opcode;
                 parser->current_pos += 2;
                 /* Handle extended opcodes here */
             } else {
@@ -491,7 +493,8 @@ static acpi_object_t *acpi_aml_parse_method(acpi_parser_state_t *parser)
 {
     acpi_object_t *object;
     uint32_t pkg_length, arg_count;
-    const uint8_t *method_start, *method_end;
+    const uint8_t *method_start;
+    (void)arg_count;
     
     if (parser->current_pos >= parser->aml_end || *parser->current_pos != AML_METHOD_OP) {
         return NULL;
@@ -521,7 +524,7 @@ static acpi_object_t *acpi_aml_parse_method(acpi_parser_state_t *parser)
     
     /* Skip method body for now */
     while (parser->current_pos < parser->aml_end && 
-           (parser->current_pos - method_start) < pkg_length) {
+           (uint32_t)(uintptr_t)(parser->current_pos - method_start) < pkg_length) {
         parser->current_pos++;
     }
     

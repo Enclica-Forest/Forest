@@ -129,6 +129,8 @@ void ps2_keyboard_clear_ascii_buffer(void) {
 }
 
 // Scan code set 1 to key code mapping
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverride-init"
 static const key_code_t scancode_set1_to_keycode[256] = {
     [0x01] = KEY_ESC,
     [0x02] = KEY_1, [0x03] = KEY_2, [0x04] = KEY_3, [0x05] = KEY_4,
@@ -166,8 +168,11 @@ static const key_code_t scancode_set1_to_keycode[256] = {
     [0x56] = KEY_OEM_102,
     [0x57] = KEY_F11, [0x58] = KEY_F12,
 };
+#pragma GCC diagnostic pop
 
 // Extended scan codes (0xE0 prefix)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverride-init"
 static const key_code_t extended_scancode_set1_to_keycode[256] = {
     [0x1C] = KEY_KEYPAD_ENTER, [0x1D] = KEY_RIGHT_CTRL,
     [0x35] = KEY_KEYPAD_DIVIDE, [0x38] = KEY_RIGHT_ALT,
@@ -185,8 +190,11 @@ static const key_code_t extended_scancode_set1_to_keycode[256] = {
     [0x5E] = KEY_POWER, [0x5F] = KEY_SLEEP, [0x63] = KEY_WAKE,
     [0x65] = KEY_WWW_SEARCH, [0x66] = KEY_WWW_FAVORITES, [0x67] = KEY_WWW_REFRESH,
 };
+#pragma GCC diagnostic pop
 
 // Scan code set 2 to key code mapping (make codes only)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverride-init"
 static const key_code_t scancode_set2_to_keycode[256] = {
     [0x01] = KEY_F9, [0x03] = KEY_F5, [0x04] = KEY_F3, [0x05] = KEY_F1,
     [0x06] = KEY_F2, [0x07] = KEY_F12, [0x09] = KEY_F10, [0x0A] = KEY_F8,
@@ -214,8 +222,11 @@ static const key_code_t scancode_set2_to_keycode[256] = {
     [0x7C] = KEY_KEYPAD_MULTIPLY, [0x7D] = KEY_KEYPAD_9, [0x7E] = KEY_SCROLL_LOCK,
     [0x7F] = KEY_UNKNOWN, [0x83] = KEY_F7,
 };
+#pragma GCC diagnostic pop
 
 // Extended scan codes (0xE0 prefix) for set 2
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverride-init"
 static const key_code_t extended_scancode_set2_to_keycode[256] = {
     [0x11] = KEY_RIGHT_ALT, [0x14] = KEY_RIGHT_CTRL,
     [0x1F] = KEY_LEFT_GUI, [0x27] = KEY_RIGHT_GUI, [0x2F] = KEY_MENU,
@@ -225,6 +236,7 @@ static const key_code_t extended_scancode_set2_to_keycode[256] = {
     [0x74] = KEY_RIGHT, [0x75] = KEY_UP, [0x7A] = KEY_PAGE_DOWN,
     [0x7C] = KEY_PRINT_SCREEN, [0x7D] = KEY_PAGE_UP,
 };
+#pragma GCC diagnostic pop
 
 /*
  * Mapping from internal key_code_t to Linux evdev keycodes
@@ -1069,7 +1081,7 @@ void ps2_keyboard_poll(void) {
 
 // Static flag to track if keyboard is present
 static bool g_keyboard_present = false;
-static uint32_t g_last_keyboard_activity = 0;
+__attribute__((unused)) static uint32_t g_last_keyboard_activity = 0;
 
 /**
  * Check if keyboard device is present and responding

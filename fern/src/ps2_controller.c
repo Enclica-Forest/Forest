@@ -17,7 +17,7 @@ static void print_hex8(uint8 value) {
 static ps2_controller_status_t controller_status;
 static bool controller_initialized = false;
 static bool controller_translation_enabled = true;
-static bool mouse_port_available = false;
+__attribute__((unused)) static bool mouse_port_available = false;
 
 int ps2_controller_init(void) {
     if (controller_initialized) {

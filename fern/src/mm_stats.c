@@ -101,7 +101,7 @@ static uint64_t get_timestamp(void) {
 /**
  * @brief Calculate fragmentation percentage
  */
-static uint32_t calculate_fragmentation(void) {
+__attribute__((unused)) static uint32_t calculate_fragmentation(void) {
     pmm_stats_t pmm_stats = pmm_enhanced_get_stats();
     return pmm_stats.fragmentation_percent;
 }

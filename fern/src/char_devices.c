@@ -408,7 +408,7 @@ static ssize_t mem_read(struct device_node *dev, void *buffer, size_t count, uin
 
     /* Copy from physical memory */
     /* This is dangerous and should be properly implemented with paging */
-    uint8_t *phys_addr = (uint8_t*)offset;
+    uint8_t *phys_addr = (uint8_t*)(uintptr_t)offset;
     uint8_t *buf = (uint8_t*)buffer;
 
     for (size_t i = 0; i < count && offset + i < 0x100000; i++) {

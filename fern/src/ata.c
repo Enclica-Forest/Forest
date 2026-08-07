@@ -71,7 +71,7 @@ static bool ata_wait_not_busy(ata_channel_t channel) {
     return false;
 }
 
-static ata_error_t ata_get_error(ata_channel_t channel) {
+__attribute__((unused)) static ata_error_t ata_get_error(ata_channel_t channel) {
     // The Error register lives in the command block at io_base+1, not the
     // control block - this previously read ctrl_base+1 (Drive Address),
     // an unrelated register.
@@ -457,6 +457,7 @@ int ata_read_sectors(ata_device_t *device, uint64_t lba, uint32_t count, void *b
     ata_channel_t channel = device->channel;
     uint16_t io_base = (channel == ATA_CHANNEL_PRIMARY) ? ATA_IO_BASE_PRIMARY : ATA_IO_BASE_SECONDARY;
     uint16_t ctrl_base = (channel == ATA_CHANNEL_PRIMARY) ? ATA_CTRL_BASE_PRIMARY : ATA_CTRL_BASE_SECONDARY;
+    (void)ctrl_base;
     uint32_t sectors_per_op = 256;
     uint8_t *buf = (uint8_t *)buffer;
     uint32_t total_read = 0;
@@ -531,6 +532,7 @@ int ata_write_sectors(ata_device_t *device, uint64_t lba, uint32_t count, const 
     ata_channel_t channel = device->channel;
     uint16_t io_base = (channel == ATA_CHANNEL_PRIMARY) ? ATA_IO_BASE_PRIMARY : ATA_IO_BASE_SECONDARY;
     const uint8_t *buf = (const uint8_t *)buffer;
+    (void)io_base;
     uint32_t total_written = 0;
 
     spinlock_acquire(&g_ata_controller.lock);

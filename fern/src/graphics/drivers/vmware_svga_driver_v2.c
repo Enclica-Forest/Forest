@@ -371,7 +371,7 @@ static void svga_fifo_rect_copy(svga_private_t* priv,
 /**
  * FIFO command: Define cursor
  */
-static void svga_fifo_define_cursor(svga_private_t* priv, uint32_t id,
+__attribute__((unused)) static void svga_fifo_define_cursor(svga_private_t* priv, uint32_t id,
                                     uint32_t width, uint32_t height,
                                     int32_t hotspot_x, int32_t hotspot_y,
                                     const uint32_t* and_mask, const uint32_t* xor_mask) {
@@ -751,7 +751,7 @@ static gfx_result_t svga_map_fb(gfx_device_t* dev, gfx_framebuffer_t** fb) {
     if (!fb || !priv) return GFX_ERR_INVALID_PARAM;
     
     if (!priv->framebuffer.virt_addr) {
-        size_t map_size = (priv->fb_size + 4095) & ~4095;
+        (void)map_physical_memory(dev->fb_base, (priv->fb_size + 4095) & ~4095);
         
         void* vaddr = map_physical_memory(dev->fb_base, map_size);
         if (!vaddr) {
@@ -771,6 +771,7 @@ static gfx_result_t svga_map_fb(gfx_device_t* dev, gfx_framebuffer_t** fb) {
 }
 
 static gfx_result_t svga_unmap_fb(gfx_device_t* dev, gfx_framebuffer_t* fb) {
+    (void)fb;
     svga_private_t* priv = (svga_private_t*)dev->driver_data;
     
     if (priv) {
@@ -1060,6 +1061,7 @@ static gfx_result_t svga_use_program(gfx_device_t* dev, void* program) {
 }
 
 static gfx_result_t svga_create_buffer(gfx_device_t* dev, uint32_t target, size_t size, const void* data, uint32_t usage, void** buffer) {
+    (void)usage;
     if (!dev || !buffer) {
         return GFX_ERR_INVALID_PARAM;
     }
@@ -1084,6 +1086,8 @@ static gfx_result_t svga_create_buffer(gfx_device_t* dev, uint32_t target, size_
 }
 
 static gfx_result_t svga_bind_buffer(gfx_device_t* dev, uint32_t target, void* buffer) {
+    (void)target;
+    (void)buffer;
     if (!dev) {
         return GFX_ERR_INVALID_PARAM;
     }
@@ -1097,6 +1101,8 @@ static gfx_result_t svga_bind_buffer(gfx_device_t* dev, uint32_t target, void* b
 }
 
 static gfx_result_t svga_buffer_data(gfx_device_t* dev, uint32_t target, size_t size, const void* data) {
+    (void)target;
+    (void)size;
     if (!dev || !data) {
         return GFX_ERR_INVALID_PARAM;
     }
@@ -1110,6 +1116,9 @@ static gfx_result_t svga_buffer_data(gfx_device_t* dev, uint32_t target, size_t 
 }
 
 static gfx_result_t svga_buffer_sub_data(gfx_device_t* dev, uint32_t target, size_t offset, size_t size, const void* data) {
+    (void)target;
+    (void)offset;
+    (void)size;
     if (!dev || !data) {
         return GFX_ERR_INVALID_PARAM;
     }
@@ -1159,6 +1168,7 @@ static gfx_result_t svga_disable_vertex_attrib_array(gfx_device_t* dev, uint32_t
 }
 
 static gfx_result_t svga_vertex_attrib_pointer(gfx_device_t* dev, uint32_t index, int32_t size, uint32_t type, bool normalized, int32_t stride, const void* pointer) {
+    (void)size; (void)type; (void)normalized; (void)stride; (void)pointer;
     if (!dev || index >= 16) {
         return GFX_ERR_INVALID_PARAM;
     }
@@ -1172,6 +1182,7 @@ static gfx_result_t svga_vertex_attrib_pointer(gfx_device_t* dev, uint32_t index
 }
 
 static gfx_result_t svga_get_uniform_location(gfx_device_t* dev, void* program, const char* name, int32_t* location) {
+    (void)program; (void)name;
     if (!dev || !program || !name || !location) {
         return GFX_ERR_INVALID_PARAM;
     }
@@ -1186,6 +1197,7 @@ static gfx_result_t svga_get_uniform_location(gfx_device_t* dev, void* program, 
 }
 
 static gfx_result_t svga_uniform1f(gfx_device_t* dev, int32_t location, double value) {
+    (void)value;
     if (!dev || location < 0) {
         return GFX_ERR_INVALID_PARAM;
     }
@@ -1199,6 +1211,7 @@ static gfx_result_t svga_uniform1f(gfx_device_t* dev, int32_t location, double v
 }
 
 static gfx_result_t svga_uniform1i(gfx_device_t* dev, int32_t location, int32_t value) {
+    (void)value;
     if (!dev || location < 0) {
         return GFX_ERR_INVALID_PARAM;
     }
@@ -1212,6 +1225,7 @@ static gfx_result_t svga_uniform1i(gfx_device_t* dev, int32_t location, int32_t 
 }
 
 static gfx_result_t svga_uniform2f(gfx_device_t* dev, int32_t location, double x, double y) {
+    (void)x; (void)y;
     if (!dev || location < 0) {
         return GFX_ERR_INVALID_PARAM;
     }
@@ -1225,6 +1239,7 @@ static gfx_result_t svga_uniform2f(gfx_device_t* dev, int32_t location, double x
 }
 
 static gfx_result_t svga_uniform3f(gfx_device_t* dev, int32_t location, double x, double y, double z) {
+    (void)x; (void)y; (void)z;
     if (!dev || location < 0) {
         return GFX_ERR_INVALID_PARAM;
     }
@@ -1238,6 +1253,7 @@ static gfx_result_t svga_uniform3f(gfx_device_t* dev, int32_t location, double x
 }
 
 static gfx_result_t svga_uniform4f(gfx_device_t* dev, int32_t location, double x, double y, double z, double w) {
+    (void)x; (void)y; (void)z; (void)w;
     if (!dev || location < 0) {
         return GFX_ERR_INVALID_PARAM;
     }
@@ -1251,6 +1267,7 @@ static gfx_result_t svga_uniform4f(gfx_device_t* dev, int32_t location, double x
 }
 
 static gfx_result_t svga_uniform_matrix4fv(gfx_device_t* dev, int32_t location, bool transpose, const double* value) {
+    (void)transpose;
     if (!dev || !value || location < 0) {
         return GFX_ERR_INVALID_PARAM;
     }

@@ -273,6 +273,8 @@ static irq_return_t vbox_interrupt_handler(int vector, void *dev_id, struct inte
     uint32_t events;
     
     (void)vector;
+    (void)dev_id;
+    (void)ctx;
     
     spin_lock_irqsave(&vbox_lock, flags);
     

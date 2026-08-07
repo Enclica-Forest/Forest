@@ -49,6 +49,8 @@ static struct mm_system_stats mm_system_stats = {0};
 // FORWARD DECLARATIONS
 // =============================================================================
 
+extern int cow_init(void);
+
 static int init_memory_zones(void);
 static int init_buddy_allocator(void);
 static int init_slab_allocator(void);
@@ -319,6 +321,7 @@ unsigned long mm_get_memory_pressure(void)
  */
 unsigned long mm_emergency_reclaim(unsigned long pages_needed)
 {
+    (void)pages_needed;
     if (!mm_init_state.reclaim_initialized) {
         return 0;
     }
@@ -475,6 +478,8 @@ void mm_shutdown(void)
  */
 int mm_configure_feature(const char *feature, unsigned long value)
 {
+    (void)feature;
+    (void)value;
     // TODO: Implement runtime feature configuration
     // This would allow tuning parameters like:
     // - Memory pressure thresholds

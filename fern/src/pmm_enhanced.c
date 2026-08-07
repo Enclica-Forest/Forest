@@ -260,7 +260,7 @@ static inline phys_addr_t calc_buddy_addr(phys_addr_t addr, uint32_t order) {
 /**
  * @brief Allocate from buddy system
  */
-static phys_addr_t buddy_alloc(pmm_zone_t* zone, uint32_t order) {
+__attribute__((unused)) static phys_addr_t buddy_alloc(pmm_zone_t* zone, uint32_t order) {
     if (order > PMM_MAX_ORDER) {
         return 0;
     }
@@ -298,7 +298,7 @@ static phys_addr_t buddy_alloc(pmm_zone_t* zone, uint32_t order) {
 /**
  * @brief Free to buddy system
  */
-static void buddy_free(pmm_zone_t* zone, phys_addr_t addr, uint32_t order) {
+__attribute__((unused)) static void buddy_free(pmm_zone_t* zone, phys_addr_t addr, uint32_t order) {
     if (order > PMM_MAX_ORDER) {
         return;
     }

@@ -42,11 +42,53 @@
  * access user-mode banked registers.
  * --------------------------------------------------------------------- */
 .macro SAVE_CONTEXT
-    /* push r0-r12 and the exception LR */
     stmfd  sp!, {r0-r12, lr}
-    /* push SPSR so the dispatcher can inspect/modify the interrupted CPSR */
     mrs    r0, spsr
     stmfd  sp!, {r0}
+.endm
+
+.macro SAVE_VFP_CONTEXT
+    ldr    r1, =current_task
+    ldr    r1, [r1]
+    cmp    r1, #0
+    beq    .Lskip_vfp_save_\@
+    ldr    r1, [r1, #248]
+    cmp    r1, #0
+    beq    .Lskip_vfp_save_\@
+    mov    r0, r1
+    vmrs   r2, fpexc
+    tst    r2, #0x40000000
+    beq    .Lskip_vfp_save_\@
+    stmfd  sp!, {r2}
+    vmrs   r2, fpscr
+    stmfd  sp!, {r2}
+    stmfd  sp!, {s0, s1, s2, s3, s4, s5, s6, s7}
+    stmfd  sp!, {s8, s9, s10, s11, s12, s13, s14, s15}
+    stmfd  sp!, {s16, s17, s18, s19, s20, s21, s22, s23}
+    stmfd  sp!, {s24, s25, s26, s27, s28, s29, s30, s31}
+    mov    r2, #0
+    vmsr   fpexc, r2
+.Lskip_vfp_save_\@:
+.endm
+
+.macro RESTORE_VFP_CONTEXT
+    ldr    r1, =current_task
+    ldr    r1, [r1]
+    cmp    r1, #0
+    beq    .Lskip_vfp_restore_\@
+    ldr    r1, [r1, #248]
+    cmp    r1, #0
+    beq    .Lskip_vfp_restore_\@
+    mov    r0, r1
+    vldm   sp!, {s0, s1, s2, s3, s4, s5, s6, s7}
+    vldm   sp!, {s8, s9, s10, s11, s12, s13, s14, s15}
+    vldm   sp!, {s16, s17, s18, s19, s20, s21, s22, s23}
+    vldm   sp!, {s24, s25, s26, s27, s28, s29, s30, s31}
+    ldmfd  sp!, {r2}
+    vmsr   fpscr, r2
+    ldmfd  sp!, {r2}
+    vmsr   fpexc, r2
+.Lskip_vfp_restore_\@:
 .endm
 
 /* -----------------------------------------------------------------------
@@ -56,10 +98,9 @@
  * which simultaneously restores PC and CPSR from SPSR.
  * --------------------------------------------------------------------- */
 .macro RESTORE_CONTEXT_AND_RETURN
-    /* restore SPSR */
+    RESTORE_VFP_CONTEXT
     ldmfd  sp!, {r0}
     msr    spsr_cxsf, r0
-    /* restore r0-r12 and return (pc = saved lr, CPSR <- SPSR via ^) */
     ldmfd  sp!, {r0-r12, pc}^
 .endm
 
@@ -74,15 +115,11 @@
 .global irq_handler
 .type   irq_handler, %function
 irq_handler:
-    /* Adjust LR: for IRQ, lr = PC + 4; we want PC of interrupted insn */
     sub    lr, lr, #4
-
     SAVE_CONTEXT
-
-    /* sp is now struct arm_regs_t * */
-    mov    r0, sp               /* arg0 = pointer to saved registers    */
-    bl     irq_dispatch          /* C handler in irq_dispatch.c         */
-
+    SAVE_VFP_CONTEXT
+    mov    r0, sp
+    bl     irq_dispatch
     RESTORE_CONTEXT_AND_RETURN
 .size irq_handler, . - irq_handler
 
@@ -96,12 +133,10 @@ irq_handler:
 .type   fiq_handler, %function
 fiq_handler:
     sub    lr, lr, #4
-
     SAVE_CONTEXT
-
+    SAVE_VFP_CONTEXT
     mov    r0, sp
     bl     fiq_dispatch
-
     RESTORE_CONTEXT_AND_RETURN
 .size fiq_handler, . - fiq_handler
 
@@ -116,26 +151,14 @@ fiq_handler:
 .global swi_handler
 .type   swi_handler, %function
 swi_handler:
-    /* lr already points past the SWI; no adjustment */
     SAVE_CONTEXT
-
-    /*
-     * Extract the SWI number from the instruction word.
-     *   r1 = address of the SWI instruction  (lr_svc - 4, saved as lr)
-     * We read it from [sp + 13*4] which is the saved lr slot.
-     */
-    ldr    r1, [sp, #(13*4)]   /* saved lr (= addr after SWI)         */
-    sub    r1, r1, #4           /* point at the SWI instruction        */
-    ldr    r1, [r1]             /* load instruction word               */
-    bic    r1, r1, #0xFF000000  /* mask to 24-bit immediate            */
-
-    /*
-     * Call: void syscall_handle(struct arm_regs_t *regs, uint32_t swi_num)
-     *   r0 = regs, r1 = swi number (already set above)
-     */
+    SAVE_VFP_CONTEXT
+    ldr    r1, [sp, #(13*4)]
+    sub    r1, r1, #4
+    ldr    r1, [r1]
+    bic    r1, r1, #0xFF000000
     mov    r0, sp
     bl     syscall_handle
-
     RESTORE_CONTEXT_AND_RETURN
 .size swi_handler, . - swi_handler
 
@@ -148,15 +171,12 @@ swi_handler:
 .type   prefetch_handler, %function
 prefetch_handler:
     sub    lr, lr, #4
-
     SAVE_CONTEXT
-
-    /* r0 = regs, r1 = IFAR (faulting address from CP15) */
+    SAVE_VFP_CONTEXT
     mov    r0, sp
-    mrc    p15, 0, r1, c6, c0, 2   /* IFAR - Instruction Fault Address  */
-    mrc    p15, 0, r2, c5, c0, 1   /* IFSR - Instruction Fault Status   */
+    mrc    p15, 0, r1, c6, c0, 2
+    mrc    p15, 0, r2, c5, c0, 1
     bl     prefetch_abort_handler
-
     RESTORE_CONTEXT_AND_RETURN
 .size prefetch_handler, . - prefetch_handler
 
@@ -169,15 +189,12 @@ prefetch_handler:
 .type   data_handler, %function
 data_handler:
     sub    lr, lr, #8
-
     SAVE_CONTEXT
-
-    /* r0 = regs, r1 = DFAR, r2 = DFSR */
+    SAVE_VFP_CONTEXT
     mov    r0, sp
-    mrc    p15, 0, r1, c6, c0, 0   /* DFAR - Data Fault Address        */
-    mrc    p15, 0, r2, c5, c0, 0   /* DFSR - Data Fault Status         */
+    mrc    p15, 0, r1, c6, c0, 0
+    mrc    p15, 0, r2, c5, c0, 0
     bl     data_abort_handler
-
     RESTORE_CONTEXT_AND_RETURN
 .size data_handler, . - data_handler
 
@@ -190,14 +207,12 @@ data_handler:
 .type   undef_handler, %function
 undef_handler:
     sub    lr, lr, #4
-
     SAVE_CONTEXT
-
-    mov    r0, sp               /* regs pointer                        */
-    ldr    r1, [sp, #(13*4)]   /* saved lr = addr after bad insn      */
-    sub    r1, r1, #4           /* addr of the undefined instruction   */
+    SAVE_VFP_CONTEXT
+    mov    r0, sp
+    ldr    r1, [sp, #(13*4)]
+    sub    r1, r1, #4
     bl     undef_instr_handler
-
     RESTORE_CONTEXT_AND_RETURN
 .size undef_handler, . - undef_handler
 

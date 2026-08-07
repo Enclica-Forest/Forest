@@ -127,8 +127,10 @@ static inline void x86_32_sgdt(x86_32_gdt_descriptor_t *desc)
 #define IDT_GATE_INT16      0x06   /* 16-bit interrupt gate */
 #define IDT_GATE_TRAP16     0x07   /* 16-bit trap gate      */
 #define IDT_GATE_INT32      0x0E   /* 32-bit interrupt gate */
+#undef IDT_GATE_TRAP32
 #define IDT_GATE_TRAP32     0x0F   /* 32-bit trap gate      */
 
+#undef IDT_PRESENT
 #define IDT_PRESENT         (1U << 7)
 #define IDT_DPL_SHIFT       5
 #define IDT_DPL_RING0       (0U << 5)

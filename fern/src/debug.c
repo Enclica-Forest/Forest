@@ -25,7 +25,7 @@ void debug_print(const char *format, ...) {
     
     va_list args;
     va_start(args, format);
-    debuglog(DEBUG_INFO, format, args);
+    debuglog(DBGLOG_INFO, format, args);
     va_end(args);
 }
 
@@ -34,7 +34,7 @@ void debug_error(const char *format, ...) {
     
     va_list args;
     va_start(args, format);
-    debuglog(DEBUG_ERROR, format, args);
+    debuglog(DBGLOG_ERROR, format, args);
     va_end(args);
 }
 
@@ -43,7 +43,7 @@ void debug_warn(const char *format, ...) {
     
     va_list args;
     va_start(args, format);
-    debuglog(DEBUG_WARN, format, args);
+    debuglog(DBGLOG_WARN, format, args);
     va_end(args);
 }
 
@@ -52,7 +52,7 @@ void debug_info(const char *format, ...) {
     
     va_list args;
     va_start(args, format);
-    debuglog(DEBUG_INFO, format, args);
+    debuglog(DBGLOG_INFO, format, args);
     va_end(args);
 }
 
@@ -61,7 +61,7 @@ void debug_verbose(const char *format, ...) {
 
     va_list args;
     va_start(args, format);
-    debuglog(DEBUG_DETAIL, format, args);
+    debuglog(DBGLOG_DEBUG, format, args);
     va_end(args);
 }
 

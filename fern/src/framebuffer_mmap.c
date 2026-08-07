@@ -234,7 +234,7 @@ static void dirty_track_rect(uint32_t pid, uint32_t x, uint32_t y, uint32_t w, u
     }
 }
 
-static void dirty_track_full(uint32_t pid) {
+static __attribute__((unused)) void dirty_track_full(uint32_t pid) {
     fb_dirty_tracker_t* tracker = get_dirty_tracker(pid);
     if (!tracker) return;
     tracker->full_screen = true;
@@ -344,7 +344,7 @@ static int fb_get_region_info(uint32_t region_id, fb_region_t* info) {
     return FB_SUCCESS;
 }
 
-static bool validate_all_fb_pages(void) {
+static __attribute__((unused)) bool validate_all_fb_pages(void) {
     task_t* task = current_task;
     if (!task || !task->page_directory) return false;
 
@@ -1161,7 +1161,7 @@ bool framebuffer_mmap_handle_page_fault(uint32_t fault_addr) {
     return false;
 }
 
-static bool check_page_directory_changed(void) {
+static __attribute__((unused)) bool check_page_directory_changed(void) {
     page_directory_t* current_pd = vmm_get_current_page_directory();
 
     if (fb_state.last_page_directory == NULL) {

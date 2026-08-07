@@ -392,6 +392,7 @@ static int tsc_calibrate_with_hpet(void)
     uint32_t iterations = 10;
     uint64_t total_tsc = 0, total_time_ns = 0;
     int i;
+    (void)i;
     
     if (!hpet_is_available()) {
         return -ENODEV;
@@ -410,7 +411,7 @@ static int tsc_calibrate_with_hpet(void)
     debug_printf("Calibrating TSC using HPET reference (%llu Hz)\n", hpet_frequency);
     
     /* Perform multiple measurements for accuracy */
-    for (i = 0; i < iterations; i++) {
+    for (uint32_t i = 0; i < iterations; i++) {
         /* Synchronize to HPET counter edge */
         uint64_t hpet_prev = hpet_get_time_ns();
         while (hpet_get_time_ns() == hpet_prev) {
@@ -552,7 +553,7 @@ static int tsc_calibrate_with_cpuid(void)
         uint32_t model = (eax >> 4) & 0xF;
         uint32_t family = (eax >> 8) & 0xF;
         uint32_t ext_model = (eax >> 16) & 0xF;
-        uint32_t ext_family = (eax >> 20) & 0xFF;
+        (void)(eax >> 20); /* ext_family - unused */
         
         /* Common crystal frequencies for Intel processors */
         if (family == 6) {
@@ -642,7 +643,7 @@ static uint64_t tsc_cycles_to_ns(uint64_t cycles)
 /**
  * Convert nanoseconds to TSC cycles
  */
-static uint64_t tsc_ns_to_cycles(uint64_t ns)
+__attribute__((unused)) static uint64_t tsc_ns_to_cycles(uint64_t ns)
 {
     if (tsc_cal.calibrated_frequency_hz == 0) {
         return 0;

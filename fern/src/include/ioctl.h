@@ -113,8 +113,12 @@
  * TTY ioctls
  * Type: 'T' (0x54)
  */
+#ifndef TIOCGWINSZ
 #define TIOCGWINSZ      _IOR('T', 0x01, uint32)         // Get window size
+#endif
+#ifndef TIOCSWINSZ
 #define TIOCSWINSZ      _IOW('T', 0x02, uint32)         // Set window size
+#endif
 #define TIOCFLUSH       _IO('T', 0x03)                  // Flush buffers
 
 /*

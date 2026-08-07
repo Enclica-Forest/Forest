@@ -1,6 +1,6 @@
 /*
  * dirent.h - Directory entries
- *
+ * 
  * POSIX compatible directory operations for Fern libc.
  */
 #ifndef _DIRENT_H

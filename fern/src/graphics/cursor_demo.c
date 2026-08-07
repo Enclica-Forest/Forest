@@ -243,6 +243,7 @@ void cursor_demo_benchmark(void) {
     
     const uint32_t iterations = 1000;
     uint64_t start = 0;
+    (void)start;
     
     start = 0;
     for (uint32_t i = 0; i < iterations; i++) {
@@ -269,7 +270,7 @@ void cursor_demo_custom_cursor(void) {
     
     debuglog(DEBUG_INFO, "Creating custom cursor...\n");
     
-    static const uint8_t custom_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
+    static const uint8_t custom_bitmap[] = {
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

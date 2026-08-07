@@ -5,6 +5,10 @@
  * SPDX-License-Identifier: MIT
  */
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+
 #include "qrcodegen.h"
 #include <string.h>
 #include <stdlib.h>
@@ -546,6 +550,8 @@ bool qrcodegen_encodeSegments(const struct qrcodegen_Segment segs[], size_t len,
 }
 
 bool qrcodegen_encodeSegmentsAdvanced(const struct qrcodegen_Segment segs[], size_t len, enum qrcodegen_Ecc ecl, int minVersion, int maxVersion, int mask, bool boostEcl, uint8_t tempBuffer[], uint8_t qrcode[]) {
+    (void)ecl;
+    (void)boostEcl;
     if (minVersion < 1 || minVersion > 40 || maxVersion < minVersion || maxVersion > 40) {
         return FALSE;
     }
@@ -607,7 +613,9 @@ bool qrcodegen_encodeSegmentsAdvanced(const struct qrcodegen_Segment segs[], siz
     
     static const uint8_t padding[] = {0xEC, 0x11};
     while (offset < dataLen) {
-        dataAndTerminator[offset++] = padding[((offset / 2) % 2)];
+        uint8_t idx = (uint8_t)((offset / 2) % 2);
+        dataAndTerminator[offset] = padding[idx];
+        offset++;
     }
     
     appendErrorCorrection(dataAndTerminator, dataLen, totalCodewords, ecCodewords);
@@ -774,3 +782,5 @@ bool qrcodegen_isKanji(const uint8_t* dataAndLen, size_t len) {
     (void)len;
     return FALSE;
 }
+
+#pragma GCC diagnostic pop

@@ -7,6 +7,14 @@
 #include "include/elf.h"
 #include "include/interrupt.h" // For context switching using new system
 #include "include/gdt.h"
+#ifdef __x86_64__
+#include "include/gdt64.h"
+/* Override 32-bit GDT selectors with 64-bit values for the IRET frame. */
+#undef GDT_USER_CODE_SELECTOR
+#undef GDT_USER_DATA_SELECTOR
+#define GDT_USER_CODE_SELECTOR  GDT64_USER_CS_SEL   /* 0x23: user code64 */
+#define GDT_USER_DATA_SELECTOR  GDT64_USER_DS_SEL   /* 0x1B: user data   */
+#endif
 #include "include/spinlock.h"
 #include "include/string.h"
 #include "include/timer.h"
@@ -58,7 +66,14 @@ extern page_directory_t* vmm_get_current_page_directory(void);
 extern string long_to_string(long n);
 extern void vmm_destroy_page_directory(page_directory_t* dir);  // For deferred cleanup
 
+#ifdef KERNEL_STACK_SIZE
+#undef KERNEL_STACK_SIZE
+#endif
 #define KERNEL_STACK_SIZE 8192 // 8KB for kernel stack per task
+
+#ifdef USER_STACK_SIZE
+#undef USER_STACK_SIZE
+#endif
 #define USER_STACK_SIZE 32   // 32 pages, 128KB for user stack (more suitable for GUI apps)
 // USER_STACK_TOP is defined in memory.h
 
@@ -255,7 +270,7 @@ uint32 task_get_real_priority(task_t* task) {
     return base;
 }
 
-static uint32 task_compute_ticks(task_t* task) {
+__attribute__((unused)) static uint32 task_compute_ticks(task_t* task) {
     uint32 prio = task_get_real_priority(task);
     return 2 + (prio * 2);
 }
@@ -275,7 +290,11 @@ static void idle_task_function(void) {
 }
 
 // Forward declarations for assembly functions (defined in context_switch.asm)
+#ifdef __aarch64__
+extern void task_switch_asm(uint64_t* old_sp_ptr, uint64_t new_sp, void* old_fpu, void* new_fpu);
+#else
 extern void task_switch_asm(uintptr_t* old_sp_ptr, uintptr_t new_sp_val, uintptr_t new_page_directory_phys);
+#endif
 extern void task_start_usermode_asm(void);  // Entry point for IRET to user mode
 extern void isr128_resume(void);  // isr128's restore+iret epilogue (defined in syscall_stubs.asm)
 // Note: jump_to_usermode_asm is deprecated and will trap if called
@@ -1379,7 +1398,11 @@ static void setup_initial_cpu_state(task_t* task,
                                         //   [top-68, top-36)   syscall_frame_t (pusha block)
                                         syscall_frame_t* child_syscall_frame = (syscall_frame_t*)
                                             ((uintptr_t)kernel_stack + KERNEL_STACK_SIZE - sizeof(syscall_frame_t) - 36);
+#if defined(__x86_64__) || defined(_M_X64)
+                                        child_syscall_frame->rax = 0;
+#else
                                         child_syscall_frame->eax = 0;
+#endif
 
                                         // Build a task_switch_asm resume frame (popa/popf/pop ebp/ret)
                                         // that lands directly on isr128_resume, right where the child's
@@ -1433,7 +1456,7 @@ static void setup_initial_cpu_state(task_t* task,
                                     }
 
                                     void task_switch(task_t* next_task) {
-                                        uint32_t eflags_before = 0;
+                                        uint64_t eflags_before = 0;
                                         bool irq_guard_acquired = false;
 #if ARCH_64BIT
                                         __asm__ __volatile__("pushfq; popq %0" : "=r"(eflags_before));
@@ -1621,9 +1644,16 @@ static void setup_initial_cpu_state(task_t* task,
                                         // and temp-mapping helpers operate on the correct directory.
                                         vmm_set_current_directory(next_task->page_directory);
 
+#ifdef __aarch64__
+                                        task_switch_asm(&prev_task->kernel_stack,
+                                                        next_task->kernel_stack,
+                                                        prev_task->vfp_context,
+                                                        next_task->vfp_context);
+#else
                                         task_switch_asm(&prev_task->kernel_stack,
                                                         next_task->kernel_stack,
                                                         next_cr3);
+#endif
 
                                         // Note: For returning tasks, we reach here after they're switched back.
                                         // For new usermode tasks, we never return here - IRET jumps to userspace.

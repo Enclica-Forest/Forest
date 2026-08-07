@@ -317,6 +317,7 @@ bool signalfd_is_writable(int fd) {
 
 // signalfd_create - Create a signalfd
 int signalfd_create(int fd, const sigset_t* mask, int flags) {
+    (void)fd;
     (void)flags;
     
     spinlock_acquire(&g_signalfd_lock);
@@ -490,6 +491,7 @@ int timerfd_create(int clockid, int flags) {
 
 // timerfd_settime - Set timerfd time
 int timerfd_settime(int fd, int flags, const struct itimerspec* new_value, struct itimerspec* old_value) {
+    (void)flags;
     spinlock_acquire(&g_timerfd_lock);
     
     timerfd_t* tf = find_timerfd_by_fd(fd);

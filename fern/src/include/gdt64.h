@@ -12,11 +12,10 @@
  *   Index 0  offset 0x00  null descriptor
  *   Index 1  offset 0x08  kernel code  (DPL=0, 64-bit, L=1)
  *   Index 2  offset 0x10  kernel data  (DPL=0)
- *   Index 3  offset 0x18  user code32  (DPL=3, 32-bit compat, L=0)
- *   Index 4  offset 0x20  user data    (DPL=3)
- *   Index 5  offset 0x28  user code64  (DPL=3, 64-bit, L=1)
- *   Index 6  offset 0x30  TSS low   \  16-byte system descriptor
- *   Index 7  offset 0x38  TSS high  /
+ *   Index 3  offset 0x18  user data    (DPL=3)          ← SYSRET base+8
+ *   Index 4  offset 0x20  user code64  (DPL=3, 64-bit)  ← SYSRET base+16
+ *   Index 5  offset 0x28  TSS low   \  16-byte system descriptor
+ *   Index 6  offset 0x30  TSS high  /
  *
  * 64-bit descriptor format (each entry is 8 bytes):
  *   Bits 63:56  Base[31:24]
@@ -50,38 +49,29 @@
  *
  *     STAR[47:32] = GDT64_KERNEL_CS  = 0x08
  *       SYSCALL:  kernel CS = 0x08,            kernel SS = 0x08 + 8 = 0x10
- *     STAR[63:48] = GDT64_STAR_USER_BASE = 0x18
- *       SYSRET:   user   SS = 0x18 + 8  = 0x20 (user data),  RPL=3 -> 0x23
- *                 user   CS = 0x18 + 16 = 0x28 (user code64), RPL=3 -> 0x2B
+ *     STAR[63:48] = GDT64_STAR_USER_BASE = 0x10
+ *       SYSRET:   user   SS = 0x10 + 8  = 0x18 (user data),  RPL=3 -> 0x1B
+ *                 user   CS = 0x10 + 16 = 0x20 (user code64), RPL=3 -> 0x23
  *
  * GDT slot layout (each entry is 8 bytes; TSS spans two slots = 16 bytes):
  *     Index 0  0x00  null
  *     Index 1  0x08  kernel code   (DPL=0, L=1, type=0xA)
  *     Index 2  0x10  kernel data   (DPL=0, type=0x2)
- *     Index 3  0x18  user code32   (DPL=3, L=0, type=0xA)  [compat mode]
- *     Index 4  0x20  user data     (DPL=3, type=0x2)
- *     Index 5  0x28  user code64   (DPL=3, L=1, type=0xA)
- *     Index 6  0x30  TSS low    \
- *     Index 7  0x38  TSS high   /  16-byte 64-bit TSS descriptor
- *
- * The 32-bit user code slot (index 3) exists so that compat-mode
- * userspace (32-bit binaries on a 64-bit kernel) can be supported via
- * int 0x80.  When ENABLE_COMPAT_INT80 is off the slot is still present
- * but never referenced by SYSRET.
+ *     Index 3  0x18  user data     (DPL=3, type=0x2)
+ *     Index 4  0x20  user code64   (DPL=3, L=1, type=0xA)
+ *     Index 5  0x28  TSS low    \
+ *     Index 6  0x30  TSS high   /  16-byte 64-bit TSS descriptor
  * ========================================================================= */
 
 #define GDT64_NULL_SEL          0x00    /* Null selector                   */
 #define GDT64_KERNEL_CS         0x08    /* Kernel code  (index 1, RPL=0)   */
 #define GDT64_KERNEL_DS         0x10    /* Kernel data  (index 2, RPL=0)   */
 #define GDT64_KERNEL_SS         GDT64_KERNEL_DS  /* SS == DS in long mode */
-#define GDT64_USER_CS32         0x18    /* User 32-bit code (index 3)      */
-#define GDT64_USER_CS32_SEL     0x1B    /*   with RPL=3                    */
-#define GDT64_USER_DS           0x20    /* User data        (index 4)      */
-#define GDT64_USER_DS_SEL       0x23    /*   with RPL=3                    */
-#define GDT64_USER_CS64         0x28    /* User 64-bit code (index 5)      */
-#define GDT64_USER_CS64_SEL     0x2B    /*   with RPL=3                    */
-#define GDT64_USER_CS           GDT64_USER_CS64_SEL  /* default user CS    */
-#define GDT64_TSS               0x30    /* TSS selector    (index 6)       */
+#define GDT64_USER_DS           0x18    /* User data        (index 3)      */
+#define GDT64_USER_DS_SEL       0x1B    /*   with RPL=3                    */
+#define GDT64_USER_CS           0x20    /* User 64-bit code (index 4)      */
+#define GDT64_USER_CS_SEL       0x23    /*   with RPL=3                    */
+#define GDT64_TSS               0x28    /* TSS selector    (index 5)       */
 
 /* Aliases used internally by the flush routine */
 #define GDT64_KERNEL_CODE_SEL   GDT64_KERNEL_CS
@@ -90,10 +80,10 @@
 
 /* STAR field values for SYSCALL/SYSRET (see comment block above) */
 #define GDT64_STAR_SYSCALL_BASE 0x08U   /* STAR[47:32]: kernel CS base    */
-#define GDT64_STAR_SYSRET_BASE  0x18U   /* STAR[63:48]: user SS/CS base   */
+#define GDT64_STAR_SYSRET_BASE  0x10U   /* STAR[63:48]: user SS/CS base   */
 
 /* Number of 8-byte GDT slots (TSS occupies 2 adjacent slots) */
-#define GDT64_ENTRY_COUNT       8
+#define GDT64_ENTRY_COUNT       7
 
 /* =========================================================================
  * IST Indices (1-based as the CPU requires; 0 means "use current stack")
@@ -184,6 +174,17 @@ void gdt64_load_tss(tss64_t *tss, uint64_t kernel_stack);
  * @param stack_top Top-of-stack address for this IST (stack grows down).
  */
 void gdt64_set_ist(tss64_t *tss, int ist_num, uint64_t stack_top);
+
+/**
+ * @brief Set an IST entry in the internally-managed TSS.
+ *
+ * Convenience wrapper for context-switch code that needs to update the
+ * static TSS's IST slots without passing a TSS pointer.
+ *
+ * @param ist_num   IST index, 1-based (1..7).
+ * @param stack_top Top-of-stack address for this IST slot.
+ */
+void gdt64_update_ist(int ist_num, uint64_t stack_top);
 
 /**
  * @brief Update RSP0 in the active (internal) TSS.

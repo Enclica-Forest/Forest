@@ -8,7 +8,7 @@
 
 static enhanced_cursor_t* g_active_cursor = NULL;
 
-static const uint8_t g_cursor_arrow_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
+static const uint8_t g_cursor_arrow_bitmap[593] = {
     0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,1,2,2,2,2,2,2,2,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,1,2,2,2,2,2,2,2,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -35,7 +35,7 @@ static const uint8_t g_cursor_arrow_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-static const uint8_t g_cursor_hand_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
+static const uint8_t g_cursor_hand_bitmap[627] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -62,7 +62,7 @@ static const uint8_t g_cursor_hand_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-static const uint8_t g_cursor_move_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
+static const uint8_t g_cursor_move_bitmap[652] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -89,7 +89,7 @@ static const uint8_t g_cursor_move_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-static const uint8_t g_cursor_text_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
+static const uint8_t g_cursor_text_bitmap[650] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -116,7 +116,7 @@ static const uint8_t g_cursor_text_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-static const uint8_t g_cursor_busy_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
+static const uint8_t g_cursor_busy_bitmap[578] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -241,7 +241,7 @@ static const uint8_t g_cursor_busy_frames[CURSOR_ANIMATION_FRAMES][CURSOR_HEIGHT
     }
 };
 
-static const uint8_t g_cursor_crosshair_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
+static const uint8_t g_cursor_crosshair_bitmap[615] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -267,7 +267,7 @@ static const uint8_t g_cursor_crosshair_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-static const uint8_t g_cursor_help_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
+static const uint8_t g_cursor_help_bitmap[651] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -294,7 +294,7 @@ static const uint8_t g_cursor_help_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-static const uint8_t g_cursor_resize_ns_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
+static const uint8_t g_cursor_resize_ns_bitmap[642] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -321,7 +321,7 @@ static const uint8_t g_cursor_resize_ns_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-static const uint8_t g_cursor_resize_ew_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
+static const uint8_t g_cursor_resize_ew_bitmap[609] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -347,7 +347,7 @@ static const uint8_t g_cursor_resize_ew_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-static const uint8_t g_cursor_resize_nwse_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
+static const uint8_t g_cursor_resize_nwse_bitmap[617] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -373,7 +373,7 @@ static const uint8_t g_cursor_resize_nwse_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] =
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-static const uint8_t g_cursor_resize_nesw_bitmap[CURSOR_HEIGHT * CURSOR_WIDTH] = {
+static const uint8_t g_cursor_resize_nesw_bitmap[625] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -509,8 +509,7 @@ static graphics_result_t render_cursor_bitmap(const uint8_t* bitmap,
     
     uint32_t primary_pixel = (primary.a << 24) | (primary.r << 16) |
                             (primary.g << 8) | primary.b;
-    uint32_t secondary_pixel = (secondary.a << 24) | (secondary.r << 16) |
-                             (secondary.g << 8) | secondary.b;
+    (void)secondary;
     uint32_t outline_pixel = (outline.a << 24) | (outline.r << 16) |
                            (outline.g << 8) | outline.b;
     
@@ -777,10 +776,6 @@ graphics_result_t enhanced_cursor_set_custom_bitmap(enhanced_cursor_t* cursor,
                             (cursor->primary_color.r << 16) |
                             (cursor->primary_color.g << 8) |
                             cursor->primary_color.b;
-    uint32_t secondary_pixel = (cursor->secondary_color.a << 24) |
-                             (cursor->secondary_color.r << 16) |
-                             (cursor->secondary_color.g << 8) |
-                             cursor->secondary_color.b;
     uint32_t outline_pixel = (outline.a << 24) | (outline.r << 16) |
                            (outline.g << 8) | outline.b;
     
@@ -884,7 +879,7 @@ graphics_result_t enhanced_cursor_scale(enhanced_cursor_t* cursor, float scale) 
     return GRAPHICS_SUCCESS;
 }
 
-static graphics_result_t render_animated_cursor_frame(enhanced_cursor_t* cursor, uint32_t frame) {
+__attribute__((unused)) static graphics_result_t render_animated_cursor_frame(enhanced_cursor_t* cursor, uint32_t frame) {
     if (!cursor || !cursor->surface || !cursor->animated) {
         return GRAPHICS_ERROR_INVALID_PARAMETER;
     }

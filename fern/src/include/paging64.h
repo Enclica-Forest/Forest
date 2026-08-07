@@ -93,6 +93,7 @@ typedef uint64_t pml4_t[512];
 #define PAGE64_SIZE_4K      0x1000ULL
 #define PAGE64_SIZE_2M      0x200000ULL
 #define PAGE64_SIZE_1G      0x40000000ULL
+#define PAGE64_SIZE_512G    0x8000000000ULL
 
 /**
  * @brief Address space limits
@@ -100,6 +101,18 @@ typedef uint64_t pml4_t[512];
 #define VADDR_MAX_4LEVEL    0x0000FFFFFFFFFFFFULL   // 48-bit
 #define VADDR_MAX_5LEVEL    0x01FFFFFFFFFFFFFFULL   // 57-bit
 #define PADDR_MAX_52BIT     0x000FFFFFFFFFFFFFULL   // 52-bit physical
+
+/* -------------------------------------------------------------------------
+ * Page level shift constants
+ * ------------------------------------------------------------------------- */
+#define PML5_SHIFT          48
+#define PML4_SHIFT_4L       39
+#define PDPT_SHIFT_4L       30
+#define PD_SHIFT_4L         21
+#define PT_SHIFT_4L         12
+
+/* 5-level VA decomposition */
+#define PML5_INDEX(va)      (((uint64_t)(va) >> PML5_SHIFT) & 0x1FF)
 
 /**
  * @brief Initialize 64-bit paging
@@ -194,6 +207,61 @@ bool paging64_enable_la57(void);
  * @brief Check if currently using 5-level paging
  */
 bool paging64_is_la57_active(void);
+
+/**
+ * @brief Get the root table level (4 or 5) based on LA57 state
+ * @return 5 if 5-level paging is active, 4 otherwise
+ */
+int paging64_get_root_level(void);
+
+/**
+ * @brief Map a 4KB page using 5-level paging
+ * @param pml5_phys Physical address of PML5
+ * @param vaddr Virtual address
+ * @param paddr Physical address
+ * @param flags Page flags
+ * @return MEMORY_OK on success
+ */
+memory_result_t paging64_map_page_5level(uint64_t pml5_phys, uint64_t vaddr,
+                                         uint64_t paddr, uint32_t flags);
+
+/**
+ * @brief Map a 2MB page using 5-level paging
+ * @param pml5_phys Physical address of PML5
+ * @param vaddr Virtual address (2MB aligned)
+ * @param paddr Physical address (2MB aligned)
+ * @param flags Page flags
+ * @return MEMORY_OK on success
+ */
+memory_result_t paging64_map_page_2m_5level(uint64_t pml5_phys, uint64_t vaddr,
+                                            uint64_t paddr, uint32_t flags);
+
+/**
+ * @brief Map a 1GB page using 5-level paging
+ * @param pml5_phys Physical address of PML5
+ * @param vaddr Virtual address (1GB aligned)
+ * @param paddr Physical address (1GB aligned)
+ * @param flags Page flags
+ * @return MEMORY_OK on success
+ */
+memory_result_t paging64_map_page_1g_5level(uint64_t pml5_phys, uint64_t vaddr,
+                                            uint64_t paddr, uint32_t flags);
+
+/**
+ * @brief Translate virtual to physical address using 5-level paging
+ * @param pml5_phys Physical address of PML5
+ * @param vaddr Virtual address
+ * @return Physical address, or 0 if not mapped
+ */
+uint64_t paging64_virt_to_phys_5level(uint64_t pml5_phys, uint64_t vaddr);
+
+/**
+ * @brief Unmap a page using 5-level paging
+ * @param pml5_phys Physical address of PML5
+ * @param vaddr Virtual address
+ * @return MEMORY_OK on success
+ */
+memory_result_t paging64_unmap_page_5level(uint64_t pml5_phys, uint64_t vaddr);
 
 /**
  * @brief Map a 512GB region (PML5 level, LA57 only)
@@ -339,6 +407,63 @@ void x64_load_pml4(pml4_t* pml4);
  * @param vaddr Virtual address of the page to invalidate.
  */
 void x64_invlpg(uint64_t vaddr);
+
+/* --------------------------------------------------------------------------
+ * 5-level paging (LA57) variants of x64_* API
+ * -------------------------------------------------------------------------- */
+
+/**
+ * @brief Map a 4KB page using 5-level paging via pml5_t*.
+ * @param pml5  Pointer to the PML5 table.
+ * @param virt  Virtual address (4KB-aligned internally).
+ * @param phys  Physical address (4KB-aligned internally).
+ * @param flags PAGE64_* flag combination.
+ * @return MEMORY_OK on success, or MEMORY_ERROR_* code.
+ */
+int x64_map_page_5level(void* pml5, uint64_t virt, uint64_t phys, uint64_t flags);
+
+/**
+ * @brief Unmap a 4KB page using 5-level paging.
+ * @param pml5  Pointer to the PML5 table.
+ * @param virt  Virtual address to unmap.
+ * @return MEMORY_OK on success.
+ */
+int x64_unmap_page_5level(void* pml5, uint64_t virt);
+
+/**
+ * @brief Translate virtual to physical using 5-level paging.
+ * @param pml5  Pointer to the PML5 table.
+ * @param virt  Virtual address to translate.
+ * @return Physical address, or 0 if not mapped.
+ */
+uint64_t x64_get_phys_5level(void* pml5, uint64_t virt);
+
+/**
+ * @brief Check whether a virtual address is mapped using 5-level paging.
+ * @param pml5  Pointer to the PML5 table.
+ * @param virt  Virtual address to check.
+ * @return true if mapped, false otherwise.
+ */
+bool x64_is_mapped_5level(void* pml5, uint64_t virt);
+
+/**
+ * @brief Identity-map a physical range using 5-level paging.
+ * @param pml5  Pointer to the PML5 table.
+ * @param start Physical (and virtual) start address.
+ * @param end   Physical (and virtual) end address (exclusive).
+ * @param flags PAGE64_* flag combination.
+ */
+void x64_identity_map_range_5level(void* pml5, uint64_t start, uint64_t end,
+                                   uint64_t flags);
+
+/**
+ * @brief Map the kernel into the higher half using 5-level paging.
+ * @param pml5       Pointer to the PML5 table.
+ * @param phys_start Start of physical kernel range.
+ * @param phys_end   End of physical kernel range.
+ */
+void x64_map_kernel_higher_half_5level(void* pml5, uint64_t phys_start,
+                                       uint64_t phys_end);
 
 /**
  * @brief Enable the No-Execute (NX / XD) bit via IA32_EFER MSR.

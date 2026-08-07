@@ -174,6 +174,8 @@ int swap_init(void)
  */
 int oom_killer_trigger(gfp_t gfp_mask, unsigned int order)
 {
+    (void)gfp_mask;
+    (void)order;
     struct oom_task *victim;
     unsigned long freed_pages = 0;
     

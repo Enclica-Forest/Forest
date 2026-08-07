@@ -21,7 +21,8 @@ static size_t guarded_copy_span(const void* dest, const void* src, size_t length
 }
 
 static inline bool io_port_in_range(uint16 port) {
-    return port < 0x10000;
+    (void)port;
+    return true; /* uint16 is always < 0x10000 */
 }
 
 static inline size_t guarded_mmio_span(const volatile void* address, size_t length) {

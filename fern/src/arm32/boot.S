@@ -124,7 +124,12 @@ _fiq_handler_addr:      .word fiq_handler
 reset_handler:
     /* ------------------------------------------------------------------
      * Step 1: Mask all interrupts (belt-and-suspenders).
+     *
+     * The ARM boot protocol passes the DTB address in r2.  Save it
+     * before any call clobbers registers.
      * ---------------------------------------------------------------- */
+    mov  r4, r2                /* r4 = DTB address (preserved across calls) */
+
     mrs  r0, cpsr
     orr  r0, r0, #CPSR_MASK_ALL
     msr  cpsr_c, r0
@@ -271,11 +276,14 @@ uart_busy_wait:
     bl   early_puts
 
     /* ------------------------------------------------------------------
-     * Step 8: Call kernel_main().
+     * Step 8: Call kernel_main(dtb_addr).
      *
      * We remain in SVC mode (CPSR[4:0] = 0x13).
      * IRQ and FIQ remain masked; kernel_main() enables them when ready.
+     *
+     * r0 = DTB address (saved in r4 at entry, moved to r0 for ABI)
      * ---------------------------------------------------------------- */
+    mov  r0, r4
     bl   kernel_main
 
     /* Should never reach here – halt the CPU */

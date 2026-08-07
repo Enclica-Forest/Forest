@@ -109,7 +109,7 @@ DECLARE_GFX_DRIVER(nv, &nv_driver_ops, GFX_DEVICE_NVIDIA);
 
 static nv_arch_t nv_identify_arch(uint16_t device_id) {
     /* Device ID format for modern NVIDIA: 0x1xxx-0x2xxx */
-    uint8_t class_id = (device_id >> 4) & 0xFF;
+    (void)device_id;
     
     /* Ada Lovelace (RTX 40) */
     if (device_id >= 0x2680 && device_id <= 0x28FF) {

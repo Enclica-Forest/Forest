@@ -53,7 +53,7 @@ static int test_double_free_detection(void) {
     
     // Second free - should be detected (but won't crash due to our protection)
     // We'll simulate this by checking if the detection works
-    corruption_stats_t stats_before, stats_after;
+    corruption_stats_t stats_before;
     corruption_get_stats(&stats_before);
     
     // This would be detected internally by our system

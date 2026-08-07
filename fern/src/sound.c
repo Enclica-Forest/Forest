@@ -1,4 +1,7 @@
 #include "include/sound.h"
+#include "arch/sound.h"
+#include "arch/arch.h"
+#include "virtio_snd.h"
 #include "include/vfs.h"
 #include "include/screen.h"
 #include "include/libc/string.h"
@@ -722,6 +725,36 @@ bool sound_system_init(void) {
      * lazily and return -ENOSYS when none is available. */
     sound_pcm_init();
 
+    /* -----------------------------------------------------------------
+     * 1. Try the architecture-specific sound driver first.
+     *
+     * On non-x86 platforms (ARM32, AArch64, RISC-V) this is the primary
+     * (and often only) path.  On x86 it returns NULL and we fall through
+     * to the legacy driver factory list below.
+     * ----------------------------------------------------------------- */
+    print("[SOUND] Probing arch-specific sound driver...\n");
+    SoundDriver* arch_driver = arch_sound_init();
+    if (arch_driver) {
+        g_active_driver = arch_driver;
+        print("[SOUND] Active driver (arch): ");
+        print(arch_driver->name ? arch_driver->name : "unknown");
+        print("\n");
+
+        sound_determine_output_format();
+        sound_mixer_init();
+        return true;
+    }
+    print("[SOUND] No arch-specific driver found, trying legacy drivers.\n");
+
+    /* -----------------------------------------------------------------
+     * 2. x86-specific legacy driver factories.
+     *
+     * These are only available when building for x86_32 or x86_64.
+     * On other architectures the symbols don't exist, so we skip them
+     * entirely to avoid link errors.
+     * ----------------------------------------------------------------- */
+#if ARCH_IS_X86
+    {
     sound_driver_factory_t factories[] = {
         sound_hda_driver,
         sound_ac97_driver,
@@ -734,57 +767,59 @@ bool sound_system_init(void) {
         sound_universal_driver
     };
 
-    const uint32 factory_count = sizeof(factories) / sizeof(factories[0]);
+        const uint32 factory_count = sizeof(factories) / sizeof(factories[0]);
 
-    for (uint32 i = 0; i < factory_count; i++) {
-        SoundDriver* driver = 0;
-        if (factories[i]) {
-            print("[SOUND] Trying driver factory #");
-            print_dec(i);
-            print("...\n");
-            driver = factories[i]();
-            print("[SOUND] Factory #");
-            print_dec(i);
-            print(" returned: ");
-            print_hex((uint32)driver);
+        for (uint32 i = 0; i < factory_count; i++) {
+            SoundDriver* driver = 0;
+            if (factories[i]) {
+                print("[SOUND] Trying driver factory #");
+                print_dec(i);
+                print("...\n");
+                driver = factories[i]();
+                print("[SOUND] Factory #");
+                print_dec(i);
+                print(" returned: ");
+                print_hex((uint32)driver);
+                print("\n");
+            }
+
+            if (!driver) {
+                print("[SOUND] No driver from factory #");
+                print_dec(i);
+                print("\n");
+                continue;
+            }
+
+            bool detected = true;
+            if (driver->detect) {
+                print("[SOUND] Running detection for driver: ");
+                print(driver->name ? driver->name : "unknown");
+                print("\n");
+                detected = driver->detect(driver);
+                print("[SOUND] Detection result for ");
+                print(driver->name ? driver->name : "unknown");
+                print(": ");
+                print(detected ? "SUCCESS" : "NOT DETECTED");
+                print("\n");
+            }
+            if (!detected) continue;
+
+            if (!driver->init || !driver->init(driver)) {
+                log_driver_failure(driver->name, "init failed");
+                continue;
+            }
+
+            g_active_driver = driver;
+            print("[SOUND] Active driver: ");
+            print(driver->name);
             print("\n");
+
+            sound_determine_output_format();
+            sound_mixer_init();
+            return true;
         }
-
-        if (!driver) {
-            print("[SOUND] No driver from factory #");
-            print_dec(i);
-            print("\n");
-            continue;
-        }
-
-        bool detected = true;
-        if (driver->detect) {
-            print("[SOUND] Running detection for driver: ");
-            print(driver->name ? driver->name : "unknown");
-            print("\n");
-            detected = driver->detect(driver);
-            print("[SOUND] Detection result for ");
-            print(driver->name ? driver->name : "unknown");
-            print(": ");
-            print(detected ? "SUCCESS" : "NOT DETECTED");
-            print("\n");
-        }
-        if (!detected) continue;
-
-        if (!driver->init || !driver->init(driver)) {
-            log_driver_failure(driver->name, "init failed");
-            continue;
-        }
-
-        g_active_driver = driver;
-        print("[SOUND] Active driver: ");
-        print(driver->name);
-        print("\n");
-
-        sound_determine_output_format();
-        sound_mixer_init();
-        return true;
     }
+#endif /* ARCH_IS_X86 */
 
     print("[SOUND] No usable sound devices detected.\n");
     return false;
@@ -835,10 +870,12 @@ bool sound_play_wav(const char* path) {
 
 void sound_beep(uint32 frequency_hz, uint32 duration_ms) {
     if (!g_active_driver || !g_active_driver->beep) {
+#if ARCH_IS_X86
         SoundDriver* fallback = fallback_pc_driver();
         if (fallback && fallback->beep) {
             fallback->beep(fallback, frequency_hz, duration_ms);
         }
+#endif
         return;
     }
     g_active_driver->beep(g_active_driver, frequency_hz, duration_ms);

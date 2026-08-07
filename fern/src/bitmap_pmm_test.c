@@ -382,6 +382,7 @@ static int test_fragmentation_analysis(void) {
     
     // Find largest free block
     uint32_t largest_block = bitmap_pmm_find_largest_free_block();
+    (void)largest_block;
     
     // Clean up remaining pages
     for (int i = 0; i < allocated; i += 2) {

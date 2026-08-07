@@ -342,6 +342,8 @@ bool ssp_validate_stack_frame(uint32_t *frame_pointer) {
 
 // Report SSP violation with detailed information
 void ssp_report_violation(const char *function_name, uint32_t expected, uint32_t found) {
+    (void)expected;
+    (void)found;
     ssp_stats.violations_detected++;
     
     // Use safe direct writing to avoid recursion

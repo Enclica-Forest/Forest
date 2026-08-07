@@ -87,6 +87,7 @@ int mm_handle_page_fault(struct interrupt_frame *frame, unsigned long address,
     vm_area_struct_t *vma;
     unsigned int flags = 0;
     int ret = 0;
+    (void)frame;
     
     // Get current process memory descriptor
     mm = get_current_mm();
@@ -357,9 +358,10 @@ static int do_linear_fault(mm_struct_t *mm, vm_area_struct_t *vma,
     unsigned long page_dir = (unsigned long)mm->pgd;
     unsigned long dir_index = (address >> 22) & 0x3FF;
     unsigned long table_index = (address >> 12) & 0x3FF;
+    (void)table_index;
     
     // Check if page directory entry exists and is present
-    page_entry_t *page_dir_entry = &((page_directory_t*)page_dir)[dir_index];
+    page_entry_t *page_dir_entry = &((page_entry_t*)page_dir)[dir_index];
     if (!page_dir_entry->present) {
         // Allocate new page table
         uint32_t table_frame = pmm_alloc_frame();
@@ -485,6 +487,9 @@ static inline unsigned long get_unmapped_area(mm_struct_t *mm,
 void print_fault_info(unsigned long address, unsigned long error_code,
                      vm_area_struct_t *vma)
 {
+    (void)address;
+    (void)error_code;
+    (void)vma;
     // TODO: Implement fault debugging output
     // This would print useful information for debugging page faults
 }
@@ -570,7 +575,7 @@ irq_return_t enhanced_page_fault_handler(int vector, struct interrupt_context *c
  */
 void install_enhanced_page_fault_handler(void)
 {
-    interrupt_set_handler(EXCEPTION_PAGE_FAULT, (interrupt_handler_t)enhanced_page_fault_handler);
+    interrupt_set_handler(EXCEPTION_PAGE_FAULT, (interrupt_handler_t)(void*)enhanced_page_fault_handler);
 }
 
 /**

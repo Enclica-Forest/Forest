@@ -142,7 +142,9 @@ int idt_register_handler(uint8_t vector, interrupt_handler_t handler, void *data
 
 // Common gate types
 #define IDT_GATE_INTERRUPT32 (IDT_FLAG_PRESENT | IDT_FLAG_DPL_0 | IDT_FLAG_INTERRUPT)
+#ifndef IDT_GATE_TRAP32
 #define IDT_GATE_TRAP32      (IDT_FLAG_PRESENT | IDT_FLAG_DPL_0 | IDT_FLAG_TRAP)
+#endif
 #define IDT_GATE_USER_INT    (IDT_FLAG_PRESENT | IDT_FLAG_DPL_3 | IDT_FLAG_INTERRUPT)
 
 /* Enhanced IDT Structures for Multi-Architecture Support */
@@ -157,7 +159,9 @@ int idt_register_handler(uint8_t vector, interrupt_handler_t handler, void *data
 #define GATE_TYPE_TRAP64            0xF  /* Same as 32-bit for compatibility */
 
 /* IDT Descriptor Flags (Enhanced) */
+#ifndef IDT_PRESENT
 #define IDT_PRESENT                 (1 << 7)
+#endif
 #define IDT_DPL_0                   (0 << 5)
 #define IDT_DPL_1                   (1 << 5)
 #define IDT_DPL_2                   (2 << 5)

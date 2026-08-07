@@ -500,8 +500,11 @@ int input_poll(mouse_state *m)
                 }
             }
             m->wheel += pw;
-            newleft  = pl;                    /* PS/2 packet is authoritative     */
-            newright = pr;
+            /* Merge PS/2 buttons with absolute device buttons (OR) so a real
+             * laptop trackpad tap (absolute pointer) and a PS/2 mouse click are
+             * both seen even when the other source reports no buttons. */
+            if (pl) newleft  = 1;
+            if (pr) newright = 1;
         }
     }
 

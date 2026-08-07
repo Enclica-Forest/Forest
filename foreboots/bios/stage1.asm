@@ -14,7 +14,10 @@
 
 ; 64-byte header — xorriso -boot-info-table patches bytes 8-63 on CD.
         jmp  short _start
-        times 62 db 0
+        times 6 db 0
+bti_pvd_lba:  dd 0            ; offset 8:  PVD LBA (16 on a valid ISO)
+bti_boot_lba: dd 0            ; offset 12: boot image LBA (nonzero on CD)
+        times 48 db 0
 
 _start:
     cli
@@ -46,17 +49,28 @@ _relocated:
     mov  si, 0x0600 + (msg_loading - 0x7C00)
     call print_str
 
-    ; --- HDD path first: pull stage2 + stage3 off the boot disk via INT 13h
+    ; --- El Torito detection: on CD, xorriso -boot-info-table patched the
+    ;     header at 0x7C00 (boot image LBA != 0).  The BIOS already pre-loaded
+    ;     the whole 48-sector blob at 0x7C00, so use the in-memory blob copy
+    ;     path and do NOT issue INT 13h reads for the stages: on an emulated
+    ;     El Torito drive those reads return mangled data (the 2-byte stage2
+    ;     magic survives the corruption, so the old magic-only fallback never
+    ;     fired and a corrupted stage2 ran). ---
+    mov  eax, [0x0600 + (bti_boot_lba - 0x7C00)]
+    test eax, eax
+    jz   .hdd_path
+    jmp  .try_blob
+
+    ; --- HDD path: pull stage2 + stage3 off the boot disk via INT 13h
     ;     LBA extensions. On a real hard disk / USB / raw disk image the BIOS
     ;     only loaded sector 0 (this MBR), so we must read the rest ourselves.
-    ;     If the read fails or the stage2 magic is absent (e.g. El Torito CD
-    ;     no-emulation, where the BIOS pre-loaded the whole 48-sector blob at
-    ;     0x7C00 and LBA math differs), fall back to the blob-copy path. ---
+    ;     If the read fails or the stage2 signature is absent, fall back to
+    ;     the blob-copy path. ---
+.hdd_path:
     mov  dl, [0x0600 + (boot_drive - 0x7C00)]
     mov  di, 0x0500                  ; DAP scratch (DS=0)
-    mov  byte  [di + 0], 0x10        ; DAP size
-    mov  byte  [di + 1], 0
-    mov  word  [di + 2], STAGE2_SECTOR_COUNT
+    mov  word [di], 0x0010           ; size=0x10, reserved=0
+    mov  word [di + 2], STAGE2_SECTOR_COUNT
     mov  word  [di + 4], 0x0000      ; dest offset
     mov  word  [di + 6], STAGE2_LOAD_SEG   ; 0x0800 -> phys 0x8000
     mov  dword [di + 8], STAGE2_START_SECTOR
@@ -65,15 +79,14 @@ _relocated:
     mov  ah, 0x42
     int  0x13
     jc   .try_blob
-    mov  ax, [0x8002]
-    cmp  ax, 0xFEB1
+    mov  eax, [0x8002]             ; magic 0xFEB1 + "Fo" tag
+    cmp  eax, 0x6f46feb1
     jne  .try_blob
     ; stage2 landed — read stage3 (LBA 17..32) to 0x5000.
     mov  dl, [0x0600 + (boot_drive - 0x7C00)]
     mov  di, 0x0500
-    mov  byte  [di + 0], 0x10
-    mov  byte  [di + 1], 0
-    mov  word  [di + 2], STAGE3_SECTOR_COUNT
+    mov  word [di], 0x0010
+    mov  word [di + 2], STAGE3_SECTOR_COUNT
     mov  word  [di + 4], 0x0000
     mov  word  [di + 6], STAGE3_LOAD_SEG   ; 0x0500 -> phys 0x5000
     mov  dword [di + 8], STAGE3_START_SECTOR
@@ -97,8 +110,8 @@ _relocated:
     mov  cx, 8192
     rep  movsb
     cld
-    mov  ax, [0x8002]
-    cmp  ax, 0xFEB1
+    mov  eax, [0x8002]             ; magic 0xFEB1 + "Fo" tag
+    cmp  eax, 0x6f46feb1
     jne  .bad_s2
 
 .launch:
@@ -176,7 +189,7 @@ print_str:
 ; Data
 ; =============================================================================
 boot_drive:   db 0x80
-msg_loading:  db "ForeB v2.0 loading...", 0x0D, 0x0A, 0
+msg_loading:  db "ForeB v2.0 loading...", 0
 msg_bad_s2:   db "Stage2 missing!", 0
 
 ; =============================================================================

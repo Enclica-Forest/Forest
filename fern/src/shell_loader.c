@@ -8,6 +8,9 @@
 #include "include/task.h"
 #include "include/debuglog.h"
 
+#ifdef USER_STACK_PAGES
+#undef USER_STACK_PAGES
+#endif
 #define USER_STACK_PAGES 4
 #define MAX_ELF_SIZE (1024 * 1024)
 #define MAX_BSS_SIZE (4 * 1024 * 1024)

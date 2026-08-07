@@ -122,6 +122,7 @@ static uint32_t apic_timer_get_optimal_divisor(uint32_t target_frequency)
     for (int i = 0; i < 8; i++) {
         uint32_t effective_freq = base_freq / divisors[i].divisor_val;
         uint32_t max_count = 0xFFFFFFFF;
+        (void)max_count;
         uint32_t max_freq = effective_freq;
         
         if (target_frequency <= max_freq) {
@@ -159,6 +160,7 @@ static int apic_timer_calibrate_frequency(void)
     
     /* Record start values */
     tsc_start = read_tsc();
+    (void)tsc_start;
     timer_start = apic_read_register(LAPIC_REG_TIMER_CURRENT);
     
     /* Wait for calibration period */
@@ -166,6 +168,7 @@ static int apic_timer_calibrate_frequency(void)
     
     /* Record end values */
     tsc_end = read_tsc();
+    (void)tsc_end;
     timer_end = apic_read_register(LAPIC_REG_TIMER_CURRENT);
     
     /* Stop timer */
@@ -286,6 +289,7 @@ static uint64_t apic_timer_read_counter(void)
  */
 static irq_return_t apic_timer_interrupt_handler(struct interrupt_context *ctx)
 {
+    (void)ctx;
     atomic64_inc(&apic_timer.timer_interrupts);
     
     if (apic_timer.periodic_mode) {
@@ -298,6 +302,12 @@ static irq_return_t apic_timer_interrupt_handler(struct interrupt_context *ctx)
     
     apic_send_eoi();
     return IRQ_HANDLED;
+}
+
+/* Wrapper function to adapt handler signature to interrupt_handler_t */
+static irq_return_t apic_timer_interrupt_handler_wrapper(int vector, void *dev_id, struct interrupt_context *ctx) {
+    (void)vector; (void)dev_id;
+    return apic_timer_interrupt_handler(ctx);
 }
 
 /*
@@ -338,7 +348,7 @@ int apic_timer_init(void)
     
     /* Register interrupt handler */
     idt_register_handler(IRQ_APIC_TIMER, 
-                        (interrupt_handler_t)apic_timer_interrupt_handler, 
+                        apic_timer_interrupt_handler_wrapper, 
                         "APIC Timer");
     
     /* Register as timer source */
@@ -367,7 +377,7 @@ static int apic_timer_source_init(struct timer_source *self)
 /*
  * Timer source cleanup callback
  */
-static void apic_timer_source_cleanup(struct timer_source *source)
+__attribute__((unused)) static void apic_timer_source_cleanup(struct timer_source *source)
 {
     apic_timer_source_stop(source);
     debuglog_printf("APIC Timer: Timer source cleaned up\n");
@@ -478,6 +488,7 @@ NO_OPTIMIZE static void apic_timer_source_set_oneshot(struct timer_source *self,
  */
 static void apic_timer_source_stop(struct timer_source *source)
 {
+    (void)source;
     spinlock_acquire(&apic_timer.lock);
     
     /* Stop timer by setting initial count to 0 */

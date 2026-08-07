@@ -375,7 +375,7 @@ static void splash_do_fadeout(void);  /* forward declaration */
  * Loops at ~30fps, rendering the marquee and any pending updates.
  * Runs independently of the boot thread.
  * ------------------------------------------------------------------------- */
-static void splash_animation_thread(void)
+__attribute__((unused)) static void splash_animation_thread(void)
 {
     g_anim_thread_active = true;
 

@@ -379,6 +379,7 @@ static gfx_result_t bga_shutdown(gfx_device_t* dev) {
  * Reset the BGA to default state
  */
 static gfx_result_t bga_reset(gfx_device_t* dev) {
+    (void)dev;
     /* Disable VBE mode */
     bga_write_reg(VBE_DISPI_INDEX_ENABLE, VBE_DISPI_DISABLED);
     
@@ -742,6 +743,7 @@ static gfx_result_t bga_map_fb(gfx_device_t* dev, gfx_framebuffer_t** fb) {
  * Unmap the framebuffer
  */
 static gfx_result_t bga_unmap_fb(gfx_device_t* dev, gfx_framebuffer_t* fb) {
+    (void)fb;
     bga_private_t* priv = (bga_private_t*)dev->driver_data;
     
     if (priv && priv->framebuffer.virt_addr) {
@@ -831,6 +833,7 @@ static gfx_result_t bga_clear(gfx_device_t* dev, gfx_color_t color) {
  * BGA doesn't have true vsync, so we use VGA port polling
  */
 static gfx_result_t bga_wait_vsync(gfx_device_t* dev) {
+    (void)dev;
     /* Wait for end of current vsync */
     while (gfx_inb(VGA_INPUT_STATUS1_COLOR) & 0x08);
     

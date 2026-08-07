@@ -14,29 +14,17 @@ ifeq ($(ARCH),32)
     ARCH_LDFLAGS := -m elf_i386
     EFI_ARCH := i386
 else ifeq ($(ARCH),64)
-    # Try to find 64-bit Forest OS toolchain
+    # 64-bit Forest OS toolchain (required — no host fallback)
     FORESTOS_TOOLCHAIN_PREFIX := x86_64-forestos
     TOOLCHAIN_ARCH_DIR := $(FORESTOS_TOOLCHAIN_DIR)/install
 
-    # Check if Forest OS 64-bit toolchain exists
     ifeq ($(wildcard $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-gcc),)
-        # Fallback to host system x86_64 toolchain for development
-        $(info Forest OS 64-bit toolchain not found - using host x86_64 toolchain)
-        FORESTOS_TOOLCHAIN_PREFIX := x86_64-linux-gnu
-        TOOLCHAIN_ARCH_DIR :=
-        CC := gcc
-        CXX := g++
-        LD := ld
-        AR := ar
-        STRIP := strip
-        OBJCOPY := objcopy
-        OBJDUMP := objdump
-        READELF := readelf
-        SIZE := size
-        FORESTOS_TOOLCHAIN_HAS_64BIT := false
-    else
-        FORESTOS_TOOLCHAIN_HAS_64BIT := true
+        $(error Forest-OS 64-bit cross-toolchain not found at \
+                $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-gcc. \
+                Build it first: cd forestos-toolchain && ./build-toolchain.sh --arch 64)
     endif
+
+    FORESTOS_TOOLCHAIN_HAS_64BIT := true
 
     ARCH_FLAGS := -m64 -march=x86-64 -mcmodel=kernel
     ARCH_LDFLAGS := -m elf_x86_64
@@ -117,31 +105,41 @@ else ifeq ($(ARCH),aarch64)
     ARCH_FLAGS := -march=armv8-a
     ARCH_LDFLAGS := -m aarch64elf
     EFI_ARCH := aarch64
+else ifeq ($(ARCH),riscv64)
+    # RISC-V 64-bit cross-compiler detection
+    TOOLCHAIN_ARCH_DIR :=
+    ifneq ($(shell which riscv64-unknown-elf-gcc 2>/dev/null),)
+        FORESTOS_TOOLCHAIN_PREFIX := riscv64-unknown-elf
+    else ifneq ($(shell which riscv64-linux-gnu-gcc 2>/dev/null),)
+        FORESTOS_TOOLCHAIN_PREFIX := riscv64-linux-gnu
+    else ifneq ($(shell which riscv64-elf-gcc 2>/dev/null),)
+        FORESTOS_TOOLCHAIN_PREFIX := riscv64-elf
+    else
+        $(warning No RISC-V 64-bit cross-compiler found. Install riscv64-unknown-elf-gcc)
+        FORESTOS_TOOLCHAIN_PREFIX := riscv64-unknown-elf
+    endif
+    CC := $(FORESTOS_TOOLCHAIN_PREFIX)-gcc
+    AS := $(FORESTOS_TOOLCHAIN_PREFIX)-as
+    LD := $(FORESTOS_TOOLCHAIN_PREFIX)-ld
+    OBJCOPY := $(FORESTOS_TOOLCHAIN_PREFIX)-objcopy
+    STRIP := $(FORESTOS_TOOLCHAIN_PREFIX)-strip
+    NASM :=
+    FORESTOS_TOOLCHAIN_HAS_64BIT := false
+    ARCH_FLAGS := -march=rv64gc -mabi=lp64d -mcmodel=medany
+    ARCH_LDFLAGS := -m elf64lriscv
+    EFI_ARCH := riscv64
 endif
 
-# Cross-compiler tools (use cross-compiler when available, fallback to host)
-# Note: ARM and AArch64 toolchains are set directly in their ifeq blocks above.
-ifeq ($(filter arm aarch64,$(ARCH)),)
-    # x86/x86_64 toolchain selection
-    ifeq ($(FORESTOS_TOOLCHAIN_HAS_64BIT),false)
-        # Using host toolchain fallback
-        CC := gcc
-        CXX := g++
-        LD := ld
-        AS := as
-        NASM := nasm
-        OBJCOPY ?= objcopy
-        STRIP ?= strip
-    else
-        # Using Forest OS cross-compiler
-        CC := $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-gcc
-        CXX := $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-g++
-        LD := $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-ld
-        AS := $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-as
-        NASM := nasm
-        OBJCOPY ?= $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-objcopy
-        STRIP ?= $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-strip
-    endif
+# Cross-compiler tools (Forest-OS cross-compiler only)
+ifeq ($(filter arm aarch64 riscv64,$(ARCH)),)
+    # x86/x86_64: use Forest OS cross-compiler (required)
+    CC := $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-gcc
+    CXX := $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-g++
+    LD := $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-ld
+    AS := $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-as
+    NASM := nasm
+    OBJCOPY ?= $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-objcopy
+    STRIP ?= $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-strip
 endif
 NASM ?= nasm
 

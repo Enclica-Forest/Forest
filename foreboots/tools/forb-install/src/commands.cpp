@@ -18,6 +18,10 @@ namespace fs = std::filesystem;
 
 namespace forb {
 
+// Forward declarations
+static std::optional<std::string> find_foreb_nvram(const std::string& esp,
+                                                   bool dry);
+
 // ===========================================================================
 //  Build pipeline
 // ===========================================================================
@@ -169,8 +173,8 @@ std::optional<BuildResult> build_config(const Args& args, Reporter& rep) {
     if (esp.empty()) {
         auto d = detect_esp();
         if (!d) {
-            die("no ESP found: none of /boot, /boot/efi, /efi is a vfat mount "
-                "(use --esp PATH)");
+            die("no ESP found: none of /boot, /boot/efi, /efi is a vfat mount",
+                "Use --esp PATH to specify the ESP mount point, or mount the ESP first");
             return std::nullopt;
         }
         esp = *d;
@@ -179,20 +183,21 @@ std::optional<BuildResult> build_config(const Args& args, Reporter& rep) {
     EspContext ctx(esp, rep);
 
     std::pair<std::string, std::string> source;
-    if (!args.config.empty()) {
+        if (!args.config.empty()) {
         std::string kind = infer_kind(args.config);
         source = {kind, args.config};
         std::error_code ec;
         if (!fs::is_regular_file(args.config, ec)) {
-            die("config file not found: " + args.config);
+            die("config file not found: " + args.config,
+                "Verify the path and ensure the file exists");
             return std::nullopt;
         }
     } else {
         auto found = autodetect_config(esp);
         if (found.empty()) {
-            die("no bootloader config found on " + esp +
-                " (looked for limine.conf, limine.cfg, limine/, grub/grub.cfg,"
-                " loader/loader.conf); use --config FILE");
+            die("no bootloader config found on " + esp,
+                "Looked for limine.conf, limine.cfg, limine/, grub/grub.cfg, loader/loader.conf. "
+                "Use --config FILE to specify a config file, or run 'forb-install list' to see available bootloaders");
             return std::nullopt;
         }
         source = found[0];
@@ -208,7 +213,8 @@ std::optional<BuildResult> build_config(const Args& args, Reporter& rep) {
     try {
         parsed = parse_source(source.first, source.second, esp, ctx, rep);
     } catch (const std::exception& e) {
-        die("cannot read " + source.second + ": " + e.what());
+        die("cannot parse " + source.second + ": " + e.what(),
+            "Check if the config file is valid " + source.first + " format");
         return std::nullopt;
     }
 
@@ -353,7 +359,8 @@ int cmd_generate(const Args& args, Reporter& rep) {
         try {
             atomic_write(args.output, result->cfg_text);
         } catch (const std::exception& e) {
-            return die("cannot write " + args.output + ": " + e.what());
+            return die("cannot write " + args.output + ": " + e.what(),
+                       "Check if the directory exists and you have write permissions");
         }
         rep.note("wrote " + args.output);
     } else {
@@ -510,6 +517,102 @@ int cmd_install(const Args& args, Reporter& rep) {
     const std::string& esp = result->esp;
     const std::string& repo = args.repo;
 
+    // --- Detect existing ForeB installation and offer to clean ---
+    {
+        fs::path esp_root(esp);
+        std::string forb_dir = (esp_root / "EFI" / "forb").string();
+        std::string forebo_dir = (esp_root / "forebo").string();
+        bool has_forb = fs::is_directory(forb_dir);
+        bool has_forebo = fs::is_directory(forebo_dir);
+        auto nvram_entry = find_foreb_nvram(esp, dry);
+        bool has_nvram = nvram_entry.has_value();
+
+        if (has_forb || has_forebo || has_nvram) {
+            if (args.clean) {
+                // --clean: remove old installation automatically
+                if (!rep.quiet) {
+                    if (Color::enabled)
+                        std::cout << Color::yellow << Color::bold
+                                  << "Removing old ForeB installation..."
+                                  << Color::reset << "\n";
+                    else
+                        std::cout << "Removing old ForeB installation...\n";
+                }
+                std::error_code ec;
+                if (has_forb) {
+                    rep.verbose_out("Removing " + forb_dir);
+                    if (!dry) fs::remove_all(forb_dir, ec);
+                }
+                if (has_forebo) {
+                    rep.verbose_out("Removing " + forebo_dir);
+                    if (!dry) fs::remove_all(forebo_dir, ec);
+                }
+                if (has_nvram && !args.keep_nvram) {
+                    rep.verbose_out("Removing NVRAM entry Boot" + *nvram_entry);
+                    if (!dry) {
+                        std::vector<std::string> cmd = {"efibootmgr", "-b", *nvram_entry, "-B"};
+                        run_cmd(cmd);
+                    }
+                }
+                if (!rep.quiet)
+                    std::cout << "Old installation removed.\n\n";
+            } else {
+                // Prompt user
+                if (!rep.quiet) {
+                    std::cout << "Existing ForeB installation detected:\n";
+                    if (has_forb)
+                        std::cout << "  " << forb_dir << "\n";
+                    if (has_forebo)
+                        std::cout << "  " << forebo_dir << "\n";
+                    if (has_nvram)
+                        std::cout << "  NVRAM: Boot" << *nvram_entry << " (ForeB)\n";
+                    std::cout << "\n";
+                }
+                if (!dry && !args.force && !rep.quiet) {
+                    std::cout << "Remove old installation and reinstall? [Y/n] ";
+                    std::cout.flush();
+                    char c = 0;
+                    if (std::cin.get(c)) {
+                        if (c == 'n' || c == 'N') {
+                            std::cout << "Keeping old installation, installing alongside.\n\n";
+                        } else {
+                            // Remove old
+                            if (Color::enabled)
+                                std::cout << Color::yellow << Color::bold
+                                          << "Removing old ForeB installation..."
+                                          << Color::reset << "\n";
+                            else
+                                std::cout << "Removing old ForeB installation...\n";
+                            std::error_code ec;
+                            if (has_forb) {
+                                rep.verbose_out("Removing " + forb_dir);
+                                if (!dry) fs::remove_all(forb_dir, ec);
+                            }
+                            if (has_forebo) {
+                                rep.verbose_out("Removing " + forebo_dir);
+                                if (!dry) fs::remove_all(forebo_dir, ec);
+                            }
+                            if (has_nvram) {
+                                rep.verbose_out("Removing NVRAM entry Boot" + *nvram_entry);
+                                if (!dry) {
+                                    std::vector<std::string> cmd = {"efibootmgr", "-b", *nvram_entry, "-B"};
+                                    run_cmd(cmd);
+                                }
+                            }
+                            if (!rep.quiet)
+                                std::cout << "Old installation removed.\n\n";
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bool show_progress = !rep.quiet;
+    Progress prog(show_progress);
+    size_t files_installed = 0;
+    size_t bytes_written = 0;
+
     // Verbose output: show detected bootloader info
     rep.verbose_out("Detected " + result->parsed.kind + " at " + 
                     result->parsed.source_path + " (" + 
@@ -517,9 +620,10 @@ int cmd_install(const Args& args, Reporter& rep) {
                     std::to_string(result->n_submenus) + " submenus)");
     rep.verbose_out("Translated " + std::to_string(result->n_entries) + 
                     " entries to ForeB format");
+    if (show_progress) prog.start(result->n_entries + 3, "Installing ForeB");
 
     auto do_action = [&](const std::string& desc, const std::function<void()>& fn) {
-        std::cout << (dry ? "[dry-run] " : "") << desc << "\n";
+        if (!rep.quiet) std::cout << (dry ? "[dry-run] " : "") << desc << "\n";
         if (!dry) fn();
     };
     auto copy_file = [&](const std::string& src, const std::string& rel_in) {
@@ -540,6 +644,8 @@ int cmd_install(const Args& args, Reporter& rep) {
                       fs::create_directories(fs::path(dest).parent_path());
                       atomic_write(dest, data);
                   });
+        ++files_installed;
+        bytes_written += data.size();
     };
 
     // Map an ESP-relative payload path to its --repo override source, if any.
@@ -575,57 +681,72 @@ int cmd_install(const Args& args, Reporter& rep) {
         else if (dry)
             std::cout << "[dry-run] WARNING: no embedded BOOTX64.EFI and no "
                          "--repo override; build ForeB first (make)\n";
-        else
+        else {
+            if (show_progress) prog.error("no BOOTX64.EFI");
             return die("no BOOTX64.EFI available (embedded payload empty and "
-                       "no --repo override) - build ForeB first (make)");
+                       "no --repo override)",
+                       "Build ForeB first (make) or use --repo DIR to provide the EFI binary");
+        }
     }
 
     // wallpaper (converted when needed)
     if (result->wallpaper) {
+        if (show_progress) prog.step("Converting wallpaper");
         write_file("forebo/" + result->wallpaper->first,
                    result->wallpaper->second);
     }
 
     // forebo.cfg (translated)
+    if (show_progress) prog.step("Writing forebo.cfg");
     write_file("forebo/forebo.cfg", result->cfg_text);
 
+    if (show_progress) prog.step("Registering NVRAM");
     // NVRAM
-    if (args.no_nvram)
-        std::cout << (dry ? "[dry-run] " : "")
-                  << "skipping efibootmgr (--no-nvram)\n";
-    else
+    if (args.no_nvram) {
+        if (!rep.quiet)
+            std::cout << (dry ? "[dry-run] " : "")
+                      << "skipping efibootmgr (--no-nvram)\n";
+    } else {
         nvram_install(esp, args.make_default, dry, args.force, rep);
+    }
+
+    if (show_progress) prog.finish("ForeB installed");
 
     // summary
-    if (Color::enabled)
-        std::cout << "\n" << Color::green << Color::bold 
-                  << "ForeB install complete!" << Color::reset << "\n";
-    else
-        std::cout << "\nForeB install complete!\n";
-    std::cout << "  ESP:      " << esp << "\n";
-    std::cout << "  Loader:   "
-              << (fs::path(esp) / "EFI/forb/BOOTX64.EFI").string() << "\n";
-    std::cout << "  Config:   "
-              << (fs::path(esp) / "forebo/forebo.cfg").string() << " ("
-              << result->n_entries << " entries, " << result->n_submenus
-              << " submenus, " << result->n_rows << "/" << MAX_ROWS
-              << " rows)\n";
-    std::cout << "  Assets:   " << (fs::path(esp) / "forebo/bg.bmp").string()
-              << ", " << (fs::path(esp) / "forebo/icons/*.tga").string()
-              << "\n";
-    if (result->background)
-        std::cout << "  Wallpaper: "
-                  << (fs::path(esp) / result->background->substr(1)).string()
+    if (!rep.quiet) {
+        if (Color::enabled)
+            std::cout << "\n" << Color::green << Color::bold 
+                      << "ForeB install complete!" << Color::reset << "\n";
+        else
+            std::cout << "\nForeB install complete!\n";
+        std::cout << "  ESP:      " << esp << "\n";
+        std::cout << "  Loader:   "
+                  << (fs::path(esp) / "EFI/forb/BOOTX64.EFI").string() << "\n";
+        std::cout << "  Config:   "
+                  << (fs::path(esp) / "forebo/forebo.cfg").string() << " ("
+                  << result->n_entries << " entries, " << result->n_submenus
+                  << " submenus, " << result->n_rows << "/" << MAX_ROWS
+                  << " rows)\n";
+        std::cout << "  Assets:   " << (fs::path(esp) / "forebo/bg.bmp").string()
+                  << ", " << (fs::path(esp) / "forebo/icons/*.tga").string()
                   << "\n";
-    std::cout << "\nHow to boot it: pick 'ForeB' in your firmware boot menu, "
-                 "or select it from the UEFI boot list.\n";
-    if (args.make_default)
-        std::cout << "ForeB was made the FIRST entry in the UEFI BootOrder "
-                     "(--make-default).\n";
-    else
-        std::cout << "Your existing bootloader was left untouched and remains "
-                     "the default; the ForeB entry was appended to the boot "
-                     "list.\n";
+        if (result->background)
+            std::cout << "  Wallpaper: "
+                      << (fs::path(esp) / result->background->substr(1)).string()
+                      << "\n";
+        std::cout << "  Installed " << files_installed << " files, "
+                  << bytes_written << " bytes written, "
+                  << result->n_entries << " entries translated\n";
+        std::cout << "\nHow to boot it: pick 'ForeB' in your firmware boot menu, "
+                     "or select it from the UEFI boot list.\n";
+        if (args.make_default)
+            std::cout << "ForeB was made the FIRST entry in the UEFI BootOrder "
+                         "(--make-default).\n";
+        else
+            std::cout << "Your existing bootloader was left untouched and remains "
+                         "the default; the ForeB entry was appended to the boot "
+                         "list.\n";
+    }
     return 0;
 }
 
@@ -2041,6 +2162,124 @@ int cmd_migrate(const Args& args, Reporter& rep) {
     std::cout << "  2. Run: forb-install install --dry-run\n";
     std::cout << "  3. Run: forb-install install\n";
     return 0;
+}
+
+// ===========================================================================
+//  Batch install
+// ===========================================================================
+BatchManifest parse_batch_manifest(const std::string& path) {
+    std::string text = read_text(path);
+    BatchManifest m;
+    // Minimal JSON parsing: find the "bootloaders" array
+    size_t arr_start = text.find("\"bootloaders\"");
+    if (arr_start == std::string::npos)
+        throw std::runtime_error("manifest missing \"bootloaders\" array");
+    arr_start = text.find('[', arr_start);
+    if (arr_start == std::string::npos)
+        throw std::runtime_error("manifest: expected '[' after bootloaders");
+    size_t arr_end = text.find(']', arr_start);
+    if (arr_end == std::string::npos)
+        throw std::runtime_error("manifest: unterminated bootloaders array");
+    std::string arr = text.substr(arr_start + 1, arr_end - arr_start - 1);
+
+    // Find each { ... } block
+    size_t pos = 0;
+    while (pos < arr.size()) {
+        size_t obj_start = arr.find('{', pos);
+        if (obj_start == std::string::npos) break;
+        size_t obj_end = arr.find('}', obj_start);
+        if (obj_end == std::string::npos)
+            throw std::runtime_error("manifest: unterminated object");
+        std::string obj = arr.substr(obj_start + 1, obj_end - obj_start - 1);
+
+        BatchEntry entry;
+        auto extract_str = [&](const std::string& key) -> std::string {
+            size_t k = obj.find("\"" + key + "\"");
+            if (k == std::string::npos) return "";
+            k = obj.find(':', k);
+            if (k == std::string::npos) return "";
+            k = obj.find('"', k + 1);
+            if (k == std::string::npos) return "";
+            ++k;
+            size_t end = obj.find('"', k);
+            if (end == std::string::npos) return "";
+            return obj.substr(k, end - k);
+        };
+        entry.type = extract_str("type");
+        entry.config = extract_str("config");
+        entry.esp = extract_str("esp");
+        if (!entry.type.empty() && !entry.config.empty())
+            m.bootloaders.push_back(std::move(entry));
+        pos = obj_end + 1;
+    }
+    if (m.bootloaders.empty())
+        throw std::runtime_error("manifest contains no valid bootloaders");
+    return m;
+}
+
+int cmd_batch(const Args& args, Reporter& rep) {
+    if (args.manifest.empty())
+        return die("batch: --manifest FILE is required");
+
+    BatchManifest m;
+    try {
+        m = parse_batch_manifest(args.manifest);
+    } catch (const std::exception& e) {
+        return die("batch: cannot parse manifest: " + std::string(e.what()));
+    }
+
+    bool show_progress = !rep.quiet;
+    Progress prog(show_progress);
+    int total = static_cast<int>(m.bootloaders.size());
+    if (show_progress) prog.start(total + 1, "Batch installing " +
+                                   std::to_string(total) + " bootloader(s)");
+
+    int success = 0;
+    int failed = 0;
+    for (int i = 0; i < total; ++i) {
+        const auto& entry = m.bootloaders[i];
+        std::string label = entry.type + " (" + entry.config + ")";
+        if (show_progress) prog.step("Installing " + label);
+
+        Args install_args = args;
+        install_args.command = "install";
+        install_args.config = entry.config;
+        install_args.esp = entry.esp;
+        install_args.manifest.clear();
+        install_args.continue_on_error = false;
+        // Inherit relevant flags
+        install_args.repo = args.repo;
+        install_args.no_nvram = args.no_nvram;
+        install_args.make_default = args.make_default;
+        install_args.dry_run = args.dry_run;
+        install_args.no_extras = args.no_extras;
+        install_args.default_entry = args.default_entry;
+        install_args.max_entries = args.max_entries;
+
+        Reporter install_rep(rep.verbose);
+        install_rep.quiet = rep.quiet;
+        int rc = cmd_install(install_args, install_rep);
+        if (rc == 0) {
+            ++success;
+        } else {
+            ++failed;
+            if (show_progress) prog.error("failed: " + label);
+            if (!args.continue_on_error) {
+                if (!rep.quiet)
+                    std::cerr << "batch: aborting due to failure (use "
+                                 "--continue-on-error to continue)\n";
+                return 1;
+            }
+        }
+    }
+
+    if (show_progress) prog.finish("Batch complete");
+
+    if (!rep.quiet) {
+        std::cout << "\nBatch summary: " << success << " succeeded, "
+                  << failed << " failed, " << total << " total\n";
+    }
+    return failed > 0 ? 1 : 0;
 }
 
 }  // namespace forb

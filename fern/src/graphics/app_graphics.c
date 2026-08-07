@@ -761,6 +761,7 @@ graphics_result_t app_invalidate_window(app_graphics_context_t* ctx) {
 }
 
 static void app_window_paint_callback(window_t* window, graphics_surface_t* surface) {
+    (void)surface;
     if (!window) {
         return;
     }

@@ -275,6 +275,7 @@ void run_task_cleanup(void) {
  */
 bool validate_user_pointer(const void* ptr, size_t size, uint32_t required_perm) {
     extern task_t* current_task;
+    (void)required_perm;
     
     if (!ptr || size == 0) {
         return false;
@@ -345,7 +346,7 @@ void kernel_safety_get_stats(kernel_safety_stats_t* stats) {
     }
     
     spinlock_acquire(&safety_lock);
-    memory_copy((uint8_t*)stats, (uint8_t*)&safety_stats, sizeof(kernel_safety_stats_t));
+    memory_copy((const char*)&safety_stats, (char*)stats, sizeof(kernel_safety_stats_t));
     spinlock_release(&safety_lock);
 }
 

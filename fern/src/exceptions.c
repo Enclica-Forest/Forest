@@ -192,7 +192,7 @@ int exception_init(void)
     /* Register exception handlers with IDT */
     for (i = 0; i < 32; i++) {
         if (exception_handlers[i]) {
-            idt_register_handler(i, (interrupt_handler_t)exception_handlers[i], NULL);
+            idt_register_handler(i, (interrupt_handler_t)(void *)exception_handlers[i], NULL);
         }
     }
     
@@ -263,7 +263,7 @@ static irq_return_t handle_debug_exception(struct interrupt_context *ctx)
     uint64_t dr6 = read_dr6();
     
     debuglog_printf("Exception: Debug exception (DR6=0x%lx) at %p\n", 
-                dr6, (void*)(uintptr_t)FRAME_IP(ctx->frame));
+                (unsigned long)dr6, (void*)(uintptr_t)FRAME_IP(ctx->frame));
     
     /* Handle single-step */
     if (dr6 & (1 << 14)) {
@@ -274,7 +274,7 @@ static irq_return_t handle_debug_exception(struct interrupt_context *ctx)
     
     /* Handle breakpoints */
     if (dr6 & 0x0F) {
-        debuglog_printf("Debug: Hardware breakpoint hit (mask=0x%lx)\n", dr6 & 0x0F);
+        debuglog_printf("Debug: Hardware breakpoint hit (mask=0x%lx)\n", (unsigned long)(dr6 & 0x0F));
     }
     
     /* Clear DR6 */
@@ -423,7 +423,7 @@ static irq_return_t handle_double_fault_internal(struct interrupt_context *ctx)
 static irq_return_t handle_invalid_tss(struct interrupt_context *ctx)
 {
     debuglog_printf("Exception: Invalid TSS (error=0x%lx) at %p\n", 
-                ctx->error_code, (void*)(uintptr_t)FRAME_IP(ctx->frame));
+                (unsigned long)ctx->error_code, (void*)(uintptr_t)FRAME_IP(ctx->frame));
     
     handle_fatal_exception(EXCEPTION_INVALID_TSS, ctx);
     return IRQ_NONE;
@@ -435,7 +435,7 @@ static irq_return_t handle_invalid_tss(struct interrupt_context *ctx)
 static irq_return_t handle_segment_not_present(struct interrupt_context *ctx)
 {
     debuglog_printf("Exception: Segment not present (error=0x%lx) at %p\n", 
-                ctx->error_code, (void*)(uintptr_t)FRAME_IP(ctx->frame));
+                (unsigned long)ctx->error_code, (void*)(uintptr_t)FRAME_IP(ctx->frame));
     
     if (is_user_mode_exception(ctx)) {
         task_exit(-1, "segmentation fault");
@@ -452,7 +452,7 @@ static irq_return_t handle_segment_not_present(struct interrupt_context *ctx)
 static irq_return_t handle_stack_fault(struct interrupt_context *ctx)
 {
     debuglog_printf("Exception: Stack fault (error=0x%lx) at %p\n", 
-                ctx->error_code, (void*)(uintptr_t)FRAME_IP(ctx->frame));
+                (unsigned long)ctx->error_code, (void*)(uintptr_t)FRAME_IP(ctx->frame));
     
     if (is_user_mode_exception(ctx)) {
         task_exit(-1, "segmentation fault");
@@ -469,7 +469,7 @@ static irq_return_t handle_stack_fault(struct interrupt_context *ctx)
 static irq_return_t handle_general_protection(struct interrupt_context *ctx)
 {
     debuglog_printf("Exception: General protection fault (error=0x%lx) at %p\n", 
-                ctx->error_code, (void*)(uintptr_t)FRAME_IP(ctx->frame));
+                (unsigned long)ctx->error_code, (void*)(uintptr_t)FRAME_IP(ctx->frame));
     
     /* Decode error code */
     if (ctx->error_code != 0) {
@@ -503,9 +503,11 @@ static irq_return_t handle_page_fault_internal(struct interrupt_context *ctx)
     bool user = error_code & 4;
     bool reserved = error_code & 8;
     bool instruction = error_code & 16;
+    (void)reserved;
+    (void)instruction;
     
     debuglog_printf("Page fault: addr=0x%lx, %s %s %s at %p\n",
-                fault_address,
+                (unsigned long)fault_address,
                 present ? "protection" : "not-present",
                 write ? "write" : "read", 
                 user ? "user" : "kernel",
@@ -718,11 +720,11 @@ static void dump_exception_context(struct interrupt_context *ctx)
                 (uint16_t)ctx->frame.cs, (uint16_t)ctx->frame.ss,
                 ctx->regs.ds, ctx->regs.es);
     debuglog_printf("RFLAGS: 0x%lx\n", (unsigned long)FRAME_FLAGS(ctx->frame));
-    debuglog_printf("Timestamp: %lu\n", ctx->timestamp);
+    debuglog_printf("Timestamp: %lu\n", (unsigned long)ctx->timestamp);
     
     /* Additional context for page faults */
     if (exception == 14) {
-        debuglog_printf("CR2 (fault address): 0x%lx\n", cpu_read_cr2());
+        debuglog_printf("CR2 (fault address): 0x%lx\n", (unsigned long)cpu_read_cr2());
     }
     
     /* Print stack trace if available */
@@ -830,7 +832,7 @@ void exception_dump_stats(void)
         
         if (count > 0) {
             debuglog_printf("[%2d] %-20s: %8lu events (last: PID %u at %lu)\n", 
-                       i, exception_table[i].name, count, last_pid, last_time);
+                       i, exception_table[i].name, (unsigned long)count, last_pid, (unsigned long)last_time);
         }
     }
     

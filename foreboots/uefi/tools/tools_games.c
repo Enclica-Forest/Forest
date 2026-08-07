@@ -40,9 +40,15 @@ static void sb_putn(char *d, int cap, int *pos, int v){
 
 /* xorshift64 PRNG seeded/stirred from the CPU timestamp counter. */
 static inline UINT64 rdtsc_now(void){
+#if defined(__x86_64__) || defined(_M_X64)
     UINT32 lo,hi;
     __asm__ __volatile__("rdtsc":"=a"(lo),"=d"(hi));
     return ((UINT64)hi<<32)|lo;
+#else
+    static UINT64 c = 0x9E3779B97F4A7C15ull;
+    c += 0x9E3779B97F4A7C15ull;
+    return c;
+#endif
 }
 static UINT64 g_rng_state;
 static void rng_stir(void){ g_rng_state ^= rdtsc_now(); if(!g_rng_state) g_rng_state=0x9E3779B97F4A7C15ULL; }

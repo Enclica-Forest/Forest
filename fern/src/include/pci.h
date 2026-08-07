@@ -46,6 +46,9 @@ typedef struct {
     uint8 header_type;
     uint32 bar[PCI_BAR_COUNT];
     
+    uint8 irq_line;
+    uint8 irq_pin;
+
     bool is_pcie;
     uint8 pcie_cap_offset;
     uint8 pcie_device_port_type;

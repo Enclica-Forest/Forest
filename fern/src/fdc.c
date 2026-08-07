@@ -186,6 +186,8 @@ bool fdc_detect_drives(void) {
 
     uint8_t dor = fdc_inb(FDC_DOR);
     uint8_t dir = fdc_inb(FDC_DIR);
+    (void)dor;
+    (void)dir;
 
     for (int i = 0; i < FDC_MAX_DRIVES; i++) {
         fdc_drive_info_t *drive = &g_fdc_controller.drives[i];

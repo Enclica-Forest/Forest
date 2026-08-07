@@ -303,6 +303,7 @@ static spl_bar_style_t parse_bar_style(const char* str)
 splconf_err_t spllayout_parse(spllayout_t* layout, const splconf_t* conf,
                               char* buf, uint32_t len)
 {
+    (void)conf;
     memset(layout, 0, sizeof(*layout));
 
     char* end = buf + len;

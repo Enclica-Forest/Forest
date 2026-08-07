@@ -54,7 +54,8 @@
 #include "recovery/fwsetup.h"     /* reboot into firmware setup (FOREB_ENTRY_FWSETUP)   */
 #include "recovery/clone.h"       /* Clone Drive tool init (diskio-backed)              */
 #include "recovery/undelete.h"    /* Undelete / Carve tool init                         */
-#include "recovery/settings_nv.h" /* durable NV persistence of Settings/Theme edits     */
+#include "recovery/settings_nv.h" /* durable NV persistence of Settings/Theme edits */
+#include "core/errorbox.h"
 #include "recovery/uefi_settings.h" /* UEFI firmware settings panel (view/edit vars)    */
 
 /* Interaction upgrade (this build): a pointer/cursor layer (input.h) and a tiny
@@ -854,6 +855,17 @@ static void scene_restore(void)
      * damage outside those spans, so fall back to a full restore. */
     if (!ui_restore_prev_spans(g_scenecache))
         memcpy((void *)(UINTN)ui_backbuffer_base(), g_scenecache, g_scenecache_bytes);
+    /* Mark the restored region dirty so ui_present() flips it to VRAM. Without
+     * this, scene_restore() overwrites back-buffer pixels (e.g. window content
+     * drawn last frame) but ui_present() doesn't know they changed, leaving
+     * stale content on screen. The mark covers the bounding box of the previous
+     * frame's dirty spans - conservative but correct, and cheap compared to a
+     * full-screen flip. */
+    {
+        int dx, dy, dw, dh;
+        ui_prev_dirty_bbox(&dx, &dy, &dw, &dh);
+        if (dw > 0 && dh > 0) ui_mark_dirty(dx, dy, dw, dh);
+    }
 }
 
 /* Full menu repaint: background + captured snapshot + panel + icons. When
@@ -1291,7 +1303,8 @@ static int run_menu_animated(EFI_HANDLE image)
     audio_init(gBS);   /* PC-speaker UI tones (silent until forebo.cfg enables) */
     audio_configure(forebo_cfg_audio());   /* apply pcspeaker / audio_* keys */
     wm_init(theme_init ? th : NULL);
-    statusbar_init(gBS, cin);
+    wm_init_cache(gBS);
+    statusbar_init(gST);
 
     /* First paint with a fade-in, then cache the background + seed particles. */
     paint_menu(labels, count, sel, secs, anim_on ? 1 : 0);
@@ -1373,7 +1386,12 @@ static int run_menu_animated(EFI_HANDLE image)
         int dirty = 0;
         if (have_key)                  dirty = 1;
         if (polled && ms.present)      dirty = 1;   /* cursor/click/wheel    */
-        if (anim_on)                   dirty = 1;   /* particles every frame */
+        /* Only mark dirty for particles when a step is actually due this frame
+         * (accumulator >= 16 ms). This avoids recomposing + flipping the whole
+         * scene on the ~14/15 sub-frames between particle ticks where nothing
+         * visual changed, saving ~184 KB of uncached VRAM writes per skipped
+         * frame on real HW. */
+        if (anim_on && part_acc_ms + frame_ms >= 16) dirty = 1;
 
         if (wm_active_count() > 0) {
             /* A window is open: route ALL input to the compositor. */
@@ -1803,9 +1821,10 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         }
         boot_linux(ImageHandle, gBS, gST, ent);   /* returns only on failure */
         serial_puts("[x] Linux boot failed.\n");
-        if (have_fb) { ui_status("Linux boot failed - halting"); ui_present(); }
-        halt();
-        return EFI_LOAD_ERROR;
+        errorbox_show("Linux Boot Failed",
+                      "Could not load vmlinuz",
+                      "Check forebo.cfg kernel path");
+        return MENU_REBOOT;
     }
 
     if (ent->type == FOREB_ENTRY_CHAINLOAD) {
@@ -1832,9 +1851,10 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         }
         chainload(ImageHandle, gBS, gST, ent);    /* returns only on failure */
         serial_puts("[x] Chainload failed.\n");
-        if (have_fb) { ui_status("Chainload failed - halting"); ui_present(); }
-        halt();
-        return EFI_LOAD_ERROR;
+        errorbox_show("Chainload Failed",
+                      "No bootable EFI loader found",
+                      "Check disk partitions");
+        return MENU_REBOOT;
     }
 
     if (ent->type == FOREB_ENTRY_FWSETUP) {
@@ -1874,8 +1894,10 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     VOID *kbuf = load_kernel_entry(ImageHandle, ent->kernel, &kfsize, (int)have_fb);
     if (!kbuf) {
         logline(L"", "[x] Kernel not available; halting (bootloader-only image).\n");
-        halt();
-        return EFI_LOAD_ERROR;
+        errorbox_show("Forest Boot Failed",
+                      "Kernel not found on ESP",
+                      "Place kernel.elf in /forebo/");
+        return MENU_REBOOT;
     }
     serial_puts("[*] Kernel file loaded, size="); serial_puthex(kfsize, 8); serial_puts("\n");
 
@@ -1883,7 +1905,10 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     UINT8 *e = (UINT8 *)kbuf;
     if (!(e[0] == ELF_MAG0 && e[1] == 'E' && e[2] == 'L' && e[3] == 'F')) {
         logline(L"[x] Bad ELF magic.\r\n", "[x] Bad ELF magic.\n");
-        halt();
+        errorbox_show("Forest Boot Failed",
+                      "Kernel file is not a valid ELF",
+                      "Re-download or rebuild kernel.elf");
+        return MENU_REBOOT;
     }
     UINT8 eclass = e[EI_CLASS];
     UINT32 kentry = 0;
@@ -1917,7 +1942,13 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         if (ppaddr < kmin) kmin = ppaddr;
         if (ppaddr + pmemsz > kmax) kmax = ppaddr + pmemsz;
     }
-    if (kmin == ~0ULL) { logline(L"[x] No PT_LOAD.\r\n", "[x] No PT_LOAD.\n"); halt(); }
+    if (kmin == ~0ULL) {
+        logline(L"[x] No PT_LOAD.\r\n", "[x] No PT_LOAD.\n");
+        errorbox_show("Forest Boot Failed",
+                      "Kernel ELF has no loadable segments",
+                      "Rebuild kernel.elf");
+        return MENU_REBOOT;
+    }
 
     serial_puts("[*] ELF class="); serial_puthex(eclass, 2);
     serial_puts(" entry="); serial_puthex(kentry, 8);
@@ -2066,7 +2097,10 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     }
     if (EFI_ERROR(st)) {
         serial_puts("[x] ExitBootServices failed rc="); serial_puthex(st, 16); serial_puts("\n");
-        halt();
+        errorbox_show("Forest Boot Failed",
+                      "ExitBootServices failed",
+                      "Firmware error - try rebooting");
+        return MENU_REBOOT;
     }
 
     /* ================= FIRMWARE IS GONE - serial port only ================= */

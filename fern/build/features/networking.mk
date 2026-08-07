@@ -26,7 +26,7 @@
 # QEMU networking (QEMU_NETWORK) is owned by build/qemu-run.mk, not here.
 
 ifeq ($(ENABLE_NETWORKING),no)
-EXCLUDED_CSOURCES += $(SRCDIR)/net.c $(wildcard $(SRCDIR)/networking/*.c)
+EXCLUDED_CSOURCES += $(SRCDIR)/net.c $(SRCDIR)/virtio_net.c $(wildcard $(SRCDIR)/networking/*.c)
 endif
 
 ifeq ($(ENABLE_ETHERNET),no)

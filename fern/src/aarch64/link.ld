@@ -129,6 +129,18 @@ SECTIONS
     _kernel_end = .;
 
     /* ---------------------------------------------------------------- */
+    /* Initrd (ramdisk) placement                                        */
+    /* QEMU -machine virt loads initrd at a physical address above the   */
+    /* kernel.  With 128 MB RAM starting at PA 0x40000000 and kernel at  */
+    /* PA 0x40080000, QEMU places the initrd around PA 0x48000000.      */
+    /* These symbols are defined at the virtual address corresponding    */
+    /* to that physical location (identity-mapped in early boot).        */
+    /* Override with -Wl,--defsym=_initrd_start=0x... at link time.      */
+    /* ---------------------------------------------------------------- */
+    _initrd_start = 0x48000000;
+    _initrd_end   = 0x48000000;
+
+    /* ---------------------------------------------------------------- */
     /* Discard unwanted sections                                        */
     /* ---------------------------------------------------------------- */
     /DISCARD/ : {

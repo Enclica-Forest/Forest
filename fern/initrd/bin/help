@@ -1,0 +1,32 @@
+Forest-OS commands:
+  help       Show this help message
+  ls         List files
+  cat        Display file contents
+  echo       Print text
+  mkdir      Create directories
+  ps         List processes
+  uname      System information
+  reboot     Reboot the system
+  shutdown   Shut down the system
+  hostname   Show hostname
+  id         Show current user
+  date       Show date/time
+  df         Show disk usage
+  pwd        Print working directory
+  clear      Clear the screen
+  sleep      Pause for N seconds
+  kill       Send signal to process
+  chmod      Change file permissions
+  cp         Copy files
+  rm         Remove files
+  mv         Move files
+  touch      Create empty file
+  ln         Create links
+  grep       Search text
+  find       Find files
+  sort       Sort lines
+  wc         Word count
+  head/tail  Show first/last lines
+  dd         Copy and convert
+  du         Disk usage summary
+  chown      Change file owner

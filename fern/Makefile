@@ -27,6 +27,7 @@ include build/kernel-sources.mk
 include build/features/memory.mk
 include build/features/filesystems.mk
 include build/features/graphics.mk
+include build/features/opengl.mk
 include build/features/networking.mk
 include build/features/audio.mk
 include build/features/usb.mk
@@ -61,6 +62,9 @@ else ifeq ($(ARCH),arm)
 else ifeq ($(ARCH),aarch64)
     TARGET_ARCH  := aarch64
     TARGET_TUPLE := aarch64-linux-gnu
+else ifeq ($(ARCH),riscv64)
+    TARGET_ARCH  := riscv64
+    TARGET_TUPLE := riscv64-unknown-elf
 endif
 
 # =============================================================================
@@ -68,8 +72,9 @@ endif
 # =============================================================================
 .PHONY: help help-advanced all build show-config \
         ensure-toolchain validate-toolchain toolchain toolchain-setup \
-        build32 build64 buildarm buildaarch64 \
+        build32 build64 buildarm buildaarch64 buildriscv64 \
         build32-bios build32-uefi build64-bios build64-uefi \
+        buildaarch64-bios buildaarch64-uefi buildriscv64-bios buildriscv64-uefi \
         buildall crossarcinterpret \
         dist dist-clean \
         info list-objects size stats \
@@ -103,7 +108,7 @@ help:
 	@echo ""
 	@echo "$(OK_COLOR)Toolchain:$(NO_COLOR)        toolchain (build cross-gcc for current ARCH) / validate-toolchain"
 	@echo "$(OK_COLOR)ForeB bootloader:$(NO_COLOR)  forebo / forebo-image / forebo-qemu / forebo-check / forebo-clean"
-	@echo "$(OK_COLOR)Multi-arch:$(NO_COLOR)       build32 build64 buildarm buildaarch64 buildall crossarcinterpret"
+	@echo "$(OK_COLOR)Multi-arch:$(NO_COLOR)       build32 build64 buildarm buildaarch64 buildriscv64 buildall crossarcinterpret"
 	@echo "$(OK_COLOR)Run in QEMU:$(NO_COLOR)      run run-bios run-uefi run32 run64 runarm runaarch64 debug"
 	@echo ""
 	@echo "$(OK_COLOR)Examples:$(NO_COLOR)"
@@ -194,8 +199,8 @@ ensure-toolchain: validate-toolchain
 
 validate-toolchain:
 	@echo "$(INFO_COLOR)Validating Forest OS toolchain...$(NO_COLOR)"
-	@if [ "$(ARCH)" = "arm" ] || [ "$(ARCH)" = "aarch64" ]; then \
-		echo "$(INFO_COLOR)ARM/AArch64 build: using system cross-compiler $(FORESTOS_TOOLCHAIN_PREFIX)$(NO_COLOR)"; \
+	@if [ "$(ARCH)" = "arm" ] || [ "$(ARCH)" = "aarch64" ] || [ "$(ARCH)" = "riscv64" ]; then \
+		echo "$(INFO_COLOR)ARM/AArch64/RISC-V build: using system cross-compiler $(FORESTOS_TOOLCHAIN_PREFIX)$(NO_COLOR)"; \
 	elif [ "$(FORESTOS_TOOLCHAIN_HAS_64BIT)" = "false" ]; then \
 		echo "$(WARN_COLOR)Using fallback host toolchain for 64-bit builds$(NO_COLOR)"; \
 		echo "$(INFO_COLOR)Using toolchain: $(FORESTOS_TOOLCHAIN_PREFIX)$(NO_COLOR)"; \
@@ -284,6 +289,17 @@ toolchain-setup:
 
 # UEFI kernel build
 ifeq ($(BOOT_MODE),uefi)
+
+# AArch64 UEFI: link only UEFI stub + shared UEFI modules (no bare-metal boot)
+ifeq ($(ARCH),aarch64)
+UEFI_LINK_OBJECTS := $(AARCH64_UEFI_OBJECTS)
+# RISC-V UEFI: link only UEFI stub + shared UEFI modules (no bare-metal boot)
+else ifeq ($(ARCH),riscv64)
+UEFI_LINK_OBJECTS := $(RISCV64_UEFI_OBJECTS)
+else
+UEFI_LINK_OBJECTS := $(ALL_OBJECTS)
+endif
+
 $(OUTPUT): $(OUTPUT_ELF)
 	@mkdir -p $(EFIDIR)
 	@echo "$(OK_COLOR)Converting ELF to UEFI PE32+ binary...$(NO_COLOR)"
@@ -291,7 +307,7 @@ $(OUTPUT): $(OUTPUT_ELF)
 	            -j .rela* -j .reloc -j .bss -j .stack --target=efi-app-$(EFI_ARCH) $< $@
 	@echo "$(OK_COLOR)UEFI kernel binary generated: $@$(NO_COLOR)"
 
-$(OUTPUT_ELF): $(ALL_OBJECTS)
+$(OUTPUT_ELF): $(UEFI_LINK_OBJECTS)
 	@mkdir -p $(dir $@)
 	@echo "$(OK_COLOR)Linking UEFI ELF binary...$(NO_COLOR)"
 	@$(LD) $(LDFLAGS) -o $@ $^ $(LIBGCC)
@@ -415,6 +431,12 @@ $(OBJDIR)/graphics/drivers/%.o: $(SRCDIR)/graphics/drivers/%.c
 	@echo "$(OK_COLOR)Compiling graphics driver $<...$(NO_COLOR)"
 	@$(CC) $(CFLAGS) -c -o $@ $<
 
+# GL subsystem compilation
+$(OBJDIR)/gl/%.o: $(SRCDIR)/gl/%.c
+	@mkdir -p $(OBJDIR)/gl
+	@echo "$(OK_COLOR)Compiling GL $<...$(NO_COLOR)"
+	@$(CC) $(CFLAGS) -c -o $@ $<
+
 # Boot mode specific compilation
 $(OBJDIR)/uefi/%.o: $(SRCDIR)/uefi/%.c
 	@mkdir -p $(OBJDIR)/uefi
@@ -492,6 +514,12 @@ $(OBJDIR)/crossarcinterpret/%.o: $(SRCDIR)/crossarcinterpret/%.c
 	@echo "$(OK_COLOR)Compiling crossarcinterpret $<...$(NO_COLOR)"
 	@$(CC) $(CFLAGS) -c -o $@ $<
 
+# Cross-architecture heap wrapper compilation (src/arch/*.c)
+$(OBJDIR)/arch/%.o: $(SRCDIR)/arch/%.c
+	@mkdir -p $(dir $@)
+	@echo "$(OK_COLOR)Compiling arch wrapper $<...$(NO_COLOR)"
+	@$(CC) $(CFLAGS) -c -o $@ $<
+
 # QR Code generator library
 $(OBJDIR)/qrcodegen.o: $(QRCODEGEN_DIR)/qrcodegen.c
 	@mkdir -p $(dir $@)
@@ -515,9 +543,29 @@ build64:
 buildarm:
 	@$(MAKE) ARCH=arm BOOT_MODE=bios BUILD_TYPE=$(BUILD_TYPE) build
 
-# AArch64 build
+# AArch64 build (BIOS)
 buildaarch64:
 	@$(MAKE) ARCH=aarch64 BOOT_MODE=bios BUILD_TYPE=$(BUILD_TYPE) build
+
+# AArch64 BIOS build (explicit)
+buildaarch64-bios:
+	@$(MAKE) ARCH=aarch64 BOOT_MODE=bios BUILD_TYPE=$(BUILD_TYPE) all
+
+# AArch64 UEFI build
+buildaarch64-uefi:
+	@$(MAKE) ARCH=aarch64 BOOT_MODE=uefi BUILD_TYPE=$(BUILD_TYPE) all
+
+# RISC-V 64-bit build
+buildriscv64:
+	@$(MAKE) ARCH=riscv64 BOOT_MODE=bios BUILD_TYPE=$(BUILD_TYPE) build
+
+# RISC-V 64-bit BIOS build (explicit)
+buildriscv64-bios:
+	@$(MAKE) ARCH=riscv64 BOOT_MODE=bios BUILD_TYPE=$(BUILD_TYPE) all
+
+# RISC-V 64-bit UEFI build
+buildriscv64-uefi:
+	@$(MAKE) ARCH=riscv64 BOOT_MODE=uefi BUILD_TYPE=$(BUILD_TYPE) all
 
 build32-bios:
 	@$(MAKE) ARCH=32 BOOT_MODE=bios all
@@ -531,7 +579,7 @@ build64-bios:
 build64-uefi:
 	@$(MAKE) ARCH=64 BOOT_MODE=uefi all
 
-buildall: build32-bios build32-uefi build64-bios build64-uefi buildarm buildaarch64
+buildall: build32-bios build32-uefi build64-bios build64-uefi buildarm buildaarch64 buildaarch64-uefi buildriscv64 buildriscv64-uefi
 	@echo "$(OK_COLOR)All architecture combinations built successfully!$(NO_COLOR)"
 
 # Cross-architecture interpreter: compile src/crossarcinterpret/*.c and link
@@ -609,7 +657,7 @@ help-advanced:
 	@echo "$(INFO_COLOR)Forest OS Advanced Build System - Detailed Help$(NO_COLOR)"
 	@echo ""
 	@echo "$(OK_COLOR)Build System Features:$(NO_COLOR)"
-	@echo "  • Multi-architecture support (32-bit, 64-bit, ARMv7, AArch64)"
+	@echo "  • Multi-architecture support (32-bit, 64-bit, ARMv7, AArch64, RISC-V 64)"
 	@echo "  • BIOS and UEFI boot mode support"
 	@echo "  • Multiple build types (debug, release, optimize)"
 	@echo "  • Cross-compilation toolchain integration"
@@ -634,9 +682,13 @@ help-advanced:
 	@echo "  make ARCH=64 BOOT_MODE=uefi BUILD_TYPE=release"
 	@echo "  make ARCH=arm  BUILD_TYPE=debug"
 	@echo "  make ARCH=aarch64 BUILD_TYPE=debug"
+	@echo "  make ARCH=riscv64 BUILD_TYPE=debug"
 	@echo "  make buildall                        # all combinations"
 	@echo "  make buildarm                        # ARMv7 kernel"
-	@echo "  make buildaarch64                    # AArch64 kernel"
+	@echo "  make buildaarch64                    # AArch64 kernel (BIOS)"
+	@echo "  make buildaarch64-uefi               # AArch64 kernel (UEFI)"
+	@echo "  make buildriscv64                    # RISC-V 64 kernel (BIOS)"
+	@echo "  make buildriscv64-uefi               # RISC-V 64 kernel (UEFI)"
 	@echo "  make run64                           # QEMU q35/qemu64"
 	@echo "  make runarm                          # QEMU virt/cortex-a15"
 	@echo "  make runaarch64                      # QEMU virt/cortex-a53"

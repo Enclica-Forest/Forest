@@ -337,7 +337,7 @@ memory_result_t pmm_init(memory_region_t* regions, uint32 region_count) {
 }
             
 #ifdef __x86_64__
-uint64 pmm_alloc_frame(void) {
+phys_addr_t pmm_alloc_frame(void) {
 #else
 uint32_t pmm_alloc_frame(void) {
 #endif
@@ -396,7 +396,7 @@ uint32_t pmm_alloc_frame(void) {
 }
 
 #ifdef __x86_64__
-uint64 pmm_alloc_frames(uint32 count) {
+phys_addr_t pmm_alloc_frames(uint32 count) {
 #else
 uint32_t pmm_alloc_frames(uint32 count) {
 #endif
@@ -442,7 +442,7 @@ uint32_t pmm_alloc_frames(uint32 count) {
 }
             
 #ifdef __x86_64__
-memory_result_t pmm_alloc_scattered(uint32 count, uint64* frames_out,
+memory_result_t pmm_alloc_scattered(uint32 count, phys_addr_t* frames_out,
 #else
 memory_result_t pmm_alloc_scattered(uint32 count, uint32_t* frames_out,
 #endif
@@ -505,7 +505,7 @@ memory_result_t pmm_alloc_scattered(uint32 count, uint32_t* frames_out,
 }
 
 #ifdef __x86_64__
-memory_result_t pmm_free_frame(uint64 frame_addr) {
+memory_result_t pmm_free_frame(phys_addr_t frame_addr) {
 #else
 memory_result_t pmm_free_frame(uint32_t frame_addr) {
 #endif
@@ -546,7 +546,7 @@ memory_result_t pmm_free_frame(uint32_t frame_addr) {
 }
 
 #ifdef __x86_64__
-memory_result_t pmm_free_frames(uint64 frame_addr, uint32 count) {
+memory_result_t pmm_free_frames(phys_addr_t frame_addr, uint32 count) {
 #else
 memory_result_t pmm_free_frames(uint32_t frame_addr, uint32 count) {
 #endif
@@ -584,7 +584,7 @@ memory_result_t pmm_free_frames(uint32_t frame_addr, uint32 count) {
 }
 
 #ifdef __x86_64__
-bool pmm_is_frame_free(uint64 frame_addr) {
+bool pmm_is_frame_free(phys_addr_t frame_addr) {
 #else
 bool pmm_is_frame_free(uint32_t frame_addr) {
 #endif
@@ -603,7 +603,7 @@ bool pmm_is_frame_free(uint32_t frame_addr) {
 // Reserve a range of physical memory (mark as used)
 // Used to protect regions like initrd from being allocated
 #ifdef __x86_64__
-void pmm_reserve_range(uint64 start_addr, uint64 end_addr) {
+void pmm_reserve_range(phys_addr_t start_addr, phys_addr_t end_addr) {
 #else
 void pmm_reserve_range(uint32_t start_addr, uint32_t end_addr) {
 #endif
@@ -627,7 +627,7 @@ void pmm_reserve_range(uint32_t start_addr, uint32_t end_addr) {
 
 // Get total number of frames
 #ifdef __x86_64__
-uint64 pmm_get_total_frames(void) {
+frame_count_t pmm_get_total_frames(void) {
 #else
 uint32_t pmm_get_total_frames(void) {
 #endif
@@ -636,7 +636,7 @@ uint32_t pmm_get_total_frames(void) {
 
 // Get number of free frames
 #ifdef __x86_64__
-uint64 pmm_get_free_frames(void) {
+frame_count_t pmm_get_free_frames(void) {
 #else
 uint32_t pmm_get_free_frames(void) {
 #endif
@@ -644,7 +644,7 @@ uint32_t pmm_get_free_frames(void) {
 }
 
 #ifdef __x86_64__
-uint64 pmm_scrub_free_frames(void) {
+frame_count_t pmm_scrub_free_frames(void) {
 #else
 uint32_t pmm_scrub_free_frames(void) {
 #endif

@@ -17,7 +17,7 @@ typedef struct {
     uint32_t target_length;
 } symlink_node_t;
 
-static uint32_t symlink_read(vfs_node_t* node, uint32_t offset, uint32_t size, uint8_t* buffer) {
+__attribute__((unused)) static uint32_t symlink_read(vfs_node_t* node, uint32_t offset, uint32_t size, uint8_t* buffer) {
     if (!node || !buffer) return 0;
 
     symlink_node_t* symlink = (symlink_node_t*)node->internal_data;
@@ -32,7 +32,7 @@ static uint32_t symlink_read(vfs_node_t* node, uint32_t offset, uint32_t size, u
     return to_copy;
 }
 
-static uint32_t symlink_write(vfs_node_t* node, uint32_t offset, uint32_t size, uint8_t* buffer) {
+__attribute__((unused)) static uint32_t symlink_write(vfs_node_t* node, uint32_t offset, uint32_t size, uint8_t* buffer) {
     (void)node;
     (void)offset;
     (void)size;
@@ -40,7 +40,7 @@ static uint32_t symlink_write(vfs_node_t* node, uint32_t offset, uint32_t size, 
     return 0; // Symbolic links are read-only
 }
 
-static bool symlink_readdir(vfs_node_t* node, uint32_t index, vfs_dirent_t* dirent) {
+__attribute__((unused)) static bool symlink_readdir(vfs_node_t* node, uint32_t index, vfs_dirent_t* dirent) {
     (void)node;
     (void)index;
     (void)dirent;

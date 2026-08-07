@@ -38,6 +38,7 @@
 #define PANIC_VERSION "1.0 ALDER (Thornedge)"
 #define PANIC_ENABLE_MOUSE 1
 #define PANIC_DEBUGLOG_ENABLED 1
+#undef MAX_STACK_FRAMES
 #define MAX_STACK_FRAMES 16
 #define MAX_MEMORY_REGIONS 8
 #define DEBUG_DELAY_MS 100
@@ -48,8 +49,8 @@
 static const graphics_color_t COLOR_BG = {0, 0, 170, 255}; // Dark blue
 static const graphics_color_t COLOR_FG = {255, 255, 255, 255}; // White
 static const graphics_color_t COLOR_HEAD = {85, 85, 255, 255}; // Lighter blue
-static const graphics_color_t COLOR_BORDER = {255, 255, 255, 255}; // White
-static const graphics_color_t COLOR_TEXT_HEADER = {255, 255, 85, 255}; // Yellow
+__attribute__((unused)) static const graphics_color_t COLOR_BORDER = {255, 255, 255, 255}; // White
+__attribute__((unused)) static const graphics_color_t COLOR_TEXT_HEADER = {255, 255, 85, 255}; // Yellow
 static const graphics_color_t COLOR_TEXT_LABEL = {85, 255, 255, 255};  // Cyan
 static const graphics_color_t COLOR_TEXT_VALUE = {255, 255, 255, 255}; // White
 static const graphics_color_t COLOR_TEXT_ERROR = {255, 85, 85, 255};   // Red
@@ -497,7 +498,7 @@ typedef struct {
 // =============================================================================
 
 static font_t* g_panic_font = NULL;
-static framebuffer_t* g_panic_framebuffer = NULL;
+__attribute__((unused)) static framebuffer_t* g_panic_framebuffer = NULL;
 static uint32_t g_screen_width = 0;
 static uint32_t g_screen_height = 0;
 static panic_context_t g_panic_context;
@@ -548,12 +549,12 @@ static void panic_draw_line(int x1, int y1, int x2, int y2, graphics_color_t col
     graphics_draw_line(x1, y1, x2, y2, color);
 }
 
-static void panic_draw_pixel(int x, int y, graphics_color_t color) {
+__attribute__((unused)) static void panic_draw_pixel(int x, int y, graphics_color_t color) {
     graphics_draw_pixel(x, y, color);
 }
 
 // Graphics-based UI functions to replace TUI
-static void panic_draw_window(int x, int y, int width, int height, const char* title, graphics_color_t fg_color, graphics_color_t bg_color) {
+__attribute__((unused)) static void panic_draw_window(int x, int y, int width, int height, const char* title, graphics_color_t fg_color, graphics_color_t bg_color) {
     // Draw window background
     panic_fill_rect(x, y, width, height, bg_color);
     
@@ -575,11 +576,11 @@ static void panic_draw_window(int x, int y, int width, int height, const char* t
     }
 }
 
-static void panic_print_at(int x, int y, const char* text, graphics_color_t fg_color) {
+__attribute__((unused)) static void panic_print_at(int x, int y, const char* text, graphics_color_t fg_color) {
     panic_draw_text(text, x, y, fg_color);
 }
 
-static void panic_center_text(int x, int y, int width, const char* text, graphics_color_t fg_color) {
+__attribute__((unused)) static void panic_center_text(int x, int y, int width, const char* text, graphics_color_t fg_color) {
     if (g_panic_font) {
         uint32_t text_width, text_height;
         if (graphics_get_text_bounds(text, g_panic_font, &text_width, &text_height) == GRAPHICS_SUCCESS) {
@@ -589,7 +590,7 @@ static void panic_center_text(int x, int y, int width, const char* text, graphic
     }
 }
 
-static void panic_draw_status_bar(int y, const char* left_text, const char* right_text, graphics_color_t fg_color, graphics_color_t bg_color) {
+__attribute__((unused)) static void panic_draw_status_bar(int y, const char* left_text, const char* right_text, graphics_color_t fg_color, graphics_color_t bg_color) {
     // Draw status bar background
     panic_fill_rect(0, y, g_screen_width, 25, bg_color);
     
@@ -608,7 +609,7 @@ static void panic_draw_status_bar(int y, const char* left_text, const char* righ
     }
 }
 
-static void panic_print_table_row(int x, int y, int width, const char* label, const char* value, 
+__attribute__((unused)) static void panic_print_table_row(int x, int y, int width, const char* label, const char* value, 
                                  graphics_color_t label_color, graphics_color_t value_color, graphics_color_t bg_color) {
     // Draw row background
     panic_fill_rect(x, y, width, 18, bg_color);
@@ -626,7 +627,7 @@ static void panic_print_table_row(int x, int y, int width, const char* label, co
     }
 }
 
-static void panic_print_section_header(int x, int y, int width, const char* title, graphics_color_t fg_color, graphics_color_t bg_color) {
+__attribute__((unused)) static void panic_print_section_header(int x, int y, int width, const char* title, graphics_color_t fg_color, graphics_color_t bg_color) {
     // Draw header background
     panic_fill_rect(x, y, width, 20, bg_color);
     
@@ -644,7 +645,7 @@ static void panic_print_section_header(int x, int y, int width, const char* titl
 // =============================================================================
 
 static panic_context_t g_panic_context;
-static bool g_panic_initialized = false;
+__attribute__((unused)) static bool g_panic_initialized = false;
 static uint32 g_panic_count = 0;
 static volatile bool g_panic_in_progress = false;
 static volatile bool g_panic_render_in_progress = false;
@@ -686,16 +687,17 @@ static uint8 panic_mouse_packet_index = 0;
 #define panic_mouse_enabled false
 #endif
 
-static int32 panic_scroll_get(panic_screen_id_t screen) {
+static int32 __attribute__((unused)) panic_scroll_get(panic_screen_id_t screen) {
     if (screen >= PANIC_SCREEN_MAX) return 0;
     return g_panic_context.scroll_offsets[screen];
 }
 
-static void panic_scroll_set(panic_screen_id_t screen, int32 value) {
+static void __attribute__((unused)) panic_scroll_set(panic_screen_id_t screen, int32 value) {
     if (screen >= PANIC_SCREEN_MAX) return;
     g_panic_context.scroll_offsets[screen] = value;
 }
 
+static bool panic_can_read_range(uint32 start, uint32 length, const char** failure_reason) __attribute__((unused));
 static bool panic_can_read_range(uint32 start, uint32 length, const char** failure_reason) {
     if (failure_reason) *failure_reason = NULL;
     if (length == 0) {
@@ -708,7 +710,7 @@ static bool panic_can_read_range(uint32 start, uint32 length, const char** failu
         return false;
     }
     
-    if (start < 0x1000) {
+    if (start < (uint32)0x1000) {
         if (failure_reason) *failure_reason = "Address below 0x1000 is unmapped";
         return false;
     }
@@ -740,7 +742,7 @@ static bool panic_can_read_range(uint32 start, uint32 length, const char** failu
     return true;
 }
 
-static const panic_memory_region_t g_memory_regions[MAX_MEMORY_REGIONS] = {
+__attribute__((unused)) static const panic_memory_region_t g_memory_regions[MAX_MEMORY_REGIONS] = {
     {"Low Memory",        0x00000000, 0x000FFFFF, "Real mode memory"},
     {"Extended Memory",   0x00100000, 0x3FFFFFFF, "Available RAM"},
     {"Kernel Space",      0xC0000000, 0xFFFFFFFF, "Kernel virtual memory"},
@@ -836,7 +838,8 @@ static void capture_cpu_state_atomic(cpu_state_t* state) {
 // INTELLIGENT PANIC TYPE DETECTION
 // =============================================================================
 
-static panic_type_t classify_panic(const char* message, uint32 error_code, const cpu_state_t* cpu) {
+static panic_type_t __attribute__((unused)) classify_panic(const char* message, uint32 error_code, const cpu_state_t* cpu) {
+    (void)error_code;
     if (!message) return PANIC_TYPE_GENERAL;
     
     // Page fault detection
@@ -1752,6 +1755,7 @@ static void panic_debuglog_emit_memory_corruption_analysis(const panic_context_t
     
     // Check registers for corruption markers
     uint32* regs = (uint32*)&ctx->cpu_state;
+    (void)regs;
     int corruption_count = 0;
     
     if (ctx->cpu_state.eax == 0xDEADBEEF || ctx->cpu_state.ebx == 0xDEADBEEF ||
@@ -1796,7 +1800,7 @@ static void panic_debuglog_emit_memory_corruption_analysis(const panic_context_t
     
     // Stack analysis for corruption
     debuglog_write("[PANIC][GDB] Stack Corruption Analysis:\n");
-    uint32 stack_range = ctx->cpu_state.ebp - ctx->cpu_state.esp;
+    uint32 stack_range = (ctx->cpu_state.ebp > ctx->cpu_state.esp) ? (ctx->cpu_state.ebp - ctx->cpu_state.esp) : 0;
     if (stack_range > 0x10000) { // More than 64KB between ESP and EBP
         debuglog_write("[PANIC][GDB]   WARNING: Abnormal stack frame size\n");
     } else if (stack_range == 0 && ctx->cpu_state.ebp == ctx->cpu_state.esp) {
@@ -2170,6 +2174,7 @@ static const char* get_panic_type_name(panic_type_t type) {
     }
 }
 
+static int get_panic_type_color(panic_type_t type) __attribute__((unused));
 static int get_panic_type_color(panic_type_t type) {
     switch (type) {
         case PANIC_TYPE_PAGE_FAULT: return 4;
@@ -2355,7 +2360,7 @@ static char wait_for_key_or_mouse(bool* mouse_clicked, int* mouse_x, int* mouse_
     }
 }
 
-static char wait_for_key(void) {
+static char __attribute__((unused)) wait_for_key(void) {
     return wait_for_key_or_mouse(NULL, NULL, NULL);
 }
 
@@ -2367,7 +2372,7 @@ static char wait_for_key(void) {
 // NEW BSOD-STYLE INTERFACE FUNCTIONS
 // =============================================================================
 
-static void draw_bsod_header(const panic_context_t* ctx) {
+__attribute__((unused)) static void draw_bsod_header(const panic_context_t* ctx) {
     // This function is now the entry point for drawing the whole screen.
     // Clear the entire screen with the background color
     panic_fill_rect(0, 0, g_screen_width, g_screen_height, COLOR_BG);
@@ -2387,7 +2392,7 @@ static void draw_bsod_header(const panic_context_t* ctx) {
     }
 }
 
-static void draw_page_navigation(void) {
+static void __attribute__((unused)) draw_page_navigation(void) {
     char nav_info[80];
     
     strcpy(nav_info, "Page ");
@@ -2402,14 +2407,14 @@ static void draw_page_navigation(void) {
     panic_draw_text("UP/DOWN: Scroll  LEFT/RIGHT: Change Page  ESC: Halt System", 10, g_screen_height - 30, FG_YELLOW);
 }
 
-static void draw_current_page(const panic_context_t* ctx) {
+static void __attribute__((unused)) draw_current_page(const panic_context_t* ctx) {
     // Render the current page starting from a pixel row of 150
     if (g_current_page < BSOD_PAGE_MAX) {
         g_bsod_pages[g_current_page].render_func(ctx, 150);
     }
 }
 
-static void handle_bsod_navigation(char key) {
+static void __attribute__((unused)) handle_bsod_navigation(char key) {
     switch (key) {
         case 'w': case 'W': case 72: // Up arrow
             if (g_page_scroll_offset > 0) {
@@ -2615,6 +2620,7 @@ static void render_memory_info_page(const panic_context_t* ctx, int start_y) {
 }
 
 static void render_system_info_page(const panic_context_t* ctx, int start_y) {
+    (void)ctx;
     int y = start_y - (g_page_scroll_offset * FONT_HEIGHT);
     char temp[80];
     
@@ -2691,6 +2697,7 @@ static void render_stack_trace_page(const panic_context_t* ctx, int start_y) {
 }
 
 static void render_hardware_page(const panic_context_t* ctx, int start_y) {
+    (void)ctx;
     int y = start_y - (g_page_scroll_offset * FONT_HEIGHT);
     
     panic_draw_text("HARDWARE DIAGNOSTICS:", 10, y, FG_YELLOW);
@@ -2779,7 +2786,7 @@ static bool panic_contains_keyword(const char* haystack, const char* keyword) {
     return false;
 }
 
-static const char* panic_identify_subsystem(const panic_context_t* ctx) {
+__attribute__((unused)) static const char* panic_identify_subsystem(const panic_context_t* ctx) {
     if (!ctx) {
         return "Unknown subsystem";
     }
@@ -2971,6 +2978,7 @@ static void panic_draw_diag_qr_direct(uint8_t* fb, uint32_t width, uint32_t heig
     
     bool ok = qrcodegen_encodeText(token, qr_temp_buffer, qr_code_buffer, 
                                     qrcodegen_Ecc_MEDIUM, 1, 10, qrcodegen_Mask_AUTO, true);
+    (void)ok;
     
     int qr_size = qrcodegen_getSize(qr_code_buffer);
 
@@ -3115,7 +3123,7 @@ static bool panic_render_simple(const panic_context_t* ctx) {
         
         if (ctx && ctx->stack_frame_count > 0) {
             char stack_buf[64];
-            for (uint32 i = 0; i < ctx->stack_frame_count && text_y < height - 20; i++) {
+            for (uint32 i = 0; i < ctx->stack_frame_count && text_y < (int)(height - 20); i++) {
                 if (ctx->stack_trace[i].valid) {
                     int pos = 0;
                     stack_buf[pos++] = '#';
@@ -3258,7 +3266,7 @@ static bool panic_render_simple(const panic_context_t* ctx) {
         
         if (ctx->stack_frame_count > 0) {
             char stack_buf[64];
-            for (uint32 i = 0; i < ctx->stack_frame_count && text_y < height - 20; i++) {
+            for (uint32 i = 0; i < ctx->stack_frame_count && text_y < (int)(height - 20); i++) {
                 if (ctx->stack_trace[i].valid) {
                     int pos = 0;
                     stack_buf[pos++] = '#';
@@ -3321,6 +3329,7 @@ static bool panic_try_render_panicui(const panic_context_t* ctx) {
     // Set up a simple exception handler to catch any faults during panicui rendering
     // If panicui crashes, we'll fall back to text mode
     volatile bool panicui_failed = false;
+    (void)panicui_failed;
     
     // Try to initialize panicui
     graphics_result_t init_result = panicui_init();
@@ -3330,7 +3339,11 @@ static bool panic_try_render_panicui(const panic_context_t* ctx) {
     }
 
     // Validate context pointer before passing to panicui
-    if (!ctx || (uintptr_t)ctx == 0xFFFFFFFF || (uintptr_t)ctx == 0xFFFFFFFFFFFFFFFF) {
+    if (!ctx || (uintptr_t)ctx == 0xFFFFFFFF
+#if ARCH_64BIT
+        || (uintptr_t)ctx == 0xFFFFFFFFFFFFFFFF
+#endif
+        ) {
         debuglog(DEBUG_ERROR, "[PANIC] Invalid panic context pointer, using text fallback\n");
         return false;
     }
@@ -3357,7 +3370,7 @@ static bool panic_try_render_panicui(const panic_context_t* ctx) {
     return true;
 }
 
-static __attribute__((noreturn)) void panic_halt_forever(void) {
+static __attribute__((unused)) __attribute__((noreturn)) void panic_halt_forever(void) {
     asm volatile("cli");
     for (;;) {
         asm volatile("hlt");

@@ -523,7 +523,7 @@ static graphics_result_t mm_setup_default_monitor(void) {
     return GRAPHICS_SUCCESS;
 }
 
-static bool mm_id_exists(uint32_t id) {
+__attribute__((unused)) static bool mm_id_exists(uint32_t id) {
     for (uint32_t i = 0; i < g_multi_monitor.num_monitors; i++) {
         if (g_multi_monitor.monitors[i].id == id) {
             return true;

@@ -21,6 +21,15 @@
 #include "arch.h"
 #include "platform.h"
 
+/* CPUID feature bit aliases (matching hardware.h enum values) */
+#ifndef CPUID1_EDX_FPU
+#define CPUID1_EDX_FPU    (1 << 0)
+#define CPUID1_EDX_SSE    (1 << 25)
+#define CPUID1_EDX_SSE2   (1 << 26)
+#define CPUID1_EDX_APIC   (1 << 9)
+#define CPUID1_ECX_AES    (1 << 25)
+#endif
+
 /* =========================================================================
  * Internal helpers (arch-specific init stubs)
  * ========================================================================= */
@@ -75,6 +84,7 @@ static void arch_init_x86_64(void)
 
     /* Optionally enable SMEP + SMAP if the CPU supports them */
     x86_64_cpuid_result_t c7 = x86_64_cpuid(7, 0);
+    (void)c7;
     if (c7.ebx & CPUID7_EBX_SMEP) cr4 |= CR4_64_SMEP;
     if (c7.ebx & CPUID7_EBX_SMAP) cr4 |= CR4_64_SMAP;
     x86_64_write_cr4(cr4);
@@ -198,6 +208,7 @@ static unsigned int detect_features_x86(void)
 #if ARCH_X86_32
     x86_32_cpuid_result_t c1 = x86_32_cpuid(1, 0);
     x86_32_cpuid_result_t c7 = x86_32_cpuid(7, 0);
+    (void)c7;
 #else
     x86_64_cpuid_result_t c1 = x86_64_cpuid(1, 0);
     x86_64_cpuid_result_t c7 = x86_64_cpuid(7, 0);

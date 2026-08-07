@@ -355,6 +355,7 @@ static gfx_result_t vga_text_reset(gfx_device_t* dev) {
 }
 
 static gfx_result_t vga_text_get_modes(gfx_device_t* dev, gfx_mode_t** modes, uint32_t* count) {
+    (void)dev;
     /* VGA text modes */
     static const struct { uint32_t w, h; } text_modes[] = {
         { 40, 25 },
@@ -530,7 +531,7 @@ static gfx_result_t vga_text_scroll(gfx_device_t* dev, int32_t lines) {
         } else {
             /* Move lines down */
             for (int32_t i = priv->width * priv->height - 1; 
-                 i >= priv->width * lines; i--) {
+                 i >= (int32_t)(priv->width * lines); i--) {
                 priv->text_buffer[i] = priv->text_buffer[i - priv->width * lines];
             }
             

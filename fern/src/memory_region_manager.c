@@ -346,7 +346,7 @@ void memory_analyze_page_fault(uint32_t fault_addr, uint32_t error_code,
     }
     
     const char* region_desc = memory_region_get_description(fault_addr);
-    protected_region_type_t region_type = memory_region_get_type(fault_addr);
+    (void)memory_region_get_type(fault_addr);
     bool is_critical = memory_region_is_critical(fault_addr);
     bool is_writable = memory_region_is_writable(fault_addr);
     

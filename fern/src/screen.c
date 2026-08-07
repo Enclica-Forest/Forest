@@ -554,7 +554,7 @@ void tui_draw_status_bar(int y, const char* left_text, const char* right_text, i
         int len = strlen(right_text);
         int start_x = screen_width - len;
         if (start_x > 0) {
-            for (int i = 0; i < len && start_x + i < screen_width; i++) {
+            for (int i = 0; i < len && start_x + i < (int)screen_width; i++) {
                 uint32 index = (y * screen_width + start_x + i) * 2;
                 vidmem[index] = right_text[i];
                 vidmem[index + 1] = color_attr;
@@ -585,7 +585,7 @@ void updateCursor() {
 }
 
 void newLineCheck() {
-    if (cursorY >= screen_height - 1) {
+    if (cursorY >= (uint32_t)screen_height - 1) {
         scrollUp(1);
         cursorY = screen_height - 1;
         cursorX = 0;

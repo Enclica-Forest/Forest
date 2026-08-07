@@ -180,7 +180,7 @@ static int timer_source_calibrate(struct timer_source *source)
 {
     uint64_t tsc_start, tsc_end;
     uint64_t timer_start, timer_end;
-    uint64_t tsc_freq, calculated_freq;
+    uint64_t calculated_freq;
     uint64_t accuracy;
     
     if (!source || !source->read) {
@@ -294,7 +294,7 @@ static bool timer_source_validate(struct timer_source *source)
 /*
  * Mark timer source as failed
  */
-static void timer_source_mark_failed(struct timer_source *source)
+__attribute__((unused)) static void timer_source_mark_failed(struct timer_source *source)
 {
     if (!source) {
         return;
@@ -349,7 +349,7 @@ static void timer_fallback_to_next(void)
 /*
  * Read TSC for calibration
  */
-static uint64_t timer_read_tsc(void)
+__attribute__((unused)) static uint64_t timer_read_tsc(void)
 {
     return read_tsc();
 }
@@ -603,7 +603,7 @@ void timer_interrupt_handler(void)
         
         if (last_count == prev_count) {
             missed_interrupts++;
-            if (missed_interrupts >= timer_abs.failure_threshold) {
+            if ((uint32_t)missed_interrupts >= timer_abs.failure_threshold) {
                 debuglog_printf("Timer: Primary timer appears unhealthy, switching\n");
                 timer_fallback_to_next();
                 missed_interrupts = 0;

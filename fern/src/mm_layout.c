@@ -438,6 +438,7 @@ mem_region_type_t mm_layout_get_type(uint64_t addr) {
  */
 void mm_layout_handle_remap(uint64_t remap_base, uint64_t remap_size, 
                             uint64_t original_base) {
+    (void)original_base;
     // Some BIOSes remap memory above 4GB that was stolen by the PCI hole
     // e.g., If you have 8GB RAM and PCI hole is at 3-4GB:
     // - 0-3GB: Normal RAM

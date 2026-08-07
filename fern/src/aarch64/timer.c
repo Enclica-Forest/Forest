@@ -245,3 +245,44 @@ uint64_t aarch64_timer_get_tick_count(void)
 {
     return g_tick_count;
 }
+
+/* ------------------------------------------------------------------ */
+/* aarch64_timer_init_phys — Physical timer (CNTP) periodic tick       */
+/* ------------------------------------------------------------------ */
+
+void aarch64_timer_init_phys(uint32_t hz)
+{
+    if (hz == 0U) {
+        uart_puts("[timer] ERROR: hz=0 in aarch64_timer_init_phys, using hz=100\n");
+        hz = 100U;
+    }
+
+    uint64_t freq = read_cntfrq_el0();
+    if (freq == 0UL) {
+        uart_puts("[timer] WARNING: CNTFRQ_EL0 = 0, assuming 62.5 MHz\n");
+        freq = TIMER_FALLBACK_FREQ;
+    }
+
+    uint32_t interval = (uint32_t)(freq / (uint64_t)hz);
+    if (interval == 0U) {
+        interval = 1U;
+    }
+
+    /* Disable physical timer while programming */
+    write_cntp_ctl_el1(0UL);
+    __asm__ volatile("isb");
+
+    /* Set countdown value */
+    write_cntp_tval_el1(interval);
+
+    /* Enable timer: ENABLE=1, IMASK=0 */
+    write_cntp_ctl_el1(CNTP_CTL_ENABLE);
+    __asm__ volatile("isb");
+
+    /* Enable physical timer PPI (INTID 30) in the GIC */
+    gicv3_set_priority(TIMER_PTIMER_INTID, 0xA0U);
+    gicv3_enable_irq(TIMER_PTIMER_INTID);
+
+    uart_printf("[timer] Physical timer (INTID 30) enabled at %u Hz, interval=%u\n",
+                hz, interval);
+}

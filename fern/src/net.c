@@ -6,6 +6,7 @@
 #include "include/screen.h"
 #include "include/spinlock.h"
 #include "include/task.h"
+#include "arch/net.h"
 
 #define NET_MAX_SOCKETS 16
 #define NET_SOCKET_FD_BASE 64
@@ -146,6 +147,12 @@ bool net_init(void) {
     }
 
     g_net_ready = true;
+
+    /* Initialize the architecture-appropriate NIC driver (PCI on x86,
+     * virtio-net MMIO on AArch64/RISC-V). This registers a NIC with
+     * the net_nic_driver_t layer so packets can flow. */
+    arch_network_init();
+
     return true;
 }
 

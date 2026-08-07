@@ -234,6 +234,14 @@
 %ifndef LBA_BASE_OFFSET
 %define LBA_BASE_OFFSET        0x00000510  ; dword: 512-byte sector offset (0=HDD)
 %endif
+; Raw El Torito boot image LBA (2048-byte sectors) as patched by xorriso into
+; the boot-info-table.  After stage1's relocation this lives in the stage1
+; copy at 0x600 (offset 12); stage2's load_kernel probes it as a fallback read
+; base for firmwares that expose the whole CD as the boot drive instead of the
+; El Torito boot image.  Zero on hard-disk boot (header unpatched).
+%ifndef CD_BOOT_LBA
+%define CD_BOOT_LBA            0x0000060C
+%endif
 ; El Torito boot info table field offsets (relative to boot image start)
 %define BTI_PVD_LBA            8           ; dword: PVD LBA in 2048-byte sectors
 %define BTI_BOOT_IMAGE_LBA     12          ; dword: boot image LBA (2048-byte)

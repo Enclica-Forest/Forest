@@ -20,9 +20,11 @@ typedef unsigned long long uint64;
 
 typedef char* string;
 
+#ifndef USERSPACE_BUILD
 #define float double
 #define false 0
 #define true  1
+#endif
 
 
 #define low_16(address) (uint16)((address) & 0xFFFF)            

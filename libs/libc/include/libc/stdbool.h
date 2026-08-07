@@ -1,16 +1,29 @@
-#ifndef LIBC_STDBOOL_H
-#define LIBC_STDBOOL_H
+/*
+ * stdbool.h - Boolean type and values
+ * 
+ * C23 compatible boolean definitions for Fern libc.
+ */
+#ifndef _STDBOOL_H
+#define _STDBOOL_H
 
-typedef unsigned char bool;
+#define __STDC_VERSION_STDBOOL_H__ 202311L
 
-#ifndef true
+#ifndef __cplusplus
+
+#ifndef __bool_true_false_are_defined
+#define __bool_true_false_are_defined 1
+
+/* In C23, bool is a keyword. For older standards, we define it. */
+#if __STDC_VERSION__ >= 202311L
+/* bool, true, false are keywords in C23 */
+#else
+#define bool _Bool
 #define true 1
-#endif
-
-#ifndef false
 #define false 0
 #endif
 
-#define __bool_true_false_are_defined 1
+#endif /* __bool_true_false_are_defined */
 
-#endif
+#endif /* __cplusplus */
+
+#endif /* _STDBOOL_H */

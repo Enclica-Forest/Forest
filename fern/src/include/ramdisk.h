@@ -14,6 +14,11 @@ typedef struct {
 // Returns true on success.
 bool ramdisk_init(uint32 magic, uint32 mbi_addr);
 
+// Initialize the ramdisk from a raw memory address range.
+// Used by non-x86 architectures (AArch64, RISC-V, ARM32) that discover
+// the initrd via DTB.  Returns true on success.
+bool ramdisk_init_from_range(uint32 base, uint32 size);
+
 // Query functions
 uint32 ramdisk_file_count(void);
 const ramdisk_file_t* ramdisk_get(uint32 index);

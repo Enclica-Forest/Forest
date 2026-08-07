@@ -255,6 +255,8 @@ memory_result_t cow_mark_shared(phys_addr_t phys_addr, uint32_t flags) {
  */
 cow_result_t cow_handle_fault(page_directory_t* dir, uint32_t vaddr, 
                                phys_addr_t old_phys, phys_addr_t* new_phys) {
+    (void)dir;
+    (void)vaddr;
     if (!cow_state.initialized) {
         *new_phys = old_phys;
         return COW_NOT_SHARED;

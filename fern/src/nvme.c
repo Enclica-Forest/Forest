@@ -34,7 +34,7 @@ static bool nvme_wait_ready(nvme_registers_t *regs, uint32_t timeout_ms) {
     return false;
 }
 
-static void nvme_irq_handler(int irq, void *dev_id, struct interrupt_context *ctx) {
+__attribute__((unused)) static void nvme_irq_handler(int irq, void *dev_id, struct interrupt_context *ctx) {
     nvme_controller_t *ctrl = (nvme_controller_t *)dev_id;
     (void)irq;
     (void)ctx;
@@ -46,7 +46,7 @@ static void nvme_irq_handler(int irq, void *dev_id, struct interrupt_context *ct
     }
 }
 
-static bool nvme_pci_callback(const pci_device_t *device, void *context) {
+__attribute__((unused)) static bool nvme_pci_callback(const pci_device_t *device, void *context) {
     (void)context;
 
     if (device->class_code != PCI_CLASS_STORAGE || device->subclass != PCI_SUBCLASS_NVME) {
@@ -153,6 +153,7 @@ int nvme_read(nvme_namespace_t *ns, uint64_t lba, uint32_t count, void *buffer) 
         return -1;
     }
 
+    (void)lba;
     (void)buffer;
 
     return count * ns->sector_size;
@@ -163,6 +164,7 @@ int nvme_write(nvme_namespace_t *ns, uint64_t lba, uint32_t count, const void *b
         return -1;
     }
 
+    (void)lba;
     (void)buffer;
 
     return count * ns->sector_size;

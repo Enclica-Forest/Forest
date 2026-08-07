@@ -215,6 +215,7 @@ static void nmi_handle_memory_parity(struct interrupt_context *ctx)
  */
 static void nmi_handle_channel_check(struct interrupt_context *ctx)
 {
+    (void)ctx;
     atomic64_inc(&nmi.channel_check_errors);
     
     debuglog_printf("NMI: I/O channel check error detected\n");
@@ -259,6 +260,7 @@ static void nmi_handle_watchdog_timeout(struct interrupt_context *ctx)
  */
 static void nmi_handle_pcie_error(struct interrupt_context *ctx)
 {
+    (void)ctx;
     atomic64_inc(&nmi.pcie_errors);
     
     debuglog_printf("NMI: PCIe error detected\n");
@@ -274,6 +276,7 @@ static void nmi_handle_pcie_error(struct interrupt_context *ctx)
  */
 static void nmi_handle_thermal_event(struct interrupt_context *ctx)
 {
+    (void)ctx;
     atomic64_inc(&nmi.thermal_events);
     
     debuglog_printf("NMI: Thermal event detected\n");
@@ -290,6 +293,7 @@ static void nmi_handle_thermal_event(struct interrupt_context *ctx)
  */
 static void nmi_handle_voltage_event(struct interrupt_context *ctx)
 {
+    (void)ctx;
     atomic64_inc(&nmi.voltage_events);
     
     debuglog_printf("NMI: Power supply voltage event detected\n");
@@ -366,8 +370,8 @@ static void nmi_dump_system_state(struct interrupt_context *ctx)
     REG_TYPE cr3 = cpu_read_cr3();
     REG_TYPE cr4 = cpu_read_cr4();
     
-    debuglog_printf("CR0: 0x%lx, CR2: 0x%lx\n", cr0, cr2);
-    debuglog_printf("CR3: 0x%lx, CR4: 0x%lx\n", cr3, cr4);
+    debuglog_printf("CR0: 0x%lx, CR2: 0x%lx\n", (unsigned long)cr0, (unsigned long)cr2);
+    debuglog_printf("CR3: 0x%lx, CR4: 0x%lx\n", (unsigned long)cr3, (unsigned long)cr4);
     
     /* Check interrupt state */
     debuglog_printf("Interrupts: %s\n", irq_are_enabled() ? "enabled" : "disabled");
@@ -516,7 +520,7 @@ int nmi_init(void)
     
     /* Register NMI handler (vector 2) */
     idt_register_handler(EXCEPTION_NMI, 
-                        (interrupt_handler_t)nmi_handler_c, 
+                        (interrupt_handler_t)(void *)nmi_handler_c, 
                         "NMI Handler");
     
     /* Enable NMI */

@@ -35,6 +35,7 @@ void cat_hw_init(EFI_SYSTEM_TABLE *st)
 /* ==========================================================================
  * Low-level x86 helpers (inline asm; CPL0 in the loader).
  * ========================================================================== */
+#if defined(__x86_64__) || defined(_M_X64)
 static inline void io_outb(UINT16 p, UINT8 v){ __asm__ volatile("outb %0,%1"::"a"(v),"Nd"(p)); }
 static inline UINT8 io_inb(UINT16 p){ UINT8 r; __asm__ volatile("inb %1,%0":"=a"(r):"Nd"(p)); return r; }
 static inline void io_outl(UINT16 p, UINT32 v){ __asm__ volatile("outl %0,%1"::"a"(v),"Nd"(p)); }
@@ -59,6 +60,15 @@ static inline UINT64 hw_rdmsr(UINT32 idx)
     __asm__ volatile("rdmsr":"=a"(lo),"=d"(hi):"c"(idx));
     return ((UINT64)hi<<32)|lo;
 }
+#else
+static inline void io_outb(UINT16 p, UINT8 v){ (void)p; (void)v; }
+static inline UINT8 io_inb(UINT16 p){ (void)p; return 0; }
+static inline void io_outl(UINT16 p, UINT32 v){ (void)p; (void)v; }
+static inline UINT32 io_inl(UINT16 p){ (void)p; return 0; }
+static inline UINT64 hw_rdtsc(void){ static UINT64 c=0x9E3779B97F4A7C15ull; c+=0x9E3779B97F4A7C15ull; return c; }
+static inline void hw_cpuid(UINT32 leaf, UINT32 sub, UINT32 r[4]){ (void)leaf; (void)sub; r[0]=r[1]=r[2]=r[3]=0; }
+static inline UINT64 hw_rdmsr(UINT32 idx){ (void)idx; return 0; }
+#endif
 
 static void hw_stall(UINTN us){ if(gBS && gBS->Stall) gBS->Stall(us); }
 

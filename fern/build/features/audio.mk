@@ -25,7 +25,14 @@ EXCLUDED_CSOURCES += $(wildcard \
     $(SRCDIR)/sound_pc_speaker.c \
     $(SRCDIR)/sound_vu_meter.c \
     $(SRCDIR)/stb_vorbis.c \
-    $(SRCDIR)/stb_vorbis_port.c)
+    $(SRCDIR)/stb_vorbis_port.c \
+    $(SRCDIR)/aarch64/sound_aarch64.c \
+    $(SRCDIR)/arm32/sound_arm32.c \
+    $(SRCDIR)/riscv64/sound_riscv64.c)
+endif
+
+ifeq ($(ENABLE_SOUND_VIRTIO),no)
+EXCLUDED_CSOURCES += $(wildcard $(SRCDIR)/virtio_snd.c)
 endif
 
 ifeq ($(ENABLE_SOUND_SB16),no)

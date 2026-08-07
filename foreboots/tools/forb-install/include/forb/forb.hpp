@@ -298,6 +298,18 @@ std::string emit_config(const ParsedConfig& cfg,
                         bool extras);
 
 // ---------------------------------------------------------------------------
+//  Export to other formats (commands.cpp)
+// ---------------------------------------------------------------------------
+std::string export_to_grub(const ParsedConfig& cfg,
+                           const std::vector<OutNode>& roots);
+std::string export_to_limine(const ParsedConfig& cfg,
+                             const std::vector<OutNode>& roots);
+std::string export_to_systemd(const ParsedConfig& cfg,
+                              const std::vector<OutNode>& roots);
+std::string export_to_syslinux(const ParsedConfig& cfg,
+                               const std::vector<OutNode>& roots);
+
+// ---------------------------------------------------------------------------
 //  Bootloader detection + migration
 // ---------------------------------------------------------------------------
 struct BootloaderInfo {
@@ -353,6 +365,7 @@ struct Args {
     std::string export_format;    // export: grub|limine|systemd-boot|syslinux
     bool yes = false;             // uninstall: skip confirmation
     bool keep_nvram = false;      // uninstall: keep NVRAM entry
+    bool clean = false;           // install: remove old ForeB before installing
     std::string manifest;         // batch: manifest file
     bool continue_on_error = false; // batch: continue on error
 };

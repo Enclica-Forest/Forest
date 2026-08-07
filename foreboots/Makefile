@@ -330,7 +330,7 @@ OVMF_RISCV_VARS := /usr/share/edk2/riscv64/RISCV_VIRT_VARS.fd
 
 # ---- aarch64 object rule + link ----
 $(AA64_BUILD)/%.o: uefi/%.c $(UEFI_MOD_HDRS)
-	@mkdir -p $(AA64_BUILD)
+	@mkdir -p $(dir $@)
 	@echo "$(CYAN)Compiling (aarch64) $<...$(RESET)"
 	$(CLANG) $(AA64_CFLAGS) -c $< -o $@
 
@@ -349,7 +349,7 @@ $(EFI_APP_AA64): $(AA64_OBJS)
 
 # ---- riscv64 object rule + best-effort ELF link + boundary note ----
 $(RISCV_BUILD)/%.o: uefi/%.c $(UEFI_MOD_HDRS)
-	@mkdir -p $(RISCV_BUILD)
+	@mkdir -p $(dir $@)
 	@echo "$(CYAN)Compiling (riscv64 ELF) $<...$(RESET)"
 	$(CLANG) $(RISCV_CFLAGS) -c $< -o $@
 
@@ -469,10 +469,14 @@ check: $(STAGE1_BIN) $(STAGE2_BIN) $(STAGE3_BIN)
 .PHONY: assets
 assets: $(ASSET_BG) $(SAMPLE_INITRD)
 
-$(ASSET_BG): $(GEN_ASSETS) include/forebo_theme.h
-	@echo "$(CYAN)Generating UEFI assets (background + icons) via $(GEN_ASSETS)...$(RESET)"
-	@python3 $(GEN_ASSETS)
-	@echo "$(GREEN)  Assets generated under $(ASSETS_DIR)/$(RESET)"
+$(ASSET_BG): include/forebo_theme.h
+	@if [ -f "$(GEN_ASSETS)" ]; then \
+	  echo "$(CYAN)Generating UEFI assets (background + icons) via $(GEN_ASSETS)...$(RESET)"; \
+	  python3 $(GEN_ASSETS); \
+	  echo "$(GREEN)  Assets generated under $(ASSETS_DIR)/$(RESET)"; \
+	else \
+	  echo "$(CYAN)Assets already present, skipping generation$(RESET)"; \
+	fi
 
 $(SAMPLE_INITRD):
 	@echo "$(CYAN)Building sample multiboot module ($(SAMPLE_INITRD))...$(RESET)"
@@ -581,6 +585,14 @@ iso-bios: $(STAGE1_BIN) $(STAGE2_BIN) $(STAGE3_BIN) $(SAMPLE_INITRD)
 	fi
 	@cp /tmp/forebo_boot.img /tmp/forebo_iso_root/boot/forebo/forebo.img
 	@cp $(FOREBO_CFG) /tmp/forebo_iso_root/boot/forebo/forebo.cfg 2>/dev/null || true
+	@if [ -f "$(KERNEL)" ]; then \
+	  cp $(KERNEL) /tmp/forebo_iso_root/boot/forebo/kernel.elf; \
+	  echo "  kernel.elf  -> ISO /boot/forebo/kernel.elf"; \
+	fi
+	@if [ -f "$(SAMPLE_INITRD)" ]; then \
+	  cp $(SAMPLE_INITRD) /tmp/forebo_iso_root/boot/forebo/initrd.tar; \
+	  echo "  initrd.tar  -> ISO /boot/forebo/initrd.tar"; \
+	fi
 	@if command -v $(XORRISO) >/dev/null 2>&1; then \
 	  $(XORRISO) -as mkisofs \
 	    -b boot/forebo/forebo.img \
@@ -629,6 +641,15 @@ iso-hybrid: $(STAGE1_BIN) $(STAGE2_BIN) $(STAGE3_BIN) $(SAMPLE_INITRD) $(ESP_IMA
 	@cp /tmp/forebo_boot.img /tmp/forebo_iso_root/boot/forebo/forebo.img
 	@# --- UEFI El Torito boot image: the FAT ESP built by the 'esp' target ---
 	@cp $(ESP_IMAGE) /tmp/forebo_iso_root/boot/efi/esp.img
+	@# --- expose kernel + initrd as regular ISO9660 files as well ---
+	@if [ -f "$(KERNEL)" ]; then \
+	  cp $(KERNEL) /tmp/forebo_iso_root/boot/forebo/kernel.elf; \
+	  echo "  kernel.elf  -> ISO /boot/forebo/kernel.elf"; \
+	fi
+	@if [ -f "$(SAMPLE_INITRD)" ]; then \
+	  cp $(SAMPLE_INITRD) /tmp/forebo_iso_root/boot/forebo/initrd.tar; \
+	  echo "  initrd.tar  -> ISO /boot/forebo/initrd.tar"; \
+	fi
 	@cp $(FOREBO_CFG) /tmp/forebo_iso_root/boot/forebo/forebo.cfg 2>/dev/null || true
 	@$(XORRISO) -as mkisofs \
 	    -V FOREB \
@@ -826,9 +847,9 @@ clean:
 # =============================================================================
 # Host tools: C++ installer + Qt6 customizer GUI (out-of-tree CMake builds)
 # =============================================================================
-.PHONY: tools forb-install forb-customizer
+.PHONY: tools forb-install forb-customizer forb-config forb-mkrescue-standalone
 
-tools: forb-install forb-customizer
+tools: forb-install forb-customizer forb-config
 
 forb-install:
 	@echo "$(CYAN)Building forb-install (C++ installer)...$(RESET)"
@@ -840,26 +861,37 @@ forb-customizer:
 	@cd tools/forb-customizer && cmake -B build -DCMAKE_PREFIX_PATH=$$(qmake6 -query QT_INSTALL_PREFIX) >/dev/null && cmake --build build -j
 	@echo "$(GREEN)  -> tools/forb-customizer/build/forb-customizer$(RESET)"
 
+forb-config:
+	@chmod +x tools/forb-config/forb-config
+	@echo "$(GREEN)  -> tools/forb-config/forb-config (Python CLI)$(RESET)"
+
+# forb-mkrescue: standalone drop-in replacement for grub-mkrescue
+forb-mkrescue-standalone:
+	@chmod +x tools/forb-mkrescue/forb-mkrescue
+	@echo "$(GREEN)  -> tools/forb-mkrescue/forb-mkrescue (drop-in for grub-mkrescue)$(RESET)"
+
 # forb-mkrescue: self-contained bootable ForeB rescue image (drop-in for
 # grub-mkrescue). Rebuilds the embedded payload from the current BOOTX64.EFI.
 .PHONY: rescue
-rescue: $(EFI_APP) forb-install
-	@cd tools/forb-install && cmake --build build -j >/dev/null
-	@tools/forb-install/build/forb-mkrescue -o $(CURDIR)/forebo-rescue.iso -v
+rescue: $(EFI_APP)
+	@tools/forb-mkrescue/forb-mkrescue -o $(CURDIR)/forebo-rescue.iso -v
 	@echo "$(GREEN)  -> forebo-rescue.iso (UEFI-bootable CD/USB)$(RESET)"
 
 # =============================================================================
-# System-wide install (forb-install + forb-customizer)
+# System-wide install (forb-install + forb-customizer + forb-config + forb-mkrescue)
 # =============================================================================
 PREFIX      ?= /usr/local
 BINDIR      := $(PREFIX)/bin
+SHAREDIR    := $(PREFIX)/share
 
 install: install-bin
 
 install-bin: tools
 	install -Dm755 tools/forb-install/build/forb-install $(DESTDIR)$(BINDIR)/forb-install
-	ln -sf forb-install $(DESTDIR)$(BINDIR)/forb-mkrescue
-	@echo "Installed forb-install + forb-mkrescue to $(DESTDIR)$(BINDIR)/"
+	install -Dm755 tools/forb-config/forb-config $(DESTDIR)$(BINDIR)/forb-config
+	install -Dm755 tools/forb-mkrescue/forb-mkrescue $(DESTDIR)$(BINDIR)/forb-mkrescue
+	ln -sf forb-install $(DESTDIR)$(BINDIR)/forb-mkrescue-legacy
+	@echo "Installed forb-install, forb-config, forb-mkrescue to $(DESTDIR)$(BINDIR)/"
 
 install-gui: tools
 	install -Dm755 tools/forb-customizer/build/forb-customizer $(DESTDIR)$(BINDIR)/forb-customizer
@@ -872,8 +904,10 @@ tools-install: install-all
 uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/forb-install
 	rm -f $(DESTDIR)$(BINDIR)/forb-mkrescue
+	rm -f $(DESTDIR)$(BINDIR)/forb-mkrescue-legacy
+	rm -f $(DESTDIR)$(BINDIR)/forb-config
 	rm -f $(DESTDIR)$(BINDIR)/forb-customizer
-	@echo "Removed forb-install, forb-mkrescue, forb-customizer from $(DESTDIR)$(BINDIR)/"
+	@echo "Removed forb-install, forb-config, forb-mkrescue, forb-customizer from $(DESTDIR)$(BINDIR)/"
 
 # =============================================================================
 # Help
@@ -912,11 +946,15 @@ help:
 	@echo "  qemu-aa64      Boot BOOTAA64.EFI under aa64 OVMF (-M virt -cpu cortex-a57)"
 	@echo "  qemu-riscv     Print the riscv64 run line (PE not producible yet)"
 	@echo ""
+	@echo "$(GREEN)Tools:$(RESET)"
+	@echo "  tools          Build all host tools (forb-install + forb-customizer + forb-config)"
+	@echo "  tools-install  Install all tools to PREFIX"
+	@echo "  rescue         Create forebo-rescue.iso (ForeB-based rescue image)"
+	@echo ""
 	@echo "$(GREEN)Install:$(RESET)"
-	@echo "  install        Install forb-install + forb-mkrescue to PREFIX (default /usr/local)"
+	@echo "  install        Install forb-install + forb-config + forb-mkrescue to PREFIX"
 	@echo "  install-gui    Install forb-customizer to PREFIX"
-	@echo "  install-all    Install all tools (forb-install + forb-mkrescue + forb-customizer)"
-	@echo "  tools-install  Alias for install-all"
+	@echo "  install-all    Install all tools"
 	@echo "  uninstall      Remove installed tools from PREFIX"
 	@echo "  install-disk   Write ForeB stages to real disk (DANGER! DISK=/dev/sdX)"
 	@echo ""

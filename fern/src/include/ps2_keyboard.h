@@ -1,6 +1,9 @@
 #ifndef PS2_KEYBOARD_H
 #define PS2_KEYBOARD_H
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverride-init"
+
 #include "types.h"
 #include "interrupt.h"
 
@@ -298,5 +301,7 @@ void ps2_keyboard_poll(void);
 // Device presence checking and hot reload
 bool ps2_keyboard_is_present(void);
 int ps2_keyboard_reinit(void);
+
+#pragma GCC diagnostic pop
 
 #endif

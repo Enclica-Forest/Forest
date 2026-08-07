@@ -31,7 +31,7 @@ PARALLEL_JOBS  ?= 0
 # -----------------------------------------------------------------------------
 # 3. Validation of choice options
 # -----------------------------------------------------------------------------
-VALID_ARCHS       := 32 64 arm aarch64
+VALID_ARCHS       := 32 64 arm aarch64 riscv64
 VALID_BOOT_MODES  := bios uefi
 VALID_BUILD_TYPES := debug release optimize
 
@@ -156,6 +156,7 @@ ALL_BOOL_OPTIONS := \
     ENABLE_NVME \
     ENABLE_NX_BIT \
     ENABLE_OOM_KILLER \
+    ENABLE_OPENGL \
     ENABLE_PAE \
     ENABLE_PAGE_CACHE \
     ENABLE_PAGING \

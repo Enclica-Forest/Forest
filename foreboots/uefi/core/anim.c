@@ -516,6 +516,79 @@ void anim_spinner(int cx, int cy, int phase, UINT32 color, int scale)
             for (ddx = 0; ddx < dsz; ddx++)
                 a_put(ux + ddx, uy + ddy, c);
     }
+    /* Mark the spinner's bounding box dirty so ui_present() flips it to VRAM
+     * without requiring the caller to force a full-screen flip. */
+    ui_mark_dirty(cx - 7 * scale, cy - 7 * scale, 16 * scale, 16 * scale);
+}
+
+/* Snapshot buffer for the spinner region, so old dots are erased before each
+ * new phase is drawn. Without this, previous frame dots accumulate as a static
+ * ring of varying brightness. The snapshot is allocated lazily on first use. */
+static UINT32 *a_spin_snap = 0;
+static int     a_spin_snap_w = 0, a_spin_snap_h = 0;
+static int     a_spin_snap_x = 0, a_spin_snap_y = 0;
+
+static void a_spin_snap_free(void)
+{
+    if (a_spin_snap && a_bs) {
+        a_bs->FreePool(a_spin_snap);
+        a_spin_snap = 0;
+    }
+    a_spin_snap_w = a_spin_snap_h = 0;
+}
+
+static void a_spin_restore(void)
+{
+    if (!a_spin_snap || !a_fb) return;
+    for (int yy = 0; yy < a_spin_snap_h; yy++) {
+        const UINT32 *src = a_spin_snap + (UINTN)yy * (UINTN)a_spin_snap_w;
+        volatile UINT32 *dst =
+            (volatile UINT32 *)(a_fb + (UINTN)(a_spin_snap_y + yy) * a_pitch
+                                     + (UINTN)a_spin_snap_x * 4u);
+        for (int xx = 0; xx < a_spin_snap_w; xx++)
+            dst[xx] = src[xx];
+    }
+}
+
+/* Snapshot the spinner's bounding box before drawing the new phase, then draw. */
+static void a_spin_draw(int cx, int cy, int phase, UINT32 color, int scale)
+{
+    int bx = cx - 7 * scale, by = cy - 7 * scale;
+    int bw = 16 * scale,     bh = 16 * scale;
+
+    /* Clip to framebuffer. */
+    if (bx < 0) { bw += bx; bx = 0; }
+    if (by < 0) { bh += by; by = 0; }
+    if (bx + bw > (int)a_w) bw = (int)a_w - bx;
+    if (by + bh > (int)a_h) bh = (int)a_h - by;
+    if (bw <= 0 || bh <= 0) return;
+
+    /* Allocate (or reallocate) snapshot buffer when size changed. */
+    if (a_spin_snap_w != bw || a_spin_snap_h != bh) {
+        a_spin_snap_free();
+        VOID *p = 0;
+        UINTN bytes = (UINTN)bw * (UINTN)bh * 4u;
+        if (!EFI_ERROR(a_bs->AllocatePool(EfiLoaderData, bytes, &p)) && p)
+            a_spin_snap = (UINT32 *)p;
+        a_spin_snap_w = bw;
+        a_spin_snap_h = bh;
+    }
+
+    /* Snapshot the region (erases previous frame's dots when restored). */
+    if (a_spin_snap) {
+        a_spin_snap_x = bx;
+        a_spin_snap_y = by;
+        for (int yy = 0; yy < bh; yy++) {
+            const volatile UINT32 *src =
+                (const volatile UINT32 *)(a_fb + (UINTN)(by + yy) * a_pitch
+                                                + (UINTN)bx * 4u);
+            UINT32 *dst = a_spin_snap + (UINTN)yy * (UINTN)bw;
+            for (int xx = 0; xx < bw; xx++)
+                dst[xx] = src[xx];
+        }
+    }
+
+    anim_spinner(cx, cy, phase, color, scale);
 }
 
 void anim_load_spinner(int phase)
@@ -531,7 +604,10 @@ void anim_load_spinner(int phase)
     /* Keep the spinner on-screen: fall back to the bar's left if the right
      * gutter is too tight. */
     if (cx + 10 * sc >= (int)a_w) cx = bx - 16;
-    anim_spinner(cx, cy, phase, FOREB_TITLE, sc);
+    /* Restore previous frame's spinner dots, then snapshot + draw new phase.
+     * This avoids accumulating stale dots as a static ring. */
+    a_spin_restore();
+    a_spin_draw(cx, cy, phase, FOREB_TITLE, sc);
 }
 
 /* ------------------------------------------------------------------ */
@@ -567,7 +643,7 @@ void anim_progress_reset(void)
 void anim_progress_to(const char *label, UINT64 cur, UINT64 total, int use_stall)
 {
     int target;
-    if (cur == 0) a_prog_last = 0;
+    if (cur == 0) { a_prog_last = 0; a_spin_restore(); }
     if (total == 0) target = 100;
     else {
         if (cur > total) cur = total;
@@ -581,11 +657,15 @@ void anim_progress_to(const char *label, UINT64 cur, UINT64 total, int use_stall
         a_prog_last += 4;
         if (a_prog_last > target) a_prog_last = target;
         ui_progress(label, (UINT64)a_prog_last, 100);
-        anim_load_spinner(a_prog_spin++);   /* dots written via a_put -> mark all */
-        ui_mark_all();
+        /* anim_load_spinner() restores old dots, snapshots + draws new phase,
+         * and marks the spinner bbox dirty. ui_progress() marks the bar dirty.
+         * Together these give ui_present() just the changed regions - no
+         * full-screen flip needed. */
+        anim_load_spinner(a_prog_spin++);
         ui_present();                 /* flip each eased step (no-op if !DB) */
         a_delay(use_stall, 10);
     }
+    a_spin_restore();
     ui_progress(label, (UINT64)target, 100);
     ui_present();
 }

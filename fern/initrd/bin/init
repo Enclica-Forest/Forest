@@ -1,0 +1,23 @@
+#!/bin/sh
+# Forest-OS init — PID 1
+echo ""
+echo "  ███████╗██████╗ ███████╗███████╗"
+echo "  ██╔════╝██╔══██╗██╔════╝██╔════╝"
+echo "  █████╗  ██████╔╝█████╗  ███████╗"
+echo "  ██╔══╝  ██╔══██╗██╔══╝  ╚════██║"
+echo "  ███████╗██║  ██║███████╗███████║"
+echo "  ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝"
+echo ""
+echo "  Forest-OS v1.0 (codename ALDER)"
+echo ""
+
+# Mount essential filesystems
+mount -t proc proc /proc 2>/dev/null
+mount -t devfs devfs /dev 2>/dev/null
+mount -t tmpfs tmpfs /tmp 2>/dev/null
+
+# Set hostname
+echo "forestos" > /etc/hostname 2>/dev/null
+
+echo "System ready. Type 'help' for available commands."
+exec /bin/sh

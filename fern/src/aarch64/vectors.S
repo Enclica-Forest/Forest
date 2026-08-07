@@ -219,10 +219,9 @@ vectors:
     .type   el1_sp0_sync, %function
 el1_sp0_sync:
     save_regs
-    /* Pass frame pointer and ESR to C for diagnosis */
-    mov     x0, sp
-    mrs     x1, esr_el1
-    bl      aarch64_el1_sync_handler
+    mrs     x0, esr_el1
+    mrs     x1, far_el1
+    bl      aarch64_sync_handler
     restore_regs
     .size   el1_sp0_sync, . - el1_sp0_sync
 
@@ -261,9 +260,9 @@ el1_sp0_serror:
     .type   el1_spx_sync, %function
 el1_spx_sync:
     save_regs
-    mov     x0, sp
-    mrs     x1, esr_el1
-    bl      aarch64_el1_sync_handler
+    mrs     x0, esr_el1
+    mrs     x1, far_el1
+    bl      aarch64_sync_handler
     restore_regs
     .size   el1_spx_sync, . - el1_spx_sync
 
@@ -309,6 +308,9 @@ el1_spx_serror:
 el0_aarch64_sync:
     save_regs
 
+    /* Save FPU/NEON state of the interrupted EL0 task */
+    bl      fpu_save_current
+
     /* Read ESR and extract EC field [31:26] */
     mrs     x25, esr_el1
     lsr     x24, x25, #26          /* x24 = EC                           */
@@ -321,6 +323,9 @@ el0_aarch64_sync:
     mov     x0, sp                  /* arg0: pointer to saved frame        */
     mov     x1, x25                 /* arg1: ESR_EL1 value                 */
     bl      aarch64_el0_sync_handler
+
+    /* Restore FPU/NEON state before returning to EL0 */
+    bl      fpu_restore_current
     restore_regs
     .size   el0_aarch64_sync, . - el0_aarch64_sync
 
@@ -388,6 +393,9 @@ el0_svc:
     /* Store return value (x0) back into the saved x0 slot in the frame   */
     str     x0,  [sp, #0x10]
 
+    /* Restore FPU/NEON state before returning to EL0 */
+    bl      fpu_restore_current
+
     restore_regs
     .size   el0_svc, . - el0_svc
 
@@ -395,8 +403,10 @@ el0_svc:
     .type   el0_aarch64_irq, %function
 el0_aarch64_irq:
     save_regs
+    bl      fpu_save_current
     mov     x0, sp
     bl      aarch64_irq_handler
+    bl      fpu_restore_current
     restore_regs
     .size   el0_aarch64_irq, . - el0_aarch64_irq
 
@@ -404,8 +414,10 @@ el0_aarch64_irq:
     .type   el0_aarch64_fiq, %function
 el0_aarch64_fiq:
     save_regs
+    bl      fpu_save_current
     mov     x0, sp
     bl      aarch64_fiq_handler
+    bl      fpu_restore_current
     restore_regs
     .size   el0_aarch64_fiq, . - el0_aarch64_fiq
 
@@ -413,9 +425,11 @@ el0_aarch64_fiq:
     .type   el0_aarch64_serror, %function
 el0_aarch64_serror:
     save_regs
+    bl      fpu_save_current
     mov     x0, sp
     mrs     x1, esr_el1
     bl      aarch64_serror_handler
+    bl      fpu_restore_current
     restore_regs
     .size   el0_aarch64_serror, . - el0_aarch64_serror
 
@@ -469,26 +483,19 @@ el0_aarch32_serror:
  * yet present.  Each stub spins forever so a missing handler is obvious
  * in a debugger rather than causing a silent bad return.
  *
- * The real implementations live in src/aarch64/syscall.c and the
- * platform interrupt driver.
+ * aarch64_sync_handler is provided by fault.c (no weak stub needed).
  * --------------------------------------------------------------------- */
-    .weak   aarch64_el1_sync_handler
     .weak   aarch64_irq_handler
     .weak   aarch64_fiq_handler
     .weak   aarch64_serror_handler
-    .weak   aarch64_el0_sync_handler
     .weak   aarch64_el0_aarch32_handler
 
-    .type   aarch64_el1_sync_handler, %function
-aarch64_el1_sync_handler:
     .type   aarch64_irq_handler, %function
 aarch64_irq_handler:
     .type   aarch64_fiq_handler, %function
 aarch64_fiq_handler:
     .type   aarch64_serror_handler, %function
 aarch64_serror_handler:
-    .type   aarch64_el0_sync_handler, %function
-aarch64_el0_sync_handler:
     .type   aarch64_el0_aarch32_handler, %function
 aarch64_el0_aarch32_handler:
 .Lweak_spin:

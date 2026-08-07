@@ -32,7 +32,7 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E rm -rf ${PAYLOAD_STAGE}
   COMMAND ${CMAKE_COMMAND} -E make_directory ${PAYLOAD_STAGE}/EFI/forb
   COMMAND ${CMAKE_COMMAND} -E make_directory ${PAYLOAD_STAGE}/forebo/icons
-  COMMAND ${CMAKE_COMMAND} -E copy ${REPO_ROOT}/BOOTX64.EFI
+  COMMAND ${CMAKE_COMMAND} -E copy ${REPO_ROOT}/build/BOOTX64.EFI
           ${PAYLOAD_STAGE}/EFI/forb/BOOTX64.EFI
   COMMAND ${CMAKE_COMMAND} -E copy ${REPO_ROOT}/forebo.cfg
           ${PAYLOAD_STAGE}/forebo/forebo.cfg
@@ -42,7 +42,7 @@ add_custom_command(
           ${PAYLOAD_STAGE}/forebo/icons
   COMMAND ${CMAKE_COMMAND} -E chdir ${PAYLOAD_STAGE}
           ${CMAKE_COMMAND} -E tar cf ${PAYLOAD_TAR} --format=gnutar .
-  DEPENDS ${REPO_ROOT}/BOOTX64.EFI ${REPO_ROOT}/forebo.cfg
+  DEPENDS ${REPO_ROOT}/build/BOOTX64.EFI ${REPO_ROOT}/forebo.cfg
           ${REPO_ROOT}/assets/bg.bmp
   COMMENT "Staging + taring ForeB payload for embedding"
   VERBATIM)

@@ -15,6 +15,7 @@
 #include "include/debuglog.h"
 #include "include/spinlock.h"
 #include "include/pci.h"
+#include "include/util.h"
 
 #include <stdint.h>
 
@@ -201,7 +202,7 @@ static uint32 driverctl_write(vfs_node_t* node, uint32 offset, uint32 size, cons
 
 static dev_ops_t g_driverctl_ops = {
     .read  = driverctl_read,
-    .write = driverctl_write,
+    .write = (uint32 (*)(vfs_node_t *, uint32, uint32, uint8 *))driverctl_write,
     .ioctl = driverctl_ioctl,
 };
 

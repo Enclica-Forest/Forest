@@ -638,3 +638,18 @@ const ramdisk_file_t* ramdisk_find(const char* path) {
     }
     return 0;
 }
+
+/**
+ * ramdisk_init_from_range - Initialize the ramdisk from a raw memory range.
+ *
+ * Used by non-x86 architectures (AArch64, RISC-V, ARM32) that discover
+ * the initrd location via DTB rather than multiboot.
+ *
+ * @base: Physical base address of the ramdisk (tar archive).
+ * @size: Size in bytes.
+ *
+ * Returns true on success.
+ */
+bool ramdisk_init_from_range(uint32 base, uint32 size) {
+    return load_initrd_range(base, base + size);
+}

@@ -1,27 +1,44 @@
-#ifndef LIBC_SYS_UTSNAME_H
-#define LIBC_SYS_UTSNAME_H
+/*
+ * sys/utsname.h - System name structure
+ * 
+ * POSIX compatible system identification for Fern libc.
+ */
+#ifndef _SYS_UTSNAME_H
+#define _SYS_UTSNAME_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifdef FOREST_USE_HOST_LIBC
-#include <sys/utsname.h>
-typedef struct utsname utsname_t;
-#else
+/* Maximum length for utsname fields */
+#define _UTSNAME_LENGTH 65
+
+/* System identification structure */
 struct utsname {
-    char sysname[32];
-    char nodename[32];
-    char release[32];
-    char version[32];
-    char machine[32];
+    /* Operating system name (e.g., "ForestOS") */
+    char sysname[_UTSNAME_LENGTH];
+    
+    /* Network node hostname */
+    char nodename[_UTSNAME_LENGTH];
+    
+    /* Operating system release (e.g., "0.2") */
+    char release[_UTSNAME_LENGTH];
+    
+    /* Operating system version (e.g., "nightly") */
+    char version[_UTSNAME_LENGTH];
+    
+    /* Hardware identifier (e.g., "x86_64") */
+    char machine[_UTSNAME_LENGTH];
+    
+    /* NIS/YP domain name (Linux extension) */
+    char domainname[_UTSNAME_LENGTH];
 };
 
-typedef struct utsname utsname_t;
-#endif
+/* Get system identification */
+int uname(struct utsname *buf);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /* _SYS_UTSNAME_H */

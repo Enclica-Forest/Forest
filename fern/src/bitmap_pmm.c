@@ -35,6 +35,7 @@ static struct {
 
 // Emergency reporting for critical errors
 static void pmm_emergency_report(const char* msg, uint32_t data) {
+    (void)data;
     volatile uint16_t* vga = (volatile uint16_t*)0xB8000;
     int row = 6; // Use row 6 for PMM errors
     int col = 0;

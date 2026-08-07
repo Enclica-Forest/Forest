@@ -49,6 +49,12 @@
 /* Public API                                                           */
 /* ------------------------------------------------------------------ */
 
+/*
+ * When the unified cross-arch uart.h is included, skip these declarations
+ * to avoid conflicting signatures (e.g. uart_init(void) vs uart_init(uint32_t)).
+ */
+#ifndef FOREST_ARCH_UART_H
+
 /**
  * uart_init - Configure PL011 at 115200 baud, 8N1, FIFO enabled.
  * Reference clock assumed to be 24 MHz (QEMU virt default).
@@ -75,5 +81,7 @@ void uart_puts(const char *s);
  * Supports: %c %s %d %u %x %p %% (no floating-point).
  */
 void uart_printf(const char *fmt, ...);
+
+#endif /* !FOREST_ARCH_UART_H */
 
 #endif /* AARCH64_UART_H */

@@ -124,15 +124,30 @@ start:
     ; Save EDX for NX check below
     push edx
 
-    ; --- 3. Build initial 4-level paging tables (identity + high-half) ---
-    ; PML4[0]      -> PDPT_low   (identity, first 2 MiB)
-    ; PML4[511]    -> PDPT_high  (high-half, KERNEL_HIGH_VMA range)
-    ; PDPT_low[0]  -> PD_low
-    ; PD_low[0]    -> 2 MiB page at phys 0 (identity)
-    ; PDPT_high[0] -> PD_high
-    ; PD_high[i]   -> 2 MiB pages at phys KERNEL_PHYS_BASE + i*2MiB,
-    ;                  mapped to KERNEL_HIGH_VMA + i*2MiB, for i in [0, 8)
+    ; --- 2b. Probe LA57 (5-level paging) support ---
+    ; LA57 is in CPUID.07H.0:ECX[16].
+    %ifdef ENABLE_5LEVEL_PAGING
+        mov eax, 7
+        xor ecx, ecx
+        cpuid
+        test ecx, 1 << 16             ; LA57 bit
+        jz .no_la57
+        ; LA57 supported — we will build 5-level tables
+        mov byte [la57_detected], 1
+        jmp .la57_probe_done
+    .no_la57:
+        mov byte [la57_detected], 0
+    .la57_probe_done:
+    %else
+        mov byte [la57_detected], 0
+    %endif
 
+    ; --- 3. Build initial paging tables (identity + high-half) ---
+    ; Check if LA57 was detected
+    cmp byte [la57_detected], 1
+    je .build_5level_tables
+
+    ; --- 3a. 4-level paging tables (current behavior) ---
     mov eax, pdpt_low
     or  eax, 0x03                    ; present + writable + supervisor
     mov [pml4 + 0], eax              ; PML4[0]
@@ -152,7 +167,6 @@ start:
     mov dword [pd_low + 0], 0x00000083
 
     ; PD_high[i] = 2 MiB pages mapping KERNEL_PHYS_BASE -> KERNEL_HIGH_VMA
-    ; Entry value = (KERNEL_PHYS_BASE + i*2MiB) | 0x83 (P|R/W|PS)
     mov ecx, 0
     mov eax, KERNEL_PHYS_BASE | 0x83
 .fill_high_pd:
@@ -166,6 +180,68 @@ start:
     ; --- 4. Load CR3 with the PML4 physical (== virtual, pre-paging) ---
     mov eax, pml4
     mov cr3, eax
+    jmp .paging_tables_done
+
+.build_5level_tables:
+    ; --- 3b. 5-level paging tables (LA57) ---
+    ; PML5[0]   -> pml4_low_5lv  (identity: first 512 GiB)
+    ; PML5[511] -> pml4_high_5lv (high-half: KERNEL_HIGH_VMA)
+    ; pml4_low_5lv[0] -> pdpt_low -> pd_low -> 2 MiB identity page
+    ; pml4_high_5lv[510] -> pdpt_high -> pd_high -> 2 MiB kernel pages
+    ;
+    ; KERNEL_HIGH_VMA = 0xFFFFFFFF80100000
+    ;   PML5 index = [56:48] = 0x1FF => PML5[511]
+    ;   PML4 index = [47:39] = 0x1FE => PML4[510]
+
+    ; PML5[0] -> pml4_low_5lv (identity)
+    mov eax, pml4_low_5lv
+    or  eax, 0x03
+    mov [pml5 + 0], eax
+
+    ; PML5[511] -> pml4_high_5lv (high-half kernel)
+    mov eax, pml4_high_5lv
+    or  eax, 0x03
+    mov [pml5 + 8*511], eax
+
+    ; pml4_low_5lv[0] -> pdpt_low (identity: first 1 GiB)
+    mov eax, pdpt_low
+    or  eax, 0x03
+    mov [pml4_low_5lv + 0], eax
+
+    ; pml4_high_5lv[510] -> pdpt_high (high-half kernel)
+    mov eax, pdpt_high
+    or  eax, 0x03
+    mov [pml4_high_5lv + 8*510], eax
+
+    ; pdpt_low[0] -> pd_low
+    mov eax, pd_low
+    or  eax, 0x03
+    mov [pdpt_low + 0], eax
+
+    ; pdpt_high[0] -> pd_high
+    mov eax, pd_high
+    or  eax, 0x03
+    mov [pdpt_high + 0], eax
+
+    ; PD_low[0] = 2 MiB identity page at phys 0
+    mov dword [pd_low + 0], 0x00000083
+
+    ; PD_high[i] = 2 MiB pages for kernel
+    mov ecx, 0
+    mov eax, KERNEL_PHYS_BASE | 0x83
+.fill_high_pd_5lv:
+    mov [pd_high + ecx*8], eax
+    mov dword [pd_high + ecx*8 + 4], 0
+    add eax, 0x200000
+    inc ecx
+    cmp ecx, (KERNEL_MAP_BYTES / 0x200000)
+    jl .fill_high_pd_5lv
+
+    ; --- 4. Load CR3 with PML5 physical ---
+    mov eax, pml5
+    mov cr3, eax
+
+.paging_tables_done:
 
     ; --- 5. Enable CR4.PAE (required for long mode) ---
     mov eax, cr4
@@ -233,6 +309,11 @@ start:
     pop eax
 .after_pcid:
 %endif
+    ; LA57 (5-level paging) — set CR4.LA57 if detected
+    cmp byte [la57_detected], 1
+    jne .no_la57_cr4
+    or  eax, 1 << 12                 ; CR4.LA57
+.no_la57_cr4:
     mov cr4, eax
 
     ; --- 6. Set EFER.LME (long-mode enable) + EFER.NXE (if NX supported) ---
@@ -336,18 +417,24 @@ long_mode_start:
 ; Boot-time page tables (low BSS, accessible before paging is on)
 ; =============================================================================
 section .bss.boot
-align 4096
-pml4:       resb 4096
-pdpt_low:   resb 4096
-pdpt_high:  resb 4096
-pd_low:     resb 4096
-pd_high:    resb 4096
+alignb 4096
+pml4:           resb 4096
+pdpt_low:       resb 4096
+pdpt_high:      resb 4096
+pd_low:         resb 4096
+pd_high:        resb 4096
+; 5-level paging tables (LA57)
+pml5:           resb 4096
+pml4_low_5lv:   resb 4096
+pml4_high_5lv:  resb 4096
+; LA57 detection flag
+la57_detected:  resb 1
 
 ; =============================================================================
 ; 64-bit GDT (loaded just before the far jump to long mode)
 ; =============================================================================
 section .rodata.boot
-align 8
+alignb 8
 gdt64:
     dq 0                                ; null descriptor
 .code: equ $ - gdt64

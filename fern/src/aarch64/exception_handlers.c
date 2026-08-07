@@ -65,7 +65,7 @@ struct exception_frame {
  * Up to 256 SPIs supported; indexed by INTID.
  */
 #define MAX_IRQ_HANDLERS    256
-static void (*irq_handlers[MAX_IRQ_HANDLERS])(uint32_t intid) = { 0 };
+void (*irq_handlers[MAX_IRQ_HANDLERS])(uint32_t intid) = { 0 };
 
 /* ------------------------------------------------------------------ */
 /* irq_handler_register - Register a C handler for a given INTID      */
@@ -148,31 +148,17 @@ void handle_sync_exception(uint64_t esr, uint64_t far, void *frame_ptr)
 
 /* ------------------------------------------------------------------ */
 /* handle_irq                                                          */
-/* Called for all IRQ exceptions (Group-1 interrupts via GICv3).      */
+/* Called with an already-acknowledged INTID from aarch64_irq_handler. */
+/* Dispatches to the registered handler table.  Does NOT acknowledge   */
+/* or EOI — the caller (aarch64_irq_handler) owns that cycle.         */
 /* ------------------------------------------------------------------ */
 void handle_irq(void *frame_ptr)
 {
     (void)frame_ptr;
-
-    /* Acknowledge the interrupt: reads ICC_IAR1_EL1 */
-    uint32_t intid = gicv3_acknowledge();
-
-    if (intid == GIC_INTID_SPURIOUS) {
-        /* Spurious – no EOI needed */
-        return;
-    }
-
-    /* Dispatch to registered handler */
-    if (intid == VTIMER_INTID) {
-        timer_irq_handler();
-    } else if (intid < MAX_IRQ_HANDLERS && irq_handlers[intid]) {
-        irq_handlers[intid](intid);
-    } else {
-        uart_printf("[irq] Unhandled INTID %u\n", intid);
-    }
-
-    /* Signal End-Of-Interrupt */
-    gicv3_end_of_interrupt(intid);
+    /* Intentionally empty: dispatch is handled by the caller.
+     * Registered handlers are invoked directly from aarch64_irq_handler
+     * via the irq_handler_table. This function is retained for ABI
+     * compatibility with vectors.S weak stubs. */
 }
 
 /* ------------------------------------------------------------------ */

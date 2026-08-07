@@ -18,7 +18,7 @@ static bool         g_iommu_initialized = false;
 
 /* Walk DMAR looking for the "DMAR" signature - we only need to know it
  * exists to enable identity mapping. */
-static iommu_type_t detect_iommu(void) {
+__attribute__((unused)) static iommu_type_t detect_iommu(void) {
     const acpi_table_info_t *info;
 
     info = acpi_find_table_by_signature(ACPI_SIG_DMAR);

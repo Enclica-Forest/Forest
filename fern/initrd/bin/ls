@@ -1,0 +1,2 @@
+#!/bin/sh
+echo "bin etc usr dev proc tmp"

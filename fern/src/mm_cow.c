@@ -382,6 +382,7 @@ mm_struct_t *cow_copy_mm(mm_struct_t *mm)
     vm_area_struct_t *vma, *new_vma;
     pte_t *ptep, *new_ptep;
     page_t *page;
+    (void)new_ptep;
     
     if (!mm) {
         return NULL;
@@ -462,6 +463,8 @@ static page_t *cow_copy_page(page_t *old_page, vm_area_struct_t *vma,
 {
     page_t *new_page;
     void *old_kaddr, *new_kaddr;
+    (void)vma;
+    (void)address;
     
     // Check for special zero page
     if (old_page->flags & PG_RESERVED) {
@@ -516,7 +519,7 @@ static void cow_make_readonly(pte_t *ptep)
  * cow_make_writable - Remove COW protection and make writable
  * @ptep: Page table entry pointer
  */
-static void cow_make_writable(pte_t *ptep)
+static void __attribute__((unused)) cow_make_writable(pte_t *ptep)
 {
     pte_t pte = *ptep;
     pte = pte_mkwrite(pte);

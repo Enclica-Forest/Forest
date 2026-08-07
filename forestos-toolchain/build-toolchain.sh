@@ -50,6 +50,7 @@ BUILD_DIR="$TOOLCHAIN_DIR/build"
 INSTALL_DIR="$TOOLCHAIN_DIR/install"
 SYSROOT_DIR="$TOOLCHAIN_DIR/sysroot"
 SKELETON_DIR="$TOOLCHAIN_DIR/sysroot-skeleton"
+CONSOLIDATED_LIBC="$TOOLCHAIN_DIR/../libs/libc"
 PATCH_DIR="$TOOLCHAIN_DIR/patches"
 CHECKSUMS="$TOOLCHAIN_DIR/checksums.txt"
 LOG_DIR="$TOOLCHAIN_DIR/build/logs"
@@ -288,6 +289,91 @@ patch_config_sub() {
     grep -q 'forestos\*' "$f" || die "Failed to add forestos to $f."
 }
 
+patch_binutils_gas_configure_tgt() {
+    local f="${BINUTILS_SRC}/gas/configure.tgt"
+    [[ -f "$f" ]] || return 0
+    if grep -q 'forestos' "$f"; then
+        return 0   # already patched
+    fi
+    # Insert forestos cases before the i386-*-elf* case (line ~231).
+    # forestos is an ELF target like *-elf, so we use the same fmt=elf.
+    grep -q 'i386-\*-elf\*' "$f" || die "Cannot patch gas/configure.tgt: 'i386-*-elf*' anchor not found."
+    local tmp; tmp="$(mktemp)"
+    awk '
+        /^  i386-\*-elf\*\)/ && !done {
+            print "  i[3-7]86-*-forestos*)   fmt=elf;;";
+            print "  x86_64-*-forestos*)     fmt=elf;;";
+            done=1;
+        }
+        { print }
+    ' "$f" > "$tmp"
+    mv -f "$tmp" "$f"
+    grep -q 'forestos' "$f" || die "Failed to add forestos to gas/configure.tgt."
+}
+
+patch_binutils_ld_configure_tgt() {
+    local f="${BINUTILS_SRC}/ld/configure.tgt"
+    [[ -f "$f" ]] || return 0
+    if grep -q 'forestos' "$f"; then
+        return 0   # already patched
+    fi
+    # Insert forestos cases before the i[3-7]86-*-elf* case (line ~405).
+    # Use the same emulation as *-elf targets (elf_i386 / elf_x86_64).
+    grep -q 'i\[3-7\]86-\*-elf\* | i\[3-7\]86-\*-rtems\* | i\[3-7\]86-\*-genode\*' "$f" \
+        || die "Cannot patch ld/configure.tgt: i[3-7]86-*-elf* anchor not found."
+    local tmp; tmp="$(mktemp)"
+    awk '
+        /^i\[3-7\]86-\*-elf\* \| i\[3-7\]86-\*-rtems\* \| i\[3-7\]86-\*-genode\*\)/ && !done {
+            print "i[3-7]86-*-forestos*)";
+            print "\t\t\ttarg_emul=elf_i386";
+            print "\t\t\ttarg_extra_emuls=elf_iamcu";
+            print "\t\t\t;;";
+            print "x86_64-*-forestos*)";
+            print "\t\t\ttarg_emul=elf_x86_64";
+            print "\t\t\ttarg_extra_emuls=\"elf_i386 elf_iamcu elf32_x86_64\"";
+            print "\t\t\ttarg_extra_libpath=\"elf_i386 elf_iamcu elf32_x86_64\"";
+            print "\t\t\ttdir_elf_i386=`echo ${targ_alias} | sed -e '\''s/x86_64/i386/'\''`";
+            print "\t\t\t;;";
+            done=1;
+        }
+        { print }
+    ' "$f" > "$tmp"
+    mv -f "$tmp" "$f"
+    grep -q 'forestos' "$f" || die "Failed to add forestos to ld/configure.tgt."
+}
+
+patch_binutils_bfd_config_bfd() {
+    local f="${BINUTILS_SRC}/bfd/config.bfd"
+    [[ -f "$f" ]] || return 0
+    if grep -q 'forestos' "$f"; then
+        return 0   # already patched
+    fi
+    # Insert forestos cases before the i[3-7]86-*-elf* case (line ~590).
+    # Match the same BFD vectors as *-elf targets.
+    grep -q 'i\[3-7\]86-\*-elf\* | i\[3-7\]86-\*-rtems\* | i\[3-7\]86-\*-genode\*' "$f" \
+        || die "Cannot patch bfd/config.bfd: i[3-7]86-*-elf* anchor not found."
+    local tmp; tmp="$(mktemp)"
+    awk '
+        /^  i\[3-7\]86-\*-elf\* \| i\[3-7\]86-\*-rtems\* \| i\[3-7\]86-\*-genode\*\)/ && !done {
+            print "  i[3-7]86-*-forestos*)";
+            print "    targ_defvec=i386_elf32_vec";
+            print "    targ_selvecs=\"iamcu_elf32_vec i386_coff_vec\"";
+            print "    ;;";
+            print "#ifdef BFD64";
+            print "  x86_64-*-forestos*)";
+            print "    targ_defvec=x86_64_elf64_vec";
+            print "    targ_selvecs=\"i386_elf32_vec iamcu_elf32_vec x86_64_elf32_vec\"";
+            print "    want64=true";
+            print "    ;;";
+            print "#endif";
+            done=1;
+        }
+        { print }
+    ' "$f" > "$tmp"
+    mv -f "$tmp" "$f"
+    grep -q 'forestos' "$f" || die "Failed to add forestos to bfd/config.bfd."
+}
+
 patch_gcc_config_gcc() {
     local f="${GCC_SRC}/gcc/config.gcc"
     [[ -f "$f" ]] || die "Missing $f"
@@ -316,6 +402,48 @@ patch_gcc_config_gcc() {
     grep -q 'i\[34567\]86-\*-forestos\*' "$f" || die "Failed to add forestos cases to config.gcc."
 }
 
+patch_gcc_libcody_cxx11() {
+    local f="${GCC_SRC}/libcody/configure"
+    [[ -f "$f" ]] || return 0
+    # Patch libcody's configure to accept C++11 or later (>= instead of ==).
+    # The original check requires __cplusplus == 201103 exactly, which fails
+    # with GCC >= 14 host compilers that default to C++17 (201703).
+    if grep -q '__cplusplus >= 201103' "$f"; then
+        return 0   # already patched
+    fi
+    if grep -q '__cplusplus != 201103' "$f"; then
+        sed -i 's/__cplusplus != 201103/__cplusplus >= 201103/g' "$f"
+        sed -i 's/__cplusplus > 201103/__cplusplus < 201103/g' "$f"
+        success "Patched libcody configure to accept C++11 or later."
+    fi
+}
+
+patch_gcc_libgcc_config_host() {
+    local f="${GCC_SRC}/libgcc/config.host"
+    [[ -f "$f" ]] || return 0
+    if grep -q 'forestos' "$f"; then
+        return 0   # already patched
+    fi
+    # Add forestos cases after the x86_64-*-elf* case.
+    local anchor='x86_64-\*-elf\* | x86_64-\*-rtems\*)'
+    grep -q "$anchor" "$f" || die "Cannot patch libgcc/config.host: '$anchor' anchor not found."
+    local tmp; tmp="$(mktemp)"
+    awk '
+        /^x86_64-\*-elf\* \| x86_64-\*-rtems\*\)/ && !done {
+            print "i[34567]86-*-forestos*)";
+            print "\ttmake_file=\"$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic\"";
+            print "\t;;";
+            print "x86_64-*-forestos*)";
+            print "\ttmake_file=\"$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic\"";
+            print "\t;;";
+            done=1;
+        }
+        { print }
+    ' "$f" > "$tmp"
+    mv -f "$tmp" "$f"
+    grep -q 'forestos' "$f" || die "Failed to add forestos to libgcc/config.host."
+}
+
 install_forestos_gcc_header() {
     local dst="${GCC_SRC}/gcc/config/forestos.h"
     local srch="${PATCH_DIR}/gcc/config/forestos.h"
@@ -328,7 +456,12 @@ apply_forestos_patches() {
     step "Applying Forest-OS triple patches (idempotent)..."
     patch_config_sub "${BINUTILS_SRC}/config.sub"
     patch_config_sub "${GCC_SRC}/config.sub"
+    patch_binutils_gas_configure_tgt
+    patch_binutils_ld_configure_tgt
+    patch_binutils_bfd_config_bfd
     patch_gcc_config_gcc
+    patch_gcc_libcody_cxx11
+    patch_gcc_libgcc_config_host
     install_forestos_gcc_header
     success "binutils/gcc now recognise i686-forestos / x86_64-forestos."
 }
@@ -357,6 +490,15 @@ setup_sysroot() {
         success "sysroot-skeleton libc island overlaid."
     else
         warn "sysroot-skeleton not found at ${SKELETON_DIR}."
+    fi
+
+    # 2b. Overlay consolidated libc headers (single source of truth for libc)
+    if [[ -d "${CONSOLIDATED_LIBC}/include/libc" ]]; then
+        mkdir -p "${SYSROOT_DIR}/usr/include/libc"
+        cp -r "${CONSOLIDATED_LIBC}/include/libc/." "${SYSROOT_DIR}/usr/include/libc/"
+        success "consolidated libc headers overlaid."
+    else
+        warn "consolidated libc not found at ${CONSOLIDATED_LIBC}/include/libc."
     fi
 
     # Sanity check the kernel-critical header island.
@@ -428,6 +570,10 @@ build_gcc() {
         cd "$bdir"
         # Ensure the freshly built binutils are found first.
         export PATH="${INSTALL_DIR}/bin:${PATH}"
+        # Force C++17 for the host compiler to avoid char8_t issues with
+        # GCC >= 14 host compilers that default to C++20. The libcody
+        # configure is patched to accept >= C++11 so this is safe.
+        export CXXFLAGS="${CXXFLAGS:--std=gnu++17}"
         if [[ ! -f Makefile ]]; then
             info "Configuring gcc (${target})..."
             # shellcheck disable=SC2086  # arch_flags is intentionally word-split
@@ -463,6 +609,60 @@ build_gcc() {
     )
     touch "$marker"
     success "gcc for ${target} installed."
+
+    # Fix broken include-fixed copies created by GCC's fixincludes.
+    patch_include_fixed "$target"
+}
+
+# ---------------------------------------------------------------------------
+# Fix GCC's include-fixed directory: GCC's fixincludes auto-processes sysroot
+# headers and may create broken copies that reference headers not present in
+# include-fixed/. We copy the missing headers so <stdio.h> -> <forestos/
+# syscalls.h> resolves correctly.
+# ---------------------------------------------------------------------------
+patch_include_fixed() {
+    local target="$1"
+    # Locate the include-fixed directory for this target's GCC installation.
+    # It lives under lib/gcc/<target-prefix>/<version>/include-fixed/.
+    local gcc_lib_dir
+    gcc_lib_dir="$(ls -d "${INSTALL_DIR}/lib/gcc/${target}/${GCC_VERSION}" 2>/dev/null | head -1)"
+    [[ -n "$gcc_lib_dir" ]] || return 0
+
+    local inc_fixed="${gcc_lib_dir}/include-fixed"
+    if [[ ! -d "$inc_fixed" ]]; then
+        info "No include-fixed directory for ${target} — skipping patch."
+        return 0
+    fi
+
+    step "Patching include-fixed for ${target}..."
+
+    # Copy forestos/syscalls.h (required by stdio.h)
+    if [[ -f "${SYSROOT_DIR}/usr/include/forestos/syscalls.h" ]]; then
+        mkdir -p "${inc_fixed}/forestos"
+        if [[ ! -f "${inc_fixed}/forestos/syscalls.h" ]] || \
+           ! diff -q "${SYSROOT_DIR}/usr/include/forestos/syscalls.h" \
+                      "${inc_fixed}/forestos/syscalls.h" >/dev/null 2>&1; then
+            cp -f "${SYSROOT_DIR}/usr/include/forestos/syscalls.h" \
+                  "${inc_fixed}/forestos/syscalls.h"
+            success "Copied forestos/syscalls.h into include-fixed."
+        else
+            info "forestos/syscalls.h already up to date in include-fixed."
+        fi
+    fi
+
+    # Copy sys/types.h (required by forestos/syscalls.h)
+    if [[ -f "${SYSROOT_DIR}/usr/include/sys/types.h" ]]; then
+        mkdir -p "${inc_fixed}/sys"
+        if [[ ! -f "${inc_fixed}/sys/types.h" ]] || \
+           ! diff -q "${SYSROOT_DIR}/usr/include/sys/types.h" \
+                      "${inc_fixed}/sys/types.h" >/dev/null 2>&1; then
+            cp -f "${SYSROOT_DIR}/usr/include/sys/types.h" \
+                  "${inc_fixed}/sys/types.h"
+            success "Copied sys/types.h into include-fixed."
+        else
+            info "sys/types.h already up to date in include-fixed."
+        fi
+    fi
 }
 
 # ---------------------------------------------------------------------------
@@ -490,6 +690,17 @@ verify_toolchain() {
         success "${target}: freestanding compile probe passed."
     else
         warn "${target}: freestanding compile probe failed (inspect logs in ${LOG_DIR})."
+    fi
+    rm -f "$tmpc" "$tmpo"
+
+    # Verify <stdio.h> -> <forestos/syscalls.h> resolves (critical for kernel).
+    tmpc="$(mktemp "${TMPDIR:-/tmp}/forestos_stdio_probe_XXXXXX.c")"
+    tmpo="${tmpc%.c}.o"
+    printf '#include <stdio.h>\nint main(void){return 0;}\n' > "$tmpc"
+    if "$gcc_bin" -ffreestanding -nostdlib -c -o "$tmpo" "$tmpc" >/dev/null 2>&1; then
+        success "${target}: stdio.h + forestos/syscalls.h include chain OK."
+    else
+        warn "${target}: stdio.h include chain broken — check include-fixed/."
     fi
     rm -f "$tmpc" "$tmpo"
 

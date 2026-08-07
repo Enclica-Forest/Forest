@@ -970,7 +970,11 @@ void tool_text_lorem_open(void)
     if (g_lor.count == 0) g_lor.count = 40;
     if (g_lor.seed == 0) {
         unsigned long long t = 0;
-        __asm__ __volatile__("rdtsc" : "=A"(t));   /* x86 32-bit style; hi:lo */
+#if defined(__x86_64__) || defined(_M_X64)
+        __asm__ __volatile__("rdtsc" : "=A"(t));
+#else
+        t = 0x9E3779B97F4A7C15ull;
+#endif
         g_lor.seed = (unsigned)t ^ 0x1234abcdu;
         if (g_lor.seed == 0) g_lor.seed = 0xC0FFEEu;
     }

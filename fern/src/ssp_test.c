@@ -23,6 +23,8 @@ void ssp_demonstrate_protection(void) {}
 // =============================================================================
 
 // Function with buffer that could be overflowed (for testing)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
 SSP_PROTECTED static int test_buffer_overflow_protection(void) {
     SSP_FUNCTION_ENTER();
     
@@ -44,9 +46,12 @@ SSP_PROTECTED static int test_buffer_overflow_protection(void) {
     SSP_FUNCTION_EXIT();
     return 0;
 }
+#pragma GCC diagnostic pop
 
 // Function to test return address validation
-SSP_STRONG static int test_return_address_validation(void) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+__attribute__((unused)) SSP_STRONG static int test_return_address_validation(void) {
     SSP_FUNCTION_ENTER();
     
     print("[SSP-TEST] Testing return address validation...\n");
@@ -88,9 +93,10 @@ SSP_STRONG static int test_return_address_validation(void) {
     SSP_FUNCTION_EXIT();
     return 0;
 }
+#pragma GCC diagnostic pop
 
 // Function to test stack frame validation
-static int test_stack_frame_validation(void) {
+__attribute__((unused)) static int test_stack_frame_validation(void) {
     SSP_FUNCTION_ENTER();
     
     print("[SSP-TEST] Testing stack frame validation...\n");
@@ -235,6 +241,7 @@ void ssp_demonstrate_protection(void) {
         work_buffer[i] = 'X';
     }
     work_buffer[100] = '\0';
+    (void)work_buffer;
     
     print("[SSP-DEMO] Completed protected operation safely\n");
     

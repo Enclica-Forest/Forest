@@ -34,7 +34,7 @@
 static displayport_t* g_dp_devices[4];
 static uint32 g_dp_count = 0;
 
-static bool dp_aux_wait_ready(displayport_t* dp, uint32 timeout_ms) {
+__attribute__((unused)) static bool dp_aux_wait_ready(displayport_t* dp, uint32 timeout_ms) {
     (void)dp;
     (void)timeout_ms;
     timer_sleep_ms(1);

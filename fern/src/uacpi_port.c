@@ -20,7 +20,7 @@ uacpi_status uacpi_kernel_get_rsdp(uacpi_phys_addr *out_rsdp_address) {
     }
     // uACPI wants a physical address. The pointer from acpi_find_rsdp is a virtual
     // address in the identity-mapped region, so it's the same value.
-    *out_rsdp_address = (uacpi_phys_addr)rsdp;
+    *out_rsdp_address = (uacpi_phys_addr)(uintptr_t)rsdp;
     return UACPI_STATUS_OK;
 }
 
@@ -143,7 +143,7 @@ uacpi_status uacpi_kernel_pci_write32(uacpi_handle device, uacpi_size offset, ua
 uacpi_status uacpi_kernel_io_map(uacpi_io_addr base, uacpi_size len, uacpi_handle *out_handle) {
     (void)len;
     // For x86, the handle can just be the base address.
-    *out_handle = (uacpi_handle)base;
+    *out_handle = (uacpi_handle)(uintptr_t)base;
     return UACPI_STATUS_OK;
 }
 
@@ -153,28 +153,28 @@ void uacpi_kernel_io_unmap(uacpi_handle handle) {
 }
 
 uacpi_status uacpi_kernel_io_read8(uacpi_handle handle, uacpi_size offset, uacpi_u8 *out_value) {
-    *out_value = inportb((uacpi_io_addr)handle + offset);
+    *out_value = inportb((uacpi_io_addr)(uintptr_t)handle + offset);
     return UACPI_STATUS_OK;
 }
 uacpi_status uacpi_kernel_io_read16(uacpi_handle handle, uacpi_size offset, uacpi_u16 *out_value) {
-    *out_value = inportw((uacpi_io_addr)handle + offset);
+    *out_value = inportw((uacpi_io_addr)(uintptr_t)handle + offset);
     return UACPI_STATUS_OK;
 }
 uacpi_status uacpi_kernel_io_read32(uacpi_handle handle, uacpi_size offset, uacpi_u32 *out_value) {
-    *out_value = inportd((uacpi_io_addr)handle + offset);
+    *out_value = inportd((uacpi_io_addr)(uintptr_t)handle + offset);
     return UACPI_STATUS_OK;
 }
 
 uacpi_status uacpi_kernel_io_write8(uacpi_handle handle, uacpi_size offset, uacpi_u8 in_value) {
-    outportb((uacpi_io_addr)handle + offset, in_value);
+    outportb((uacpi_io_addr)(uintptr_t)handle + offset, in_value);
     return UACPI_STATUS_OK;
 }
 uacpi_status uacpi_kernel_io_write16(uacpi_handle handle, uacpi_size offset, uacpi_u16 in_value) {
-    outportw((uacpi_io_addr)handle + offset, in_value);
+    outportw((uacpi_io_addr)(uintptr_t)handle + offset, in_value);
     return UACPI_STATUS_OK;
 }
 uacpi_status uacpi_kernel_io_write32(uacpi_handle handle, uacpi_size offset, uacpi_u32 in_value) {
-    outportd((uacpi_io_addr)handle + offset, in_value);
+    outportd((uacpi_io_addr)(uintptr_t)handle + offset, in_value);
     return UACPI_STATUS_OK;
 }
 
@@ -227,14 +227,17 @@ uacpi_handle uacpi_kernel_create_spinlock(void) {
 }
 
 void uacpi_kernel_free_spinlock(uacpi_handle handle) {
+    (void)handle;
     kfree(handle);
 }
 
 uacpi_cpu_flags uacpi_kernel_lock_spinlock(uacpi_handle handle) {
+    (void)handle;
     return spinlock_irq_save();
 }
 
 void uacpi_kernel_unlock_spinlock(uacpi_handle handle, uacpi_cpu_flags flags) {
+    (void)handle;
     spinlock_irq_restore(flags);
 }
 
@@ -247,6 +250,7 @@ uacpi_handle uacpi_kernel_create_mutex(void) {
 }
 
 void uacpi_kernel_free_mutex(uacpi_handle handle) {
+    (void)handle;
     kfree(handle);
 }
 

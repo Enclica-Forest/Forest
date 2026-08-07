@@ -142,7 +142,7 @@ ASFLAGS := $(ARCH_FLAGS)
 USER_CFLAGS := $(ARCH_FLAGS) \
     -ffreestanding -nostdlib -fno-builtin -fno-stack-protector \
     -fno-pie -fno-pic -Wall -Wextra -g -O0 \
-    -I$(SRCDIR)/include -I$(LIBC_DIR)/include -I$(USER_SRCDIR)/include \
+    -I$(SRCDIR)/include -I$(LIBC_DIR)/include/libc -I$(USER_SRCDIR)/include \
     -I$(FORESTCORE_DIR)/include \
     -DUSERSPACE_BUILD \
     -mno-sse -mno-sse2 -mno-mmx -mno-3dnow \

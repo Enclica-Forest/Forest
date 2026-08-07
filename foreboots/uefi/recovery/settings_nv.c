@@ -17,11 +17,13 @@
  * default; flip SNV_DEBUG to 1 to trace saves/loads over COM1.
  * ------------------------------------------------------------------------ */
 #define SNV_DEBUG 0
-#if SNV_DEBUG
+#if SNV_DEBUG && (defined(__x86_64__) || defined(_M_X64))
 static void snv_outb(UINT16 port, UINT8 val)
 { __asm__ __volatile__("outb %0,%1" : : "a"(val), "Nd"(port)); }
 static void snv_puts(const char *s)
 { if(!s) return; while(*s){ if(*s=='\n') snv_outb(0x3F8,'\r'); snv_outb(0x3F8,(UINT8)*s++); } }
+#elif SNV_DEBUG
+static void snv_puts(const char *s) { (void)s; }
 #else
 static void snv_puts(const char *s) { (void)s; }
 #endif

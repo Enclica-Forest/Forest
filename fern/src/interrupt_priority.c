@@ -21,6 +21,10 @@
 #include "time.h"
 #include <string.h>
 
+/* Forward declarations for functions defined in missing_impls.c */
+int smp_get_current_cpu(void);
+void debug_printf(const char *fmt, ...);
+
 /* Priority flag mask for clearing priority bits before setting new ones */
 #ifndef PRIORITY_FLAG_MASK
 #define PRIORITY_FLAG_MASK  (PRIORITY_FLAG_PREEMPTIBLE | PRIORITY_FLAG_CRITICAL | \
@@ -40,7 +44,7 @@ struct priority_manager priority_mgr = {0};
 
 /* Debug and tracing support */
 static bool priority_debug_enabled = false;
-static uint64_t priority_trace_mask = 0;
+static __attribute__((unused)) uint64_t priority_trace_mask = 0;
 
 /* Per-CPU thread-local storage for fast access */
 static __thread int current_cpu = 0;
@@ -175,6 +179,7 @@ uint8_t interrupt_get_priority(int vector)
  */
 int interrupt_set_realtime_deadline(int vector, uint64_t deadline_ns)
 {
+    (void)deadline_ns;
     if (vector < 0 || vector >= 256) {
         return -1;
     }
@@ -558,6 +563,7 @@ int interrupt_set_deadline(int vector, uint64_t deadline_ns)
     state->nesting.deadline = deadline_ns;
     spin_unlock_irqrestore(&state->priority_lock, irq_flags);
     
+    (void)vector;
     return 0;
 }
 
@@ -581,6 +587,7 @@ bool interrupt_check_deadline(int vector)
     }
     
     current_time = get_system_time_ns();
+    (void)vector;
     return current_time <= deadline;
 }
 

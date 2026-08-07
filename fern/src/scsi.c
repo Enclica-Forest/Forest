@@ -137,8 +137,8 @@ bool scsi_inquiry(scsi_device_t* dev, scsi_inquiry_data_t* inquiry) {
 
     if (transferred > 0) {
         dev->device_type = inquiry->peripheral_type;
-        memory_copy(inquiry->vendor_id, dev->inquiry_data.vendor_id, 8);
-        memory_copy(inquiry->product_id, dev->inquiry_data.product_id, 16);
+        memory_copy((const char *)inquiry->vendor_id, (char *)dev->inquiry_data.vendor_id, 8);
+        memory_copy((const char *)inquiry->product_id, (char *)dev->inquiry_data.product_id, 16);
     }
 
     return transferred > 0;
@@ -249,14 +249,14 @@ static bool scsi_probe_target(uint8 target_id) {
                 print(": ");
 
                 char vendor_str[9];
-                memory_copy(dev->inquiry_data.vendor_id, (uint8*)vendor_str, 8);
+                memory_copy((const char *)dev->inquiry_data.vendor_id, (char *)vendor_str, 8);
                 vendor_str[8] = 0;
                 print(vendor_str);
 
                 print(" ");
 
                 char product_str[17];
-                memory_copy(dev->inquiry_data.product_id, (uint8*)product_str, 16);
+                memory_copy((const char *)dev->inquiry_data.product_id, (char *)product_str, 16);
                 product_str[16] = 0;
                 print(product_str);
 

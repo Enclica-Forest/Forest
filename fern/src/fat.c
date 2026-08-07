@@ -137,7 +137,7 @@ static uint32_t fat_read_cluster_chain(fat_fs_t* fs, uint32_t start_cluster,
     return bytes_read;
 }
 
-static void fat_read_dir_entry(fat_fs_t* fs, uint32_t cluster, uint32_t index, fat_dir_entry_t* entry) {
+static __attribute__((unused)) void fat_read_dir_entry(fat_fs_t* fs, uint32_t cluster, uint32_t index, fat_dir_entry_t* entry) {
     uint32_t cluster_size = fs->sectors_per_cluster * fs->bytes_per_sector;
     uint32_t offset = index * sizeof(fat_dir_entry_t);
     uint32_t skip_clusters = offset / cluster_size;
@@ -173,6 +173,7 @@ static bool fat_find_file_in_dir(fat_fs_t* fs, uint32_t dir_cluster,
     short_name[11] = 0;
     
     const char* basename = name;
+    (void)basename;
     const char* ext = NULL;
     for (int i = strlen(name) - 1; i >= 0; i--) {
         if (name[i] == '.') {
@@ -247,7 +248,7 @@ static bool fat_find_file_in_dir(fat_fs_t* fs, uint32_t dir_cluster,
     return false;
 }
 
-static fat_dir_entry_t* fat_read_root_dir(fat_fs_t* fs, uint32_t* count) {
+static __attribute__((unused)) fat_dir_entry_t* fat_read_root_dir(fat_fs_t* fs, uint32_t* count) {
     uint32_t entries = fs->root_entries;
     uint32_t size = entries * sizeof(fat_dir_entry_t);
     uint8_t* buffer = (uint8_t*)enhanced_heap_alloc(size, "fat_root_dir");
@@ -264,7 +265,7 @@ static fat_dir_entry_t* fat_read_root_dir(fat_fs_t* fs, uint32_t* count) {
     return (fat_dir_entry_t*)buffer;
 }
 
-static void fat_free_root_dir(fat_dir_entry_t* dir) {
+static __attribute__((unused)) void fat_free_root_dir(fat_dir_entry_t* dir) {
     if (dir) {
         enhanced_heap_free(dir, "fat_root_dir");
     }
@@ -355,6 +356,7 @@ static uint32_t fat_node_read(vfs_node_t* node, uint32_t offset, uint32_t size, 
 }
 
 static void fat_node_open(vfs_node_t* node, uint32_t flags) {
+    (void)flags;
     if (!node) return;
     node->open_count++;
 }
@@ -410,7 +412,8 @@ static bool fat_node_readdir(vfs_node_t* node, uint32_t index, vfs_dirent_t* dir
                 char name[256];
                 int j = 0;
                 while (j < 8 && entry->name[j] != ' ') {
-                    name[j++] = entry->name[j];
+                    name[j] = entry->name[j];
+                    j++;
                 }
                 if (entry->name[8] != ' ') {
                     name[j++] = '.';
@@ -581,6 +584,7 @@ static int fat_node_mkdir(vfs_node_t* node, const char* name, uint32_t mode) {
     memset(&dir_entry, 0, sizeof(dir_entry));
     
     const char* basename = name;
+    (void)basename;
     const char* ext = NULL;
     for (int i = strlen(name) - 1; i >= 0; i--) {
         if (name[i] == '.') {
@@ -641,6 +645,7 @@ static int fat_node_mkdir(vfs_node_t* node, const char* name, uint32_t mode) {
 }
 
 uint32_t fat_probe(void* dev_data, fat_read_sector_fn read_sector, fat_write_sector_fn write_sector) {
+    (void)write_sector;
     uint8_t buffer[512];
     
     if (read_sector(dev_data, 0, buffer) != 512) {
@@ -658,6 +663,7 @@ uint32_t fat_probe(void* dev_data, fat_read_sector_fn read_sector, fat_write_sec
     uint16_t root_entries = fs_read16_le(buffer + 17);
     uint16_t total_sectors_16 = fs_read16_le(buffer + 19);
     uint8_t media = buffer[21];
+    (void)media;
     uint16_t sectors_per_fat_16 = fs_read16_le(buffer + 22);
     uint32_t total_sectors_32 = fs_read32_le(buffer + 32);
     
@@ -688,6 +694,7 @@ uint32_t fat_probe(void* dev_data, fat_read_sector_fn read_sector, fat_write_sec
 
 bool fat_mount(void* dev_data, fat_read_sector_fn read_sector, fat_write_sector_fn write_sector,
                uint64_t sectors, void** sb_out) {
+    (void)sectors;
     if (!dev_data || !sb_out) return false;
     
     fat_fs_t* fs = (fat_fs_t*)enhanced_heap_alloc(sizeof(fat_fs_t), "fat_fs");
@@ -814,7 +821,7 @@ typedef struct {
     vfs_node_t* (*get_root)(void*);
 } fat_filesystem_t;
 
-static fat_filesystem_t fat_fs_ops = {
+static __attribute__((unused)) fat_filesystem_t fat_fs_ops = {
     .name = "fat",
     .probe = fat_probe,
     .mount = fat_mount,

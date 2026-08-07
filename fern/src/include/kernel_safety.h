@@ -21,10 +21,12 @@
 #define TASK_PRIORITY_LOW       1   /* Background tasks */
 #define TASK_PRIORITY_NORMAL    3   /* Regular user tasks */
 #define TASK_PRIORITY_HIGH      5   /* Interactive/GUI tasks */
+#ifndef TASK_PRIORITY_REALTIME
 #define TASK_PRIORITY_REALTIME  6   /* Critical system tasks */
-#define TASK_PRIORITY_KERNEL    7   /* Kernel threads */
+#endif
+#define TASK_PRIORITY_KERNEL    8   /* Kernel threads */
 
-#define NUM_PRIORITY_QUEUES     8
+#define NUM_PRIORITY_QUEUES     9
 
 /* Time quantum in timer ticks (100Hz = 10ms per tick) */
 #define TIME_QUANTUM_BASE       10  /* 100ms for normal priority */

@@ -67,13 +67,13 @@ CONFIG_DB[ENABLE_MEMORY_PROTECTION]="bool:y:none:Memory Protection:Enable memory
 CONFIG_DB[ENABLE_GUARD_PAGES]="bool:y:none:Guard Pages:Enable guard pages for stack overflow detection"
 CONFIG_DB[ENABLE_ASLR]="bool:n:none:ASLR:Enable Address Space Layout Randomization"
 CONFIG_DB[ENABLE_NX_BIT]="bool:y:none:NX Bit:Enable No-Execute bit support"
-CONFIG_DB[ENABLE_COW]="bool:n:none:Copy-on-Write:Enable COW for efficient fork()"
-CONFIG_DB[ENABLE_SWAP]="bool:n:none:Swap Support:Enable virtual memory swapping to disk"
-CONFIG_DB[ENABLE_PAGE_CACHE]="bool:n:none:Page Cache:Enable unified page cache for file I/O"
-CONFIG_DB[ENABLE_OOM_KILLER]="bool:n:none:OOM Killer:Enable Out-of-Memory killer"
-CONFIG_DB[ENABLE_MEMORY_RECLAIM]="bool:n:none:Memory Reclaim:Enable LRU-based memory reclaim"
-CONFIG_DB[ENABLE_MEMORY_STATS]="bool:n:none:Memory Stats:Enable memory statistics and debugging"
-CONFIG_DB[ENABLE_TLB_SHOOTDOWN]="bool:n:none:TLB Shootdown:Enable SMP TLB shootdown via IPI"
+CONFIG_DB[ENABLE_COW]="bool:y:none:Copy-on-Write:Enable COW for efficient fork()"
+CONFIG_DB[ENABLE_SWAP]="bool:y:none:Swap Support:Enable virtual memory swapping to disk"
+CONFIG_DB[ENABLE_PAGE_CACHE]="bool:y:none:Page Cache:Enable unified page cache for file I/O"
+CONFIG_DB[ENABLE_OOM_KILLER]="bool:y:none:OOM Killer:Enable Out-of-Memory killer"
+CONFIG_DB[ENABLE_MEMORY_RECLAIM]="bool:y:none:Memory Reclaim:Enable LRU-based memory reclaim"
+CONFIG_DB[ENABLE_MEMORY_STATS]="bool:y:none:Memory Stats:Enable memory statistics and debugging"
+CONFIG_DB[ENABLE_TLB_SHOOTDOWN]="bool:y:none:TLB Shootdown:Enable SMP TLB shootdown via IPI"
 CONFIG_DB[ENABLE_MEMORY_CORRUPTION_DETECTION]="bool:y:none:Memory Corruption Detection:Enable heap corruption detection with canaries"
 
 # --- 3. Filesystems ---
@@ -202,7 +202,7 @@ CONFIG_DB[ENABLE_TIMERFD]="bool:y:none:timerfd:Enable timerfd interface"
 
 # --- 12. Timers ---
 CONFIG_DB[ENABLE_PIT]="bool:y:none:PIT:Enable Programmable Interval Timer"
-CONFIG_DB[ENABLE_HPET]="bool:n:none:HPET:Enable High Precision Event Timer"
+CONFIG_DB[ENABLE_HPET]="bool:y:none:HPET:Enable High Precision Event Timer"
 CONFIG_DB[ENABLE_APIC_TIMER]="bool:y:none:APIC Timer:Enable Local APIC timer"
 CONFIG_DB[ENABLE_CMOS_RTC]="bool:y:none:CMOS RTC:Enable real-time clock"
 CONFIG_DB[ENABLE_TSC]="bool:y:none:TSC:Enable Time Stamp Counter"
@@ -215,7 +215,7 @@ CONFIG_DB[ENABLE_KERNEL_DEBUG]="bool:y:none:Kernel Debug:Enable kernel debugging
 CONFIG_DB[ENABLE_SERIAL_DEBUG]="bool:y:none:Serial Debug:Enable serial port debug output"
 CONFIG_DB[ENABLE_PANIC_BACKTRACES]="bool:y:none:Panic Backtraces:Enable stack traces on panic"
 CONFIG_DB[ENABLE_ASSERTIONS]="bool:y:none:Assertions:Enable runtime assertion checking"
-CONFIG_DB[ENABLE_MEMORY_DEBUG]="bool:n:none:Memory Debug:Enable memory leak detection"
+CONFIG_DB[ENABLE_MEMORY_DEBUG]="bool:y:none:Memory Debug:Enable memory leak detection"
 
 # --- 14. Hardware ---
 CONFIG_DB[ENABLE_PCI]="bool:y:none:PCI Bus:Enable PCI bus support"
@@ -224,7 +224,7 @@ CONFIG_DB[ENABLE_ACPI]="bool:y:none:ACPI:Enable ACPI support"
 CONFIG_DB[ENABLE_SERIAL]="bool:y:none:Serial Port:Enable serial port (UART)"
 CONFIG_DB[ENABLE_PARALLEL]="bool:n:none:Parallel Port:Enable parallel port (LPT)"
 CONFIG_DB[ENABLE_A20]="bool:y:none:A20 Gate:Enable A20 address line management"
-CONFIG_DB[ENABLE_VIRTUALBOX_GUEST]="bool:n:none:VBox Guest:Enable VirtualBox Guest Additions"
+CONFIG_DB[ENABLE_VIRTUALBOX_GUEST]="bool:y:none:VBox Guest:Enable VirtualBox Guest Additions"
 CONFIG_DB[ENABLE_CHAR_DEVICES]="bool:y:none:Char Devices:Enable /dev/null, /dev/zero, etc."
 CONFIG_DB[ENABLE_TTY]="bool:y:none:TTY:Enable terminal subsystem"
 

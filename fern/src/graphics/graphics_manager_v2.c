@@ -140,7 +140,7 @@ static bool gfx_detect_environment(void) {
  * Driver Blacklist
  * ============================================================================ */
 
-static bool gfx_is_device_blacklisted(gfx_device_type_t type) {
+__attribute__((unused)) static bool gfx_is_device_blacklisted(gfx_device_type_t type) {
     for (uint32_t i = 0; i < g_gfx.device_count; i++) {
         if (g_gfx.driver_blacklist[i] && g_gfx.drivers[i]) {
             /* Check if this driver handles the blacklisted type */
@@ -1196,7 +1196,7 @@ static void gfx_write_validation_header(void) {
  * Validate framebuffer integrity
  * Returns true if framebuffer is valid, false if corrupted
  */
-static bool gfx_validate_framebuffer(void) {
+__attribute__((unused)) static bool gfx_validate_framebuffer(void) {
     if (!g_gfx.primary_fb) {
         gfx_err("validate: primary_fb is NULL\n");
         return false;
@@ -1227,7 +1227,7 @@ static bool gfx_validate_framebuffer(void) {
     }
 
     if (fb->size != 0 && fb->size < (uint32_t)visible_size) {
-        gfx_err("validate: size %u < visible %llu\n", fb->size, visible_size);
+        gfx_err("validate: size %zu < visible %zu\n", (size_t)fb->size, (size_t)visible_size);
         return false;
     }
 

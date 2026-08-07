@@ -17,6 +17,7 @@ _start:
     /* ------------------------------------------------------------------ */
     /* Step 0: Park all CPUs except core 0                                 */
     /* ------------------------------------------------------------------ */
+    mov     x19, x0             /* x19 = DTB address (preserved across calls) */
     mrs     x0, mpidr_el1
     and     x0, x0, #0xFF           /* Aff0: core ID within cluster       */
     cbz     x0, .Lprimary_cpu
@@ -135,10 +136,9 @@ _start:
     msr     sp_el1, x0
 
     /* ------------------------------------------------------------------ */
-    /* Step 7: Call kernel_main()                                          */
+    /* Step 7: Call kernel_main(dtb_addr)                                  */
     /* ------------------------------------------------------------------ */
-    mov     x0, #0                  /* argc = 0                           */
-    mov     x1, #0                  /* argv = NULL                        */
+    mov     x0, x19             /* x0 = DTB address */
     bl      kernel_main
 
     /* Should never return, but park just in case */

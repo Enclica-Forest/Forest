@@ -11,6 +11,7 @@
 #include "include/input_mux.h"
 #include "include/tty.h"
 #include "include/task.h"
+#include "libc/stdio.h"
 
 #define GFP_KERNEL 0x01
 #define MAX_HOTKEY_MAPPINGS 32

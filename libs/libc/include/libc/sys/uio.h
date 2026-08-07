@@ -12,10 +12,14 @@ extern "C" {
 
 #include <sys/types.h>
 
+/* struct iovec may already be defined in sys/socket.h */
+#ifndef _STRUCT_IOVEC
+#define _STRUCT_IOVEC
 struct iovec {
     void  *iov_base;  /* Pointer to data buffer */
     size_t iov_len;   /* Length of data buffer */
 };
+#endif
 
 ssize_t readv(int fd, const struct iovec *iov, int iovcnt);
 ssize_t writev(int fd, const struct iovec *iov, int iovcnt);

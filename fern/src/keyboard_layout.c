@@ -249,6 +249,8 @@ key_code_t keyboard_scancode_set1_lookup(uint8 scancode, bool extended) {
         [0x57] = KEY_F11, [0x58] = KEY_F12,
     };
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverride-init"
     static const key_code_t extended_scancode_set1_to_keycode[128] = {
         [0x1C] = KEY_KEYPAD_ENTER, [0x1D] = KEY_RIGHT_CTRL,
         [0x35] = KEY_KEYPAD_DIVIDE, [0x38] = KEY_RIGHT_ALT,
@@ -264,6 +266,7 @@ key_code_t keyboard_scancode_set1_lookup(uint8 scancode, bool extended) {
         [0x5E] = KEY_POWER, [0x5F] = KEY_SLEEP, [0x63] = KEY_WAKE,
         [0x65] = KEY_WWW_SEARCH, [0x66] = KEY_WWW_FAVORITES, [0x67] = KEY_WWW_REFRESH,
     };
+#pragma GCC diagnostic pop
 
     const key_code_t* table = extended ? extended_scancode_set1_to_keycode : scancode_set1_to_keycode;
     if (scancode >= 128) {

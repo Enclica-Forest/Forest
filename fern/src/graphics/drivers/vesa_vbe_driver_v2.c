@@ -788,6 +788,8 @@ static gfx_result_t vesa_map_fb(gfx_device_t* dev, gfx_framebuffer_t** fb) {
 }
 
 static gfx_result_t vesa_unmap_fb(gfx_device_t* dev, gfx_framebuffer_t* fb) {
+    (void)dev;
+    (void)fb;
     /* We don't actually unmap the framebuffer */
     return GFX_OK;
 }
@@ -870,6 +872,7 @@ static gfx_result_t vesa_draw_pixel(gfx_device_t* dev, int32_t x, int32_t y, gfx
 }
 
 static gfx_result_t vesa_wait_vsync(gfx_device_t* dev) {
+    (void)dev;
     /* Use VGA port for vsync detection */
     while (gfx_inb(VGA_INPUT_STATUS1_COLOR) & 0x08);
     while (!(gfx_inb(VGA_INPUT_STATUS1_COLOR) & 0x08));

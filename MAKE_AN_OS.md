@@ -36,7 +36,7 @@ independently-named source components plus a cross-toolchain:
 |-----------|------|------|----------|
 | Kernel | **Fern** | The Forest-OS kernel. Boot artifact `fern.bin` (BIOS) / `fern.elf` / `BOOTX64.EFI` (UEFI). | `fern/` |
 | Bootloader | **foreboots** (ForeB) | Native raw-MBR/BIOS **and** UEFI bootloader that loads the Fern kernel. The only userspace component. | `foreboots/` |
-| C library | **forestlibs** | POSIX-oriented libc the OS/ABI targets. | `fern/forestlibs/`, `libs/` |
+| C library | **forestlibs** | POSIX-oriented libc the OS/ABI targets. | `libs/libc/` |
 | Cross-toolchain | **forestos-toolchain** | The `i686-forestos` / `x86_64-forestos` GCC + binutils used to compile Fern. | `forestos-toolchain/` |
 
 The whole thing is **Forest-OS**; the kernel alone is **Fern**; the bootloader
@@ -52,7 +52,8 @@ $FOREST/                 <- repo root
 │   ├── conf.sh                     <- Kconfig-style configurator -> build-config.mk
 │   ├── build/                      <- make fragments (toolchain.mk, iso.mk, foreb.mk, ...)
 │   ├── src/                        <- kernel C sources + src/include headers
-│   ├── forestlibs/                 <- POSIX libc sources
+│   ├── forestlibs/                 <- other OS libraries (libc consolidated to libs/libc/)
+│   ├── initrd/                     <- initrd filesystem tree (packed into initrd.tar)
 │   ├── build/<ARCH>bit-<MODE>-<TYPE>/   <- kernel build outputs (generated)
 │   └── forestos-toolchain -> ../forestos-toolchain   (symlink; see Troubleshooting)
 ├── foreboots/                      <- the foreboots (ForeB) bootloader
@@ -262,7 +263,227 @@ An initrd tarball is also produced at
 
 ---
 
-## 6. Step 4 + Step 5 — Build foreboots and assemble the bootable image
+## 6. Creating the initrd (Initial RAM Disk)
+
+The initrd is a tarball of files the kernel loads into memory at boot and
+mounts as the root filesystem. It contains the essential userspace programs,
+libraries, configuration files, and resources your OS needs.
+
+### 6.1 initrd directory structure
+
+```
+fern/initrd/                        <- root of the initrd tree
+├── bin/                            <- userspace executables
+│   ├── sh                          <- shell (must be here as /bin/sh)
+│   ├── init                        <- init process (PID 1)
+│   ├── ls
+│   ├── cat
+│   ├── echo
+│   ├── mkdir
+│   ├── mount
+│   ├── reboot
+│   └── ...
+├── etc/                            <- configuration files
+│   ├── hostname
+│   ├── passwd
+│   ├── group
+│   └── fstab
+├── usr/
+│   ├── bin/                        <- additional programs
+│   ├── lib/                        <- shared libraries
+│   │   ├── libc.so
+│   │   └── libm.so
+│   └── share/
+│       └── ...                     <- fonts, icons, wallpapers, sounds
+├── dev/                            <- device nodes (usually created by kernel/devfs)
+├── proc/                           <- mount point for /proc (usually empty in initrd)
+├── tmp/                            <- temporary files
+└── var/
+    └── log/                        <- log files
+```
+
+### 6.2 Building userspace programs into the initrd
+
+Each userspace program must be compiled with the Forest cross-toolchain and
+placed into `fern/initrd/bin/`. The process:
+
+```bash
+# Set up cross-compiler
+export CC="$FOREST/forestos-toolchain/install/bin/i686-forestos-gcc"
+export SYSROOT="$FOREST/forestos-toolchain/sysroot"
+
+# Compile a simple program
+$CC -nostdlib -ffreestanding -I$SYSROOT/usr/include \
+    -o $FOREST/fern/initrd/bin/myprogram \
+    myprogram.c -L$SYSROOT/lib -lc
+
+# Or use the consolidated libc build system
+cd $FOREST/libs/libc
+make DESTDIR=$FOREST/fern/initrd install
+```
+
+### 6.3 Essential initrd programs
+
+At minimum, your initrd **must** contain:
+
+| Program | Purpose | Why it's essential |
+|---------|---------|-------------------|
+| `/bin/init` | PID 1 process | Kernel executes `/init` after boot |
+| `/bin/sh` | Shell | Users interact with the OS through the shell |
+| `/bin/mount` | Mount filesystems | Needed to mount /proc, /dev, /tmp |
+| `/bin/echo` | Print text | Used by shell scripts |
+| `/bin/ls` | List files | Users need to see what's on disk |
+| `/bin/cat` | Display file contents | Users need to read files |
+| `/bin/mkdir` | Create directories | Needed for runtime setup |
+| `/bin/reboot` | Reboot system | Users need to restart |
+| `/bin/ps` | List processes | Users need to see running tasks |
+
+### 6.4 Adding shared libraries
+
+Shared libraries go in `/usr/lib/` within the initrd. The dynamic linker
+(`/lib/ld.so` or `/lib/ld-forestos.so`) must also be present if you use
+dynamic linking.
+
+```bash
+# Copy libc and other shared libs
+cp $SYSROOT/lib/libc.so $FOREST/fern/initrd/usr/lib/
+cp $SYSROOT/lib/libm.so $FOREST/fern/initrd/usr/lib/
+
+# Create the dynamic linker symlink
+ln -sf /usr/lib/libc.so $FOREST/fern/initrd/lib/ld-forestos.so
+```
+
+### 6.5 Adding resources (fonts, icons, wallpapers)
+
+```bash
+# Fonts (for the framebuffer console / GUI)
+mkdir -p $FOREST/fern/initrd/usr/share/fonts
+cp my-font.ttf $FOREST/fern/initrd/usr/share/fonts/
+
+# Icons
+mkdir -p $FOREST/fern/initrd/usr/share/icons/hicolor/48x48/apps
+cp my-icon.png $FOREST/fern/initrd/initrd/usr/share/icons/hicolor/48x8/apps/
+
+# Wallpapers
+mkdir -p $FOREST/fern/initrd/usr/share/wallpapers
+cp wallpaper.png $FOREST/fern/initrd/usr/share/wallpapers/
+
+# Sound files
+mkdir -p $FOREST/fern/initrd/usr/share/sounds
+cp beep.wav $FOREST/fern/initrd/usr/share/sounds/
+```
+
+### 6.6 The initrd build process
+
+The Fern Makefile automatically packs `fern/initrd/` into a tarball:
+
+```bash
+cd $FOREST/fern
+
+# The initrd is built automatically during `make all` or `make build`:
+make build    # produces build/<ARCH>bit-<MODE>-<TYPE>/boot/initrd.tar
+
+# Or build just the initrd:
+tar -C initrd -cf build/32bit-bios-debug/boot/initrd.tar .
+```
+
+The resulting `initrd.tar` is embedded into the bootable image by foreboots.
+The kernel loads it at boot time and extracts it to a ramdisk.
+
+### 6.7 initrd size limits
+
+| Limit | Value | Notes |
+|-------|-------|-------|
+| Max initrd size (BIOS) | ~14 MB | ForeB loads it via INT 13h; limited by conventional memory |
+| Max initrd size (UEFI) | ~128 MB | Loaded from FAT ESP; limited by available RAM |
+| Recommended max | ~8 MB | Keeps boot fast; larger initrds slow boot significantly |
+
+To check your initrd size:
+
+```bash
+ls -lh $FOREST/fern/initrd.tar
+du -sh $FOREST/fern/initrd/
+```
+
+### 6.8 Customizing the initrd
+
+You can add or remove files from the initrd tree at any time. The build
+system watches for changes:
+
+```bash
+# Add a new program
+cp myprogram $FOREST/fern/initrd/bin/
+
+# Remove a program you don't need
+rm $FOREST/fern/initrd/bin/unwanted-program
+
+# Rebuild (make will detect the change and rebuild initrd.tar)
+make build
+```
+
+### 6.9 initrd example: minimal shell-only initrd
+
+```bash
+cd $FOREST/fern
+mkdir -p initrd/bin initrd/etc initrd/tmp initrd/proc
+
+# Create a minimal init script
+cat > initrd/bin/init << 'EOF'
+#!/bin/sh
+echo "Forest-OS starting..."
+mount -t proc proc /proc
+mount -t devfs devfs /dev
+echo "Welcome to Forest-OS!"
+exec /bin/sh
+EOF
+chmod +x initrd/bin/init
+
+# Copy essential binaries from the toolchain sysroot
+cp $FOREST/forestos-toolchain/sysroot/bin/sh initrd/bin/
+cp $FOREST/forestos-toolchain/sysroot/bin/ls initrd/bin/
+cp $FOREST/forestos-toolchain/sysroot/bin/cat initrd/bin/
+
+# Build
+make build
+```
+
+### 6.10 initrd example: full desktop initrd
+
+```bash
+cd $FOREST/fern
+
+# Create a complete directory structure
+mkdir -p initrd/{bin,etc,usr/{bin,lib,share/{fonts,icons,wallpapers}},dev,proc,tmp,var/log}
+
+# Copy all userspace programs
+cp $FOREST/userspace/*/initrd/bin/* initrd/bin/ 2>/dev/null
+
+# Copy all shared libraries
+cp $FOREST/forestos-toolchain/sysroot/lib/*.so initrd/usr/lib/ 2>/dev/null
+
+# Copy resources
+cp -r $FOREST/fern/tools/initrd/usr/share/* initrd/usr/share/
+
+# Create init script with full boot sequence
+cat > initrd/bin/init << 'INITEOF'
+#!/bin/sh
+mount -t proc proc /proc
+mount -t devfs devfs /dev
+mount -t tmpfs tmpfs /tmp
+echo "Forest-OS $(cat /etc/hostname 2>/dev/null || echo 'v1.0')"
+echo "Starting services..."
+# Start display manager, network, etc.
+exec /bin/sh
+INITEOF
+chmod +x initrd/bin/init
+
+# Build the full OS
+make all
+```
+
+---
+
+## 7. Step 4 + Step 5 — Build foreboots and assemble the bootable image
 
 In the Fern tree, `make iso` and `make img` **both** just delegate to
 `forebo-image` (`build/iso.mk`). The one canonical command that builds foreboots
@@ -309,7 +530,7 @@ make -C $FOREST/foreboots image \
 
 ---
 
-## 7. Step 6 — Run in QEMU / install to hardware
+## 8. Step 6 — Run in QEMU / install to hardware
 
 ### Run in QEMU (easiest — builds the image if needed, then boots)
 
@@ -373,7 +594,240 @@ For UEFI hardware, write `esp.img` to a FAT partition (or use the hybrid
 
 ---
 
-## 8. Quick start (TL;DR — Path A, Linux host, BIOS 32-bit)
+## 9. Userspace Applications
+
+Forest-OS includes **44 userspace applications** in `userspace/` — a complete
+set of POSIX-compatible tools for a functional operating system.
+
+### Building userspace apps
+
+```bash
+cd $FOREST/userspace
+
+# Build all apps (requires forestos-toolchain to be built first)
+make
+
+# Build for 64-bit
+make ARCH=64
+```
+
+Each app has its own directory with `app.c` and `Makefile`. Apps are compiled
+with the Forest-OS cross-compiler (`i686-forestos-gcc`) as freestanding ELF32
+binaries. They use the consolidated libc (`libs/libc/`) for POSIX functions.
+
+### Userspace app categories
+
+| Category | Apps |
+|----------|------|
+| **Core utilities** | cat, echo, ls, cp, mv, rm, mkdir, rmdir, touch, chmod, chown, ln, pwd, basename, dirname |
+| **Text processing** | grep, find, sort, wc, head, tail |
+| **Disk/filesystem** | dd, df, du, fdisk, mkfs, mount, umount, blkid, losetup, fsck |
+| **System tools** | ps, kill, init, shutdown, reboot, hostname, uname, date, sleep, id |
+| **Shell & auth** | forest-shell, sudo, su |
+| **Special** | initrd-builder (host tool) |
+
+### The shell: forest-shell
+
+`forest-shell` is the primary interactive shell. It provides:
+
+- **19 builtins**: cd, exit, export, unset, env, set, pwd, echo, type, which, history, source, alias, unalias, jobs, fg, bg, wait, help, clear
+- **Piping**: `cmd1 | cmd2 | cmd3`
+- **I/O redirection**: `>`, `>>`, `<`, `2>`, `2>>`, `&>`
+- **Background jobs**: `cmd &` with job control (Ctrl+Z, jobs, fg, bg)
+- **Variable expansion**: `$VAR`, `${VAR}`, `$?`, `$#`, `$$`, `$@`, `$*`
+- **Quoting**: single quotes (literal), double quotes (expansion), backslash escaping
+- **Globbing**: `*`, `?` via opendir/readdir
+- **Command substitution**: `` `cmd` ``
+- **Aliases**: `alias name=command`
+- **History**: arrow keys (Up/Down), last 100 commands
+- **Signal handling**: Ctrl+C (SIGINT), Ctrl+\ (SIGQUIT), Ctrl+Z (SIGTSTP)
+
+The shell is placed at `/bin/forest-shell` in the initrd. The kernel's session
+manager (`session.c`) looks for `/bin/shell` — create a symlink:
+
+```bash
+# In the initrd staging area:
+ln -s forest-shell initrd/bin/shell
+```
+
+### sudo and su
+
+- `sudo` — execute commands as root with `/etc/sudoers` support, password
+  authentication via `/etc/shadow`, timestamp caching, logging
+- `su` — switch user identity with login shell support, environment setup
+
+Both are installed setuid (mode 4755) so they can elevate privileges.
+
+---
+
+## 10. Building the initrd (Initial RAM Disk)
+
+The initrd is a tarball of the root filesystem that the kernel loads at boot.
+The kernel's ramdisk module (`fern/src/ramdisk.c`) parses it and mounts it as `/`.
+
+### What goes in the initrd
+
+The initrd is your root filesystem. At minimum it needs:
+
+```
+/
+├── bin/            # Essential commands (cat, ls, sh, mount, etc.)
+├── dev/            # Device nodes (kernel creates devtmpfs)
+├── etc/            # Config files (passwd, shadow, fstab)
+├── proc/           # Mount point for procfs
+├── sys/            # Mount point for sysfs
+├── tmp/            # Temporary files
+├── usr/
+│   └── bin/        # Additional commands
+├── var/
+│   ├── log/        # Log files
+│   ├── run/        # Runtime data
+│   └── tmp/        # Temp files
+```
+
+### Method 1: Use the userspace Makefile
+
+```bash
+cd $FOREST/userspace
+make install
+
+# This builds all apps and creates initrd staging at build/initrd/
+# The staging area has bin/, sbin/, etc/, dev/, proc/, sys/, tmp/, usr/
+```
+
+### Method 2: Build and use initrd-builder
+
+`initrd-builder` is a host tool that creates newc cpio initrd images:
+
+```bash
+cd $FOREST/userspace
+make initrd
+
+# Create an initrd from a directory tree:
+./build/initrd-builder -d /path/to/rootfs -o /path/to/initrd.img
+
+# With config file:
+./build/initrd-builder -c config.txt -o initrd.img -v
+
+# Config file format (one entry per line):
+#   /bin/ls 0755 0 0
+#   /bin/sh 0755 0 0
+#   /etc 0755 0 0 dir
+#   /dev/null 0666 0 0 c 1 3
+```
+
+### Method 3: Use the existing initrd directory
+
+The Fern kernel tree has a pre-built initrd at `fern/initrd/`:
+
+```bash
+# Add your apps to the existing initrd:
+cp $FOREST/userspace/build/bin/* $FOREST/fern/initrd/bin/
+
+# The kernel Makefile creates initrd.tar from this directory:
+cd $FOREST/fern
+make build   # creates initrd.tar automatically
+```
+
+### Integrating userspace apps into the kernel's initrd
+
+The simplest approach for a working system:
+
+```bash
+# 1. Build the kernel (creates initrd.tar)
+cd $FOREST/fern
+make build
+
+# 2. Build userspace apps
+cd $FOREST/userspace
+make
+
+# 3. Copy apps into the kernel's initrd directory
+cp $FOREST/userspace/build/bin/* $FOREST/fern/initrd/bin/
+
+# 4. Create the shell symlink (kernel looks for /bin/shell)
+ln -sf forest-shell $FOREST/fern/initrd/bin/shell
+
+# 5. Rebuild the kernel with updated initrd
+cd $FOREST/fern
+make build
+
+# 6. Rebuild the bootable image (embeds new initrd)
+make forebo-image
+
+# 7. Run it
+make run
+```
+
+### Initrd filesystem layout (recommended)
+
+For a complete Forest-OS system, populate the initrd with:
+
+```bash
+# Create staging directory
+ROOTFS=$FOREST/fern/initrd
+mkdir -p $ROOTFS/{bin,sbin,etc,dev,proc,sys,tmp,home/root,var/{log,run,tmp}}
+mkdir -p $ROOTFS/usr/{bin,lib,share}
+
+# Copy all userspace apps
+cp $FOREST/userspace/build/bin/* $ROOTFS/bin/
+
+# Create shell symlink
+ln -sf forest-shell $ROOTFS/bin/shell
+ln -sf forest-shell $ROOTFS/bin/sh
+
+# Create essential device nodes (if not using devtmpfs)
+# mknod $ROOTFS/dev/null c 1 3
+# mknod $ROOTFS/dev/zero c 1 5
+# mknod $ROOTFS/dev/console c 5 1
+# mknod $ROOTFS/dev/tty c 5 0
+# mknod $ROOTFS/dev/ptmx c 5 2
+# mknod $ROOTFS/dev/urandom c 1 9
+
+# Create config files
+echo "root:x:0:0:root:/root:/bin/forest-shell" > $ROOTFS/etc/passwd
+echo "root::0:0:99999:7:::" > $ROOTFS/etc/shadow
+echo "root:x:0:" > $ROOTFS/etc/group
+
+# Create /etc/fstab (optional)
+cat > $ROOTFS/etc/fstab << 'EOF'
+proc     /proc    proc     defaults  0 0
+sysfs    /sys     sysfs    defaults  0 0
+tmpfs    /tmp     tmpfs    defaults  0 0
+EOF
+```
+
+### How the kernel loads the initrd
+
+1. Bootloader loads kernel + initrd into memory
+2. `ramdisk_init()` in `fern/src/ramdisk.c` finds the initrd via multiboot tags
+3. `parse_tar()` indexes all files in the tar archive
+4. Virtual directories (`dev/`, `proc/`, `sys/`, etc.) are created automatically
+5. `vfs_init()` mounts the ramdisk as the root filesystem
+6. Session manager (`session.c`) searches for `/bin/shell` and loads it as PID 2+
+
+### Kernel session flow
+
+```
+kmain()
+  → ramdisk_init()     # parse initrd tar
+  → vfs_init()         # mount root filesystem
+  → session_run()      # session manager
+    → run_session_login()  # authenticate user
+    → launch_user_session()
+      → load_first_elf("/bin/shell")  # find and load shell
+      → task_create_elf(elf_data, elf_size, "sh")
+      → task->tty_fd = session_id - 1  # link to TTY
+      → task_set_foreground(shell_task)
+```
+
+The shell then reads from stdin (keyboard via TTY) and writes to stdout (TTY
+display). Commands are executed via fork/exec. The kernel handles all
+filesystem, memory, and process management through syscalls.
+
+---
+
+## 11. Quick start (TL;DR — Path A, Linux host, BIOS 32-bit)
 
 ```bash
 # 0. install host deps (see §2)
@@ -389,16 +843,53 @@ export FORESTOS_TOOLCHAIN_DIR=$FOREST/forestos-toolchain
 cd $FOREST/fern
 ./conf.sh --defconfig
 
-# 3+4+5. build kernel + foreboots + bootable image
-make all
+# 3. build kernel
+make build
 
-# 6. run it
+# 4. build userspace apps
+cd $FOREST/userspace
+make
+
+# 5. copy apps into initrd
+cp $FOREST/userspace/build/bin/* $FOREST/fern/initrd/bin/
+ln -sf forest-shell $FOREST/fern/initrd/bin/shell
+ln -sf forest-shell $FOREST/fern/initrd/bin/sh
+
+# 6. rebuild kernel with updated initrd
+cd $FOREST/fern
+make build
+
+# 7. build bootable image
+make forebo-image
+
+# 8. run it
 make run
 ```
 
 ---
 
-## 9. Troubleshooting
+## 12. Using the GUI build tool (createos.sh)
+
+For a guided, menu-driven build experience, use the `createos.sh` script:
+
+```bash
+cd $FOREST
+./createos.sh
+```
+
+This launches an interactive GUI (using `dialog`) that walks you through:
+1. Selecting architecture (x86 32-bit, x86 64-bit, ARM32, AArch64, RISC-V 64)
+2. Selecting boot mode (BIOS or UEFI)
+3. Selecting build type (debug or release)
+4. Enabling/disabling features (OpenGL, networking, audio, etc.)
+5. Configuring the initrd (which programs to include)
+6. Building everything and outputting to `output/`
+
+See `createos.sh --help` for non-interactive options.
+
+---
+
+## 13. Troubleshooting
 
 **`Architecture toolchain not found: .../install`** (build aborts at
 `validate-toolchain`). The Makefile is looking at
@@ -449,9 +940,39 @@ your distro actually ships (symlink or edit the path if needed).
 non-interactive modes (`--defconfig`, `--oldconfig`, `--allnoconfig`,
 `--allyesconfig`).
 
+**initrd is too large / boot fails.** Check the initrd size with
+`ls -lh initrd.tar`. If it exceeds ~14 MB for BIOS or ~128 MB for UEFI,
+remove unnecessary files from `initrd/`. Common offenders: large fonts,
+unnecessary shared libraries, debug symbols.
+
+**Programs segfault at boot.** Ensure all binaries in `initrd/bin/` are compiled
+with the Forest cross-toolchain (`i686-forestos-gcc`), not the host GCC.
+Host-compiled binaries use a different ABI and will crash.
+
+**Shell script "#!/bin/sh" not found.** Make sure `/bin/sh` exists in the initrd
+and is executable: `chmod +x initrd/bin/sh`.
+
+**Shell can't find commands.** The shell looks for commands in
+`/bin:/usr/bin:/usr/local/bin`. Ensure your userspace apps are copied to
+`initrd/bin/` (or `initrd/usr/bin/`). Also verify the shell binary itself is
+at `/bin/forest-shell` or `/bin/sh`.
+
+**Shell segfaults or hangs.** Ensure the shell is compiled with the Forest
+cross-toolchain (`i686-forestos-gcc`), not the host GCC. Host-compiled binaries
+use a different ABI and will crash or behave unexpectedly.
+
+**sudo/su password prompts don't work.** If `/etc/shadow` doesn't exist in the
+initrd, sudo/su accept any password. Create the file with:
+`echo "root::0:0:99999:7:::" > initrd/etc/shadow` (empty password = no auth
+required) or `echo "root:HASH:0:0:99999:7:::"` with a proper crypt hash.
+
+**Kernel doesn't start shell.** The session manager searches for `/bin/shell`.
+Create the symlink: `ln -sf forest-shell initrd/bin/shell`. Also check that
+the binary is a valid ELF32 (`file initrd/bin/forest-shell` should say ELF32).
+
 ---
 
-## 10. Self-host on Forest-OS (Path B, summary)
+## 14. Self-host on Forest-OS (Path B, summary)
 
 Once Forest-OS boots and hosts a working `x86_64-forestos` GCC/binutils:
 
@@ -464,3 +985,29 @@ Once Forest-OS boots and hosts a working `x86_64-forestos` GCC/binutils:
    `make run` (or install to disk).
 
 See `forestos-toolchain/README.md` for the authoritative self-host details.
+
+---
+
+## 15. Output structure
+
+After a successful build, your output directory will contain:
+
+```
+output/                                 <- final OS output
+├── forestos-bios-32bit.img            <- raw BIOS disk image (write to USB/HDD)
+├── forestos-uefi-64bit.img            <- raw UEFI disk image (write to USB/HDD)
+├── forestos-bios-32bit.iso            <- hybrid BIOS+UEFI ISO (burn to CD/DVD)
+├── forestos-uefi-64bit.iso            <- UEFI-only ISO
+├── esp.img                            <- EFI System Partition (for UEFI boot)
+├── kernel/
+│   ├── fern.bin                       <- kernel binary (BIOS)
+│   ├── fern.elf                       <- kernel ELF (UEFI)
+│   └── BOOTX64.EFI                    <- UEFI bootloader application
+├── initrd/
+│   └── initrd.tar                     <- initrd tarball
+├── bootloader/
+│   ├── stage1.bin                     <- MBR stage 1
+│   ├── stage2.bin                     <- stage 2
+│   └── stage3.bin                     <- stage 3
+└── README.txt                         <- build info and how to boot
+```

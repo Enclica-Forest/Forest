@@ -43,6 +43,7 @@ void timer_delay_ms(uint32_t milliseconds) {
 
 // Memory mapping placeholder function
 void* mm_map_physical_page(uint64_t physical_addr, uint32_t flags) {
+    (void)flags;
     // This is a placeholder - in a real OS this would set up virtual memory mapping
     // For now, just return the physical address as virtual (identity mapping)
     return (void*)(uintptr_t)physical_addr;

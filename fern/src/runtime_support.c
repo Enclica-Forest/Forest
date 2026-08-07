@@ -45,6 +45,9 @@ uint64 __umoddi3(uint64 num, uint64 den) {
 // These provide thread-safe atomic operations for uACPI
 // Note: These work with raw pointers, not atomic32_t structures
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wbuiltin-declaration-mismatch"
+
 uint32 __atomic_fetch_add_4(volatile uint32* ptr, uint32 val, int memorder) {
     (void)memorder; // Fern doesn't support different memory ordering
     
@@ -85,3 +88,5 @@ bool __atomic_compare_exchange_4(volatile uint32* ptr, uint32* expected, uint32 
     
     return success != 0;
 }
+
+#pragma GCC diagnostic pop

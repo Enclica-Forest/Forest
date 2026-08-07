@@ -50,6 +50,7 @@ static void* worker_thread_func(void* arg) {
         }
         
         uint64_t start_time = 0;
+        (void)start_time;
         
         switch (job->type) {
             case PARALLEL_JOB_TYPE_RECT_FILL: {

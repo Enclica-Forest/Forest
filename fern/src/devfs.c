@@ -1354,8 +1354,6 @@ static uint32 fb_pitch_read(vfs_node_t* node, uint32 offset, uint32 size, uint8*
 static uint32 fb_bpp_read(vfs_node_t* node, uint32 offset, uint32 size, uint8* buffer);
 static uint32 fb_addr_read(vfs_node_t* node, uint32 offset, uint32 size, uint8* buffer);
 static uint32 fb_size_read(vfs_node_t* node, uint32 offset, uint32 size, uint8* buffer);
-static uint32 scrx_read(vfs_node_t* node, uint32 offset, uint32 size, uint8* buffer);
-static uint32 scry_read(vfs_node_t* node, uint32 offset, uint32 size, uint8* buffer);
 
 // Cursor device function declarations
 static uint32 cursor_pos_read(vfs_node_t* node, uint32 offset, uint32 size, uint8* buffer);
@@ -2346,7 +2344,7 @@ static void fb0_close(vfs_node_t* node) {
 /**
  * Memory map framebuffer device (stub implementation)
  */
-static int fb0_mmap(vfs_node_t* node, void* addr, size_t len, uint32_t prot, uint64_t offset) {
+__attribute__((unused)) static int fb0_mmap(vfs_node_t* node, void* addr, size_t len, uint32_t prot, uint64_t offset) {
     (void)node; (void)addr; (void)len; (void)prot; (void)offset;
     // TODO: Implement proper framebuffer mmap
     return -1;

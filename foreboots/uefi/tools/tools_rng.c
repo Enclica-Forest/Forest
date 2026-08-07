@@ -70,6 +70,7 @@ static int is_digit(CHAR16 u){ return u>='0'&&u<='9'; }
 /* ==========================================================================
  * Entropy: RDRAND if available, else TSC-seeded xorshift64 mixed with TSC.
  * ========================================================================== */
+#if defined(__x86_64__) || defined(_M_X64)
 static UINT64 rdtsc64(void)
 {
     UINT32 lo, hi;
@@ -94,6 +95,11 @@ static int rdrand64(UINT64 *out)
     }
     return 0;
 }
+#else
+static UINT64 rdtsc64(void){ static UINT64 c=0x9E3779B97F4A7C15ull; c+=0x9E3779B97F4A7C15ull; return c; }
+static int cpuid_has_rdrand(void){ return 0; }
+static int rdrand64(UINT64 *out){ (void)out; return 0; }
+#endif
 
 static int    g_have_rdrand = -1;   /* lazy CPUID cache */
 static UINT64 g_xstate = 0;

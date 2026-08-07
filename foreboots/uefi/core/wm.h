@@ -67,6 +67,10 @@ typedef int  (*wm_event_cb)(wm_window *w, const wm_event *ev);
  * `theme` may be NULL to use the built-in default palette. */
 void wm_init(const struct forebo_theme *theme);
 
+/* Provide BootServices for the window content cache (AllocatePool/FreePool).
+ * Call once from efi_main before the menu loop; NULL-safe (disables caching). */
+void wm_init_cache(EFI_BOOT_SERVICES *bs);
+
 /* Re-skin every OPEN window against a new theme WITHOUT closing anything (unlike
  * wm_init). Used by the Theme/Settings tool to apply color/skin edits live while
  * its own window stays open. NULL-safe (ignored). */

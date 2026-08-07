@@ -46,9 +46,9 @@ graphics_result_t optimized_blit_surface(const graphics_surface_t* src,
     graphics_rect_t r = src_rect ? *src_rect :
         (graphics_rect_t){0, 0, src->width, src->height};
     
-    if (r.x >= src->width || r.y >= src->height ||
-        r.x + r.width > src->width ||
-        r.y + r.height > src->height) {
+    if ((uint32_t)r.x >= src->width || (uint32_t)r.y >= src->height ||
+        (uint32_t)(r.x + r.width) > src->width ||
+        (uint32_t)(r.y + r.height) > src->height) {
         return GRAPHICS_ERROR_INVALID_PARAMETER;
     }
     

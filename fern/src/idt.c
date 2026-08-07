@@ -265,11 +265,6 @@ static void idt_set_gate_internal(uint8_t vector, void *handler, uint16_t select
 {
     idt_entry_t *entry;
     
-    if (vector >= IDT_ENTRIES_MAX) {
-        debuglog_printf("IDT: Invalid vector %d\n", vector);
-        return;
-    }
-    
     entry = &g_idt_manager.entries[vector];
     
 #if ARCH_64BIT
@@ -299,12 +294,8 @@ static void idt_set_gate_internal(uint8_t vector, void *handler, uint16_t select
 /*
  * Clear an IDT gate entry
  */
-static void idt_clear_gate(uint8_t vector)
+__attribute__((unused)) static void idt_clear_gate(uint8_t vector)
 {
-    if (vector >= IDT_ENTRIES_MAX) {
-        return;
-    }
-    
     memset(&g_idt_manager.entries[vector], 0, sizeof(idt_entry_t));
     g_idt_manager.handlers[vector] = NULL;
     g_idt_manager.handler_data[vector] = NULL;
@@ -361,14 +352,6 @@ int idt_register_handler(uint8_t vector, interrupt_handler_t handler, void *data
 {
     unsigned long flags;
     
-    if (vector >= IDT_ENTRIES_MAX) {
-        return -1;
-    }
-    
-    if (!handler) {
-        return -1;
-    }
-    
     flags = interrupt_save_and_disable();
     
     g_idt_manager.handlers[vector] = handler;
@@ -386,6 +369,8 @@ void interrupt_register_handler(uint8_t vector, void *handler, void *data) {
     idt_register_handler(vector, (interrupt_handler_t)handler, data);
 }
 
+void idt_unregister_handler(uint8_t vector);
+
 void interrupt_unregister_handler(uint8_t vector) {
     idt_unregister_handler(vector);
 }
@@ -396,10 +381,6 @@ void interrupt_unregister_handler(uint8_t vector) {
 void idt_unregister_handler(uint8_t vector)
 {
     unsigned long flags;
-    
-    if (vector >= IDT_ENTRIES_MAX) {
-        return;
-    }
     
     flags = interrupt_save_and_disable();
     
@@ -414,10 +395,6 @@ void idt_unregister_handler(uint8_t vector)
  */
 interrupt_handler_t idt_get_handler(uint8_t vector)
 {
-    if (vector >= IDT_ENTRIES_MAX) {
-        return NULL;
-    }
-    
     return g_idt_manager.handlers[vector];
 }
 
@@ -426,10 +403,6 @@ interrupt_handler_t idt_get_handler(uint8_t vector)
  */
 void *idt_get_handler_data(uint8_t vector)
 {
-    if (vector >= IDT_ENTRIES_MAX) {
-        return NULL;
-    }
-    
     return g_idt_manager.handler_data[vector];
 }
 
@@ -438,9 +411,7 @@ void *idt_get_handler_data(uint8_t vector)
  */
 void idt_update_stats(uint8_t vector)
 {
-    if (vector < IDT_ENTRIES_MAX) {
-        g_idt_manager.handler_stats[vector]++;
-    }
+    g_idt_manager.handler_stats[vector]++;
 }
 
 /*
@@ -448,10 +419,6 @@ void idt_update_stats(uint8_t vector)
  */
 uint64_t idt_get_stats(uint8_t vector)
 {
-    if (vector >= IDT_ENTRIES_MAX) {
-        return 0;
-    }
-    
     return g_idt_manager.handler_stats[vector];
 }
 
@@ -477,14 +444,14 @@ void idt_dump(void)
             debuglog_printf("  [%3d] Handler: 0x%016lx, Selector: 0x%04x, "
                        "Flags: 0x%02x, IST: %d, Stats: %lu\n", 
                        i, handler_addr, entry->selector, entry->flags, 
-                       entry->ist, g_idt_manager.handler_stats[i]);
+                       entry->ist, (unsigned long)g_idt_manager.handler_stats[i]);
 #else
             uint32_t handler_addr = entry->offset_low | 
                                    ((uint32_t)entry->offset_high << 16);
             debuglog_printf("  [%3d] Handler: 0x%08x, Selector: 0x%04x, "
                        "Flags: 0x%02x, Stats: %lu\n", 
                        i, handler_addr, entry->selector, entry->flags,
-                       g_idt_manager.handler_stats[i]);
+                       (unsigned long)g_idt_manager.handler_stats[i]);
 #endif
         }
     }

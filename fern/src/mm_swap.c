@@ -175,6 +175,7 @@ static uint32_t swap_alloc_slot(swap_device_t* dev) {
  * @brief Free swap slot
  */
 static void swap_free_slot(swap_device_t* dev, uint32_t slot) {
+    (void)slot;
     if (slot >= dev->size_pages) {
         return;
     }
@@ -192,7 +193,7 @@ static void swap_free_slot(swap_device_t* dev, uint32_t slot) {
 /**
  * @brief Add page to LRU active list
  */
-static void lru_add_active(phys_addr_t phys, uint32_t vaddr, page_directory_t* dir) {
+static void __attribute__((unused)) lru_add_active(phys_addr_t phys, uint32_t vaddr, page_directory_t* dir) {
     lru_node_t* node = (lru_node_t*)kmalloc(sizeof(lru_node_t));
     if (!node) return;
     
@@ -220,7 +221,7 @@ static void lru_add_active(phys_addr_t phys, uint32_t vaddr, page_directory_t* d
 /**
  * @brief Move page from active to inactive list
  */
-static void lru_demote_page(lru_node_t* node) {
+static void __attribute__((unused)) lru_demote_page(lru_node_t* node) {
     // Remove from active list
     if (node->prev) {
         node->prev->next = node->next;
@@ -277,6 +278,8 @@ static lru_node_t* lru_get_victim(void) {
  * @brief Write page to swap
  */
 static bool swap_write_page(swap_device_t* dev, uint32_t slot, void* page_data) {
+    (void)slot;
+    (void)page_data;
     if (!dev->active || !dev->backing) {
         return false;
     }
@@ -292,6 +295,8 @@ static bool swap_write_page(swap_device_t* dev, uint32_t slot, void* page_data) 
  * @brief Read page from swap
  */
 static bool swap_read_page(swap_device_t* dev, uint32_t slot, void* page_data) {
+    (void)slot;
+    (void)page_data;
     if (!dev->active || !dev->backing) {
         return false;
     }

@@ -1,0 +1,1028 @@
+#!/usr/bin/env python3
+"""
+forb-config - ForeB bootloader configuration tool
+
+A drop-in CLI for editing, validating, querying, and converting forebo.cfg
+files. Works with any bootloader's config by translating to/from ForeB format.
+
+Usage:
+    forb-config info    <config>                  Show config summary
+    forb-config validate <config> [--esp /boot]   Validate config
+    forb-config get     <config> <key>            Get a setting value
+    forb-config set     <config> <key> <value>    Set a setting value
+    forb-config entries <config>                  List boot entries
+    forb-config add     <config> [options]        Add a boot entry
+    forb-config remove  <config> <index>          Remove a boot entry
+    forb-config default <config> [index|title]    Get/set default entry
+    forb-config timeout <config> [seconds]        Get/set timeout
+    forb-config convert <input> --to <format>     Convert to another format
+    forb-config detect  [/path]                   Detect installed bootloaders
+    forb-config migrate <source> [--backup]       Migrate from another bootloader
+    forb-config diff    <a> <b>                   Compare two configs
+    forb-config themes                            List available themes
+    forb-config icons                             List available icons
+"""
+
+import sys
+import os
+import re
+import json
+import argparse
+from pathlib import Path
+from typing import Optional, List, Tuple, Dict, Any
+
+# ─── ForeB theme definitions ────────────────────────────────────────────────
+THEMES = {
+    "forest":   {"bg": "#0a1a0a", "fg": "#c0c0c0", "accent": "#4a8", "sel_bg": "#2a5a2a", "sel_fg": "#fff", "titlebar": "#1a3a1a", "window": "#0e2e0e", "cursor": "#4a8"},
+    "midnight": {"bg": "#0a0a2e", "fg": "#c0c0c0", "accent": "#48f", "sel_bg": "#1a1a5e", "sel_fg": "#fff", "titlebar": "#1a1a3e", "window": "#0e0e2e", "cursor": "#48f"},
+    "nord":     {"bg": "#2e3440", "fg": "#d8dee9", "accent": "#88c0d0", "sel_bg": "#434c5e", "sel_fg": "#eceff4", "titlebar": "#3b4252", "window": "#2e3440", "cursor": "#88c0d0"},
+    "dracula":  {"bg": "#282a36", "fg": "#f8f8f2", "accent": "#bd93f9", "sel_bg": "#44475a", "sel_fg": "#f8f8f2", "titlebar": "#44475a", "window": "#282a36", "cursor": "#bd93f9"},
+    "gruvbox":  {"bg": "#282828", "fg": "#ebdbb2", "accent": "#d65d0e", "sel_bg": "#3c3836", "sel_fg": "#ebdbb2", "titlebar": "#3c3836", "window": "#282828", "cursor": "#d65d0e"},
+    "solarized":{"bg": "#002b36", "fg": "#839496", "accent": "#268bd2", "sel_bg": "#073642", "sel_fg": "#93a1a1", "titlebar": "#073642", "window": "#002b36", "cursor": "#268bd2"},
+    "amber":    {"bg": "#1a1000", "fg": "#ffb000", "accent": "#ff8c00", "sel_bg": "#3a2a00", "sel_fg": "#ffc000", "titlebar": "#2a1a00", "window": "#1a1000", "cursor": "#ffb000"},
+    "matrix":   {"bg": "#000000", "fg": "#00ff00", "accent": "#00cc00", "sel_bg": "#003300", "sel_fg": "#00ff00", "titlebar": "#001a00", "window": "#000000", "cursor": "#00ff00"},
+    "rose":     {"bg": "#1a0a1a", "fg": "#e0c0d0", "accent": "#ff69b4", "sel_bg": "#3a1a3a", "sel_fg": "#fff", "titlebar": "#2a1a2a", "window": "#1a0a1a", "cursor": "#ff69b4"},
+    "ocean":    {"bg": "#0a1a2a", "fg": "#c0d0e0", "accent": "#4a9eff", "sel_bg": "#1a3a5a", "sel_fg": "#fff", "titlebar": "#1a2a3a", "window": "#0a1a2a", "cursor": "#4a9eff"},
+    "mono":     {"bg": "#1a1a1a", "fg": "#a0a0a0", "accent": "#ffffff", "sel_bg": "#3a3a3a", "sel_fg": "#ffffff", "titlebar": "#2a2a2a", "window": "#1a1a1a", "cursor": "#ffffff"},
+}
+
+ICONS = [
+    "os", "text", "safe", "gear", "shield", "reboot",
+    "ubuntu", "debian", "arch", "fedora", "mint", "tux",
+    "windows", "grub", "usb", "disk", "terminal", "settings",
+]
+
+VALID_TYPES = ["linux", "forest", "chainload", "shell", "recovery", "tools", "setup", "settings", "reboot", "uefi_settings"]
+
+# ─── Config parser ───────────────────────────────────────────────────────────
+
+class ForebConfig:
+    """Parsed representation of a forebo.cfg file."""
+
+    def __init__(self):
+        self.timeout: Optional[int] = None
+        self.default: Optional[str] = None
+        self.remember_last: Optional[bool] = None
+        self.background: Optional[str] = None
+        self.theme: Optional[str] = None
+        self.entries: List[Dict[str, Any]] = []
+        self.globals: Dict[str, str] = {}
+        self._raw_lines: List[str] = []
+
+    @classmethod
+    def parse(cls, text: str) -> "ForebConfig":
+        cfg = cls()
+        cfg._raw_lines = text.splitlines()
+        lines = cfg._raw_lines
+
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+            i += 1
+
+            # skip comments and empty lines
+            if not line or line.startswith("#"):
+                continue
+
+            # global key=value
+            m = re.match(r'^(\w+)\s*=\s*(.*)', line)
+            if m:
+                key, val = m.group(1), m.group(2).strip()
+                cfg.globals[key] = val
+                if key == "timeout":
+                    try: cfg.timeout = int(val)
+                    except ValueError: pass
+                elif key == "default":
+                    cfg.default = val
+                elif key == "remember_last":
+                    cfg.remember_last = val == "1"
+                elif key == "background":
+                    cfg.background = val
+                elif key == "theme":
+                    cfg.theme = val
+                continue
+
+            # menuentry "title" { or submenu "title" {
+            m = re.match(r'^(menuentry|submenu)\s+"([^"]*)"\s*\{', line)
+            if m:
+                kind = m.group(1)
+                title = m.group(2)
+                entry = {"_kind": kind, "title": title, "_children": []}
+                # parse inner block
+                depth = 1
+                while i < len(lines) and depth > 0:
+                    inner = lines[i].strip()
+                    i += 1
+                    if inner == "{":
+                        depth += 1
+                        continue
+                    if inner == "}":
+                        depth -= 1
+                        continue
+                    if depth == 1:
+                        km = re.match(r'^(\w+)\s*=\s*(.*)', inner)
+                        if km:
+                            entry[km.group(1)] = km.group(2).strip()
+                    elif depth == 2 and kind == "submenu":
+                        # nested menuentry
+                        nm = re.match(r'^menuentry\s+"([^"]*)"\s*\{', inner)
+                        if nm:
+                            child = {"_kind": "menuentry", "title": nm.group(1), "_children": []}
+                            while i < len(lines):
+                                cl = lines[i].strip()
+                                i += 1
+                                if cl == "}":
+                                    break
+                                km2 = re.match(r'^(\w+)\s*=\s*(.*)', cl)
+                                if km2:
+                                    child[km2.group(1)] = km2.group(2).strip()
+                            entry["_children"].append(child)
+                cfg.entries.append(entry)
+                continue
+
+        return cfg
+
+    @classmethod
+    def from_file(cls, path: str) -> "ForebConfig":
+        with open(path, "r") as f:
+            return cls.parse(f.read())
+
+    def serialize(self) -> str:
+        lines = []
+        lines.append(f"# ==== ForeB configuration ====")
+        lines.append(f"# Generated by forb-config")
+        lines.append("")
+        if self.timeout is not None:
+            lines.append(f"timeout={self.timeout}")
+        if self.default is not None:
+            lines.append(f"default={self.default}")
+        if self.remember_last is not None:
+            lines.append(f"remember_last={'1' if self.remember_last else '0'}")
+        if self.background:
+            lines.append(f"background={self.background}")
+        if self.theme:
+            lines.append(f"theme={self.theme}")
+        lines.append("")
+
+        for entry in self.entries:
+            kind = entry.get("_kind", "menuentry")
+            title = entry.get("title", "Untitled")
+            if kind == "submenu":
+                lines.append(f'submenu "{title}" {{')
+                for child in entry.get("_children", []):
+                    self._emit_entry(lines, child, indent=1)
+                lines.append("}")
+            else:
+                self._emit_entry(lines, entry, indent=0)
+            lines.append("")
+
+        return "\n".join(lines) + "\n"
+
+    def _emit_entry(self, lines, entry, indent=0):
+        pad = "    " * indent
+        title = entry.get("title", "Untitled")
+        lines.append(f'{pad}menuentry "{title}" {{')
+        skip = {"_kind", "title", "_children"}
+        for key, val in sorted(entry.items()):
+            if key not in skip:
+                lines.append(f'{pad}    {key}={val}')
+        lines.append(f'{pad}}}')
+
+    def entry_count(self) -> int:
+        count = 0
+        for e in self.entries:
+            if e.get("_kind") == "submenu":
+                count += len(e.get("_children", []))
+            else:
+                count += 1
+        return count
+
+    def flat_entries(self) -> List[Dict[str, Any]]:
+        result = []
+        for e in self.entries:
+            if e.get("_kind") == "submenu":
+                result.extend(e.get("_children", []))
+            else:
+                result.append(e)
+        return result
+
+
+# ─── Commands ────────────────────────────────────────────────────────────────
+
+def cmd_info(args):
+    """Show config summary."""
+    cfg = ForebConfig.from_file(args.config)
+    entries = cfg.flat_entries()
+
+    print(f"Config: {args.config}")
+    print(f"  Timeout:     {cfg.timeout if cfg.timeout is not None else '(not set)'}")
+    print(f"  Default:     {cfg.default if cfg.default else '(not set)'}")
+    print(f"  Theme:       {cfg.theme if cfg.theme else '(not set)'}")
+    print(f"  Background:  {cfg.background if cfg.background else '(not set)'}")
+    print(f"  Entries:     {len(entries)}")
+
+    # count by type
+    types = {}
+    for e in entries:
+        t = e.get("type", "unknown")
+        types[t] = types.get(t, 0) + 1
+    for t, c in sorted(types.items()):
+        print(f"    {t}: {c}")
+
+    # submenu count
+    submenus = sum(1 for e in cfg.entries if e.get("_kind") == "submenu")
+    print(f"  Submenus:    {submenus}")
+    print(f"  Raw lines:   {len(cfg._raw_lines)}")
+
+
+def cmd_validate(args):
+    """Validate a config file."""
+    cfg = ForebConfig.from_file(args.config)
+    entries = cfg.flat_entries()
+    errors = []
+    warnings = []
+    infos = []
+
+    # check entry count
+    if len(entries) > 64:
+        errors.append(f"Too many entries: {len(entries)} (max 64)")
+    elif len(entries) > 56:
+        warnings.append(f"Entry count {len(entries)} approaches limit (max 64)")
+
+    # check each entry
+    for i, e in enumerate(entries):
+        title = e.get("title", "")
+        etype = e.get("type", "")
+
+        if len(title) > 63:
+            warnings.append(f"Entry {i}: title '{title[:40]}...' exceeds 63 chars ({len(title)})")
+
+        if etype not in VALID_TYPES:
+            errors.append(f"Entry {i}: unknown type '{etype}'")
+
+        # check paths
+        for field in ["vmlinuz", "kernel", "chain", "initrd"]:
+            val = e.get(field, "")
+            if val and len(val) > 255:
+                warnings.append(f"Entry {i}: {field} path exceeds 255 chars")
+            if val and not val.startswith("/") and not val.startswith("\\"):
+                infos.append(f"Entry {i}: {field} path '{val}' is not absolute")
+
+        cmdline = e.get("cmdline", "")
+        if len(cmdline) > 255:
+            warnings.append(f"Entry {i}: cmdline exceeds 255 chars ({len(cmdline)})")
+
+        icon = e.get("icon", "")
+        if icon and icon not in ICONS and not icon.endswith((".tga", ".png", ".bmp")):
+            infos.append(f"Entry {i}: icon '{icon}' not in standard icon set")
+
+    # check duplicates
+    seen = {}
+    for i, e in enumerate(entries):
+        key = (e.get("title", ""), e.get("vmlinuz", "") or e.get("kernel", "") or e.get("chain", ""))
+        if key in seen:
+            warnings.append(f"Entry {i}: duplicate of entry {seen[key]} (same title+kernel)")
+        seen[key] = i
+
+    # check ESP paths
+    if args.esp:
+        esp = Path(args.esp)
+        for i, e in enumerate(entries):
+            for field in ["vmlinuz", "kernel", "chain", "initrd"]:
+                val = e.get(field, "")
+                if val:
+                    full = esp / val.lstrip("/")
+                    if not full.exists():
+                        warnings.append(f"Entry {i}: {field} '{val}' not found on ESP")
+
+    # print results
+    if errors:
+        print(f"\033[31mErrors ({len(errors)}):\033[0m")
+        for e in errors:
+            print(f"  \033[31m✗\033[0m {e}")
+    if warnings:
+        print(f"\033[33mWarnings ({len(warnings)}):\033[0m")
+        for w in warnings:
+            print(f"  \033[33m⚠\033[0m {w}")
+    if infos:
+        print(f"\033[36mInfo ({len(infos)}):\033[0m")
+        for i in infos:
+            print(f"  \033[36mi\033[0m {i}")
+
+    if not errors and not warnings and not infos:
+        print("\033[32mConfig is valid.\033[0m")
+
+    return 2 if errors else (1 if warnings else 0)
+
+
+def cmd_get(args):
+    """Get a config value."""
+    cfg = ForebConfig.from_file(args.config)
+    key = args.key
+
+    # check globals
+    if key in cfg.globals:
+        print(cfg.globals[key])
+        return
+
+    # check first entry
+    entries = cfg.flat_entries()
+    if args.index is not None and 0 <= args.index < len(entries):
+        val = entries[args.index].get(key, "")
+        print(val)
+        return
+
+    # not found
+    print(f"Key '{key}' not found", file=sys.stderr)
+    return 1
+
+
+def cmd_set(args):
+    """Set a config value."""
+    cfg = ForebConfig.from_file(args.config)
+    key = args.key
+    value = args.value
+
+    # global settings
+    globals_set = {"timeout", "default", "remember_last", "background", "theme"}
+    if key in globals_set:
+        if key == "timeout":
+            try:
+                cfg.timeout = int(value)
+                cfg.globals["timeout"] = value
+            except ValueError:
+                print(f"Invalid timeout: {value}", file=sys.stderr)
+                return 1
+        elif key == "default":
+            cfg.default = value
+            cfg.globals["default"] = value
+        elif key == "remember_last":
+            cfg.remember_last = value in ("1", "true", "yes")
+            cfg.globals["remember_last"] = "1" if cfg.remember_last else "0"
+        elif key == "background":
+            cfg.background = value
+            cfg.globals["background"] = value
+        elif key == "theme":
+            if value not in THEMES:
+                print(f"Unknown theme: {value}. Available: {', '.join(sorted(THEMES))}", file=sys.stderr)
+                return 1
+            cfg.theme = value
+            cfg.globals["theme"] = value
+    else:
+        # entry setting
+        entries = cfg.flat_entries()
+        idx = args.index if args.index is not None else 0
+        if idx < 0 or idx >= len(entries):
+            print(f"Entry index {idx} out of range (0-{len(entries)-1})", file=sys.stderr)
+            return 1
+        entries[idx][key] = value
+
+    # write back
+    with open(args.config, "w") as f:
+        f.write(cfg.serialize())
+    print(f"Set {key}={value}")
+
+
+def cmd_entries(args):
+    """List boot entries."""
+    cfg = ForebConfig.from_file(args.config)
+    entries = cfg.flat_entries()
+
+    if not entries:
+        print("No entries found.")
+        return
+
+    print(f"{'#':>3}  {'Type':<12} {'Title':<40} {'Icon':<12} {'Kernel/Chain'}")
+    print("-" * 90)
+    for i, e in enumerate(entries):
+        etype = e.get("type", "?")
+        title = e.get("title", "?")[:40]
+        icon = e.get("icon", "-")
+        kernel = e.get("vmlinuz", "") or e.get("kernel", "") or e.get("chain", "")
+        if kernel:
+            kernel = kernel[:30]
+        marker = " *" if i == 0 and cfg.default is None else ""
+        print(f"{i:>3}  {etype:<12} {title:<40} {icon:<12} {kernel}{marker}")
+
+
+def cmd_add(args):
+    """Add a boot entry."""
+    cfg = ForebConfig.from_file(args.config)
+
+    entry = {"_kind": "menuentry", "title": args.title, "_children": []}
+    if args.type:
+        entry["type"] = args.type
+    if args.kernel:
+        if args.type == "linux":
+            entry["vmlinuz"] = args.kernel
+        elif args.type == "chainload":
+            entry["chain"] = args.kernel
+        else:
+            entry["kernel"] = args.kernel
+    if args.initrd:
+        entry["initrd"] = args.initrd
+    if args.cmdline:
+        entry["cmdline"] = args.cmdline
+    if args.icon:
+        entry["icon"] = args.icon
+
+    cfg.entries.append(entry)
+
+    with open(args.config, "w") as f:
+        f.write(cfg.serialize())
+    print(f"Added entry '{args.title}'")
+
+
+def cmd_remove(args):
+    """Remove a boot entry by index."""
+    cfg = ForebConfig.from_file(args.config)
+    entries = cfg.flat_entries()
+
+    if args.index < 0 or args.index >= len(entries):
+        print(f"Entry index {args.index} out of range (0-{len(entries)-1})", file=sys.stderr)
+        return 1
+
+    removed = entries[args.index]
+    print(f"Removing: {removed.get('title', '?')}")
+
+    # find and remove from the tree
+    for e in cfg.entries:
+        if e.get("_kind") == "submenu":
+            children = e.get("_children", [])
+            if removed in children:
+                children.remove(removed)
+                break
+        elif removed is e:
+            cfg.entries.remove(e)
+            break
+
+    with open(args.config, "w") as f:
+        f.write(cfg.serialize())
+    print("Done.")
+
+
+def cmd_default(args):
+    """Get or set the default entry."""
+    cfg = ForebConfig.from_file(args.config)
+
+    if args.value is None:
+        # get
+        print(cfg.default if cfg.default else "(not set)")
+        return
+
+    # set
+    cfg.default = args.value
+    cfg.globals["default"] = args.value
+    with open(args.config, "w") as f:
+        f.write(cfg.serialize())
+    print(f"Default set to: {args.value}")
+
+
+def cmd_timeout(args):
+    """Get or set the timeout."""
+    cfg = ForebConfig.from_file(args.config)
+
+    if args.value is None:
+        # get
+        print(cfg.timeout if cfg.timeout is not None else "(not set)")
+        return
+
+    # set
+    try:
+        val = int(args.value)
+    except ValueError:
+        print(f"Invalid timeout: {args.value}", file=sys.stderr)
+        return 1
+
+    cfg.timeout = val
+    cfg.globals["timeout"] = str(val)
+    with open(args.config, "w") as f:
+        f.write(cfg.serialize())
+    print(f"Timeout set to: {val}s")
+
+
+def cmd_convert(args):
+    """Convert between bootloader config formats."""
+    input_path = Path(args.input)
+    if not input_path.exists():
+        print(f"File not found: {args.input}", file=sys.stderr)
+        return 1
+
+    text = input_path.read_text()
+    fmt = args.format
+
+    if fmt == "forebo" or fmt == "foreb":
+        # already forebo format, just re-serialize
+        cfg = ForebConfig.parse(text)
+        output = cfg.serialize()
+    elif fmt == "grub":
+        output = _to_grub(text)
+    elif fmt == "limine":
+        output = _to_limine(text)
+    elif fmt == "systemd-boot":
+        output = _to_systemd_boot(text, args.output)
+    elif fmt == "syslinux":
+        output = _to_syslinux(text)
+    else:
+        print(f"Unknown format: {fmt}", file=sys.stderr)
+        print("Supported: forebo, grub, limine, systemd-boot, syslinux", file=sys.stderr)
+        return 1
+
+    if args.output:
+        Path(args.output).write_text(output)
+        print(f"Converted to {fmt}: {args.output}")
+    else:
+        print(output)
+
+
+def _to_grub(text: str) -> str:
+    """Convert forebo.cfg to GRUB format."""
+    cfg = ForebConfig.parse(text)
+    lines = []
+    lines.append("# Generated by forb-config - ForeB to GRUB conversion")
+    lines.append("")
+    if cfg.timeout is not None:
+        lines.append(f"set timeout={cfg.timeout}")
+    if cfg.default is not None:
+        lines.append(f"set default={cfg.default}")
+    lines.append("")
+
+    for e in cfg.flat_entries():
+        etype = e.get("type", "")
+        title = e.get("title", "Untitled")
+        if etype == "linux":
+            lines.append(f"menuentry \"{title}\" {{")
+            vmlinuz = e.get("vmlinuz", "")
+            cmdline = e.get("cmdline", "")
+            if vmlinuz:
+                lines.append(f"    linux {vmlinuz} {cmdline}")
+            initrd = e.get("initrd", "")
+            if initrd:
+                lines.append(f"    initrd {initrd}")
+            lines.append("}")
+        elif etype == "chainload":
+            chain = e.get("chain", "")
+            lines.append(f"menuentry \"{title}\" {{")
+            if chain:
+                lines.append(f"    chainloader {chain}")
+            lines.append("}")
+        elif etype == "forest":
+            kernel = e.get("kernel", "")
+            lines.append(f"menuentry \"{title}\" {{")
+            if kernel:
+                lines.append(f"    multiboot {kernel}")
+            for mod in e.get("modules", "").split():
+                lines.append(f"    module {mod}")
+            lines.append("}")
+        else:
+            lines.append(f"menuentry \"{title}\" {{}}")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def _to_limine(text: str) -> str:
+    """Convert forebo.cfg to Limine format."""
+    cfg = ForebConfig.parse(text)
+    lines = []
+    lines.append("# Generated by forb-config - ForeB to Limine conversion")
+    lines.append("")
+    if cfg.timeout is not None:
+        lines.append(f"TIMEOUT={cfg.timeout}")
+    lines.append("")
+
+    for e in cfg.flat_entries():
+        etype = e.get("type", "")
+        title = e.get("title", "Untitled")
+        lines.append(f":{title}")
+        if etype == "linux":
+            lines.append("    PROTOCOL=linux")
+            vmlinuz = e.get("vmlinuz", "")
+            if vmlinuz:
+                lines.append(f"    KERNEL_PATH=boot():/{vmlinuz.lstrip('/')}")
+            initrd = e.get("initrd", "")
+            if initrd:
+                lines.append(f"    MODULE_PATH=boot():/{initrd.lstrip('/')}")
+            cmdline = e.get("cmdline", "")
+            if cmdline:
+                lines.append(f"    CMDLINE={cmdline}")
+        elif etype == "chainload":
+            chain = e.get("chain", "")
+            lines.append("    PROTOCOL=efi_chainload")
+            if chain:
+                lines.append(f"    PATH=boot():/{chain.lstrip('/')}")
+        elif etype == "forest":
+            kernel = e.get("kernel", "")
+            lines.append("    PROTOCOL=multiboot1")
+            if kernel:
+                lines.append(f"    KERNEL_PATH=boot():/{kernel.lstrip('/')}")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def _to_systemd_boot(text: str, output_dir: Optional[str] = None) -> str:
+    """Convert forebo.cfg to systemd-boot format (creates multiple files)."""
+    cfg = ForebConfig.parse(text)
+    entries = cfg.flat_entries()
+
+    if output_dir:
+        outdir = Path(output_dir)
+        outdir.mkdir(parents=True, exist_ok=True)
+
+    lines = []
+    for i, e in enumerate(entries):
+        etype = e.get("type", "")
+        title = e.get("title", "Untitled")
+        filename = f"{title.lower().replace(' ', '-')}.conf"
+
+        entry_lines = []
+        entry_lines.append(f"title {title}")
+        if etype == "linux":
+            vmlinuz = e.get("vmlinuz", "")
+            if vmlinuz:
+                entry_lines.append(f"linux /{vmlinuz.lstrip('/')}")
+            initrd = e.get("initrd", "")
+            if initrd:
+                entry_lines.append(f"initrd /{initrd.lstrip('/')}")
+            cmdline = e.get("cmdline", "")
+            if cmdline:
+                entry_lines.append(f"options {cmdline}")
+        elif etype == "chainload":
+            chain = e.get("chain", "")
+            if chain:
+                entry_lines.append(f"efi /{chain.lstrip('/')}")
+        elif etype == "forest":
+            kernel = e.get("kernel", "")
+            if kernel:
+                entry_lines.append(f"linux /{kernel.lstrip('/')}")
+                entry_lines.append("options multiboot")
+
+        content = "\n".join(entry_lines) + "\n"
+        if output_dir:
+            (outdir / filename).write_text(content)
+            lines.append(f"  Created: {filename}")
+        else:
+            lines.append(f"# --- {filename} ---")
+            lines.append(content)
+
+    # create loader.conf
+    if output_dir:
+        loader_conf = "# Generated by forb-config\n"
+        if cfg.timeout is not None:
+            loader_conf += f"timeout {cfg.timeout}\n"
+        (outdir / "loader.conf").write_text(loader_conf)
+        lines.insert(0, f"  Created: loader.conf")
+
+    return "\n".join(lines)
+
+
+def _to_syslinux(text: str) -> str:
+    """Convert forebo.cfg to syslinux format."""
+    cfg = ForebConfig.parse(text)
+    lines = []
+    lines.append("# Generated by forb-config - ForeB to syslinux conversion")
+    lines.append("")
+    if cfg.timeout is not None:
+        lines.append(f"TIMEOUT {cfg.timeout * 10}")  # syslinux uses 10ths
+    lines.append("")
+
+    for e in cfg.flat_entries():
+        etype = e.get("type", "")
+        title = e.get("title", "Untitled")
+        lines.append(f"LABEL {title.lower().replace(' ', '-')}")
+        lines.append(f"    MENU LABEL {title}")
+        if etype == "linux":
+            vmlinuz = e.get("vmlinuz", "")
+            if vmlinuz:
+                lines.append(f"    LINUX /{vmlinuz.lstrip('/')}")
+            initrd = e.get("initrd", "")
+            if initrd:
+                lines.append(f"    INITRD /{initrd.lstrip('/')}")
+            cmdline = e.get("cmdline", "")
+            if cmdline:
+                lines.append(f"    APPEND {cmdline}")
+        elif etype == "chainload":
+            chain = e.get("chain", "")
+            if chain:
+                if chain.endswith(".efi"):
+                    lines.append(f"    COM32 chain.c32")
+                    lines.append(f"    APPEND fs")
+                else:
+                    lines.append(f"    LOCALBOOT 0")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def cmd_detect(args):
+    """Detect installed bootloaders."""
+    search_paths = [
+        args.path if args.path else "/boot/efi",
+        "/boot",
+        "/efi",
+    ]
+
+    detected = []
+    for base in search_paths:
+        b = Path(base)
+        if not b.exists():
+            continue
+
+        checks = [
+            ("ForeB", "EFI/forb/BOOTX64.EFI", "EFI/forb/forebo.cfg"),
+            ("GRUB", "grub/grub.cfg", None),
+            ("GRUB (EFI)", "EFI/grub/grub.cfg", None),
+            ("Limine", "limine.conf", None),
+            ("Limine (EFI)", "EFI/limine/limine.conf", None),
+            ("systemd-boot", "loader/loader.conf", None),
+            ("rEFInd", "EFI/refind/refind.conf", None),
+            ("Clover", "EFI/CLOVER/config.plist", None),
+            ("syslinux", "syslinux/syslinux.cfg", None),
+            ("Windows Boot Manager", "EFI/Microsoft/Boot/bootmgfw.efi", None),
+        ]
+
+        for name, efi_path, cfg_path in checks:
+            full = b / efi_path
+            if full.exists():
+                info = {"name": name, "efi": str(full)}
+                if cfg_path:
+                    cfg_full = b / cfg_path
+                    if cfg_full.exists():
+                        info["config"] = str(cfg_full)
+                        try:
+                            text = cfg_full.read_text()
+                            info["lines"] = len(text.splitlines())
+                        except:
+                            pass
+                detected.append(info)
+
+    if not detected:
+        print("No bootloaders detected.")
+        return
+
+    print(f"{'Bootloader':<25} {'EFI Binary':<50} {'Config'}")
+    print("-" * 120)
+    for d in detected:
+        print(f"{d['name']:<25} {d.get('efi', '-'):<50} {d.get('config', '-')}")
+
+
+def cmd_migrate(args):
+    """Migrate from another bootloader."""
+    source = Path(args.source) if args.source else Path("/boot/efi")
+    if not source.exists():
+        print(f"Source path not found: {args.source}", file=sys.stderr)
+        return 1
+
+    # detect source bootloader
+    print(f"Scanning {source}...")
+
+    grub_cfg = None
+    limine_cfg = None
+    systemd_cfg = None
+
+    for p in [
+        source / "grub/grub.cfg",
+        source / "EFI/grub/grub.cfg",
+    ]:
+        if p.exists():
+            grub_cfg = p
+            break
+
+    for p in [
+        source / "limine.conf",
+        source / "EFI/limine/limine.conf",
+    ]:
+        if p.exists():
+            limine_cfg = p
+            break
+
+    systemd_cfg = source / "loader/loader.conf"
+    if not systemd_cfg.exists():
+        systemd_cfg = None
+
+    if grub_cfg:
+        print(f"Detected GRUB: {grub_cfg}")
+        print("GRUB migration is best-effort. Complex GRUB features may not translate.")
+        # TODO: use forb-install's parser
+        print("Use: forb-install migrate --source {} --backup".format(source))
+    elif limine_cfg:
+        print(f"Detected Limine: {limine_cfg}")
+        print("Use: forb-install migrate --source {} --backup".format(source))
+    elif systemd_cfg:
+        print(f"Detected systemd-boot: {systemd_cfg}")
+        print("Use: forb-install migrate --source {} --backup".format(source))
+    else:
+        print("No known bootloader config found.")
+        print("Searched for: grub.cfg, limine.conf, loader.conf")
+        return 1
+
+
+def cmd_diff(args):
+    """Compare two configs."""
+    a = ForebConfig.from_file(args.config_a)
+    b = ForebConfig.from_file(args.config_b)
+
+    a_entries = a.flat_entries()
+    b_entries = b.flat_entries()
+
+    a_titles = {e.get("title", ""): e for e in a_entries}
+    b_titles = {e.get("title", ""): e for e in b_entries}
+
+    added = [t for t in b_titles if t not in a_titles]
+    removed = [t for t in a_titles if t not in b_titles]
+    common = [t for t in a_titles if t in b_titles]
+
+    modified = []
+    for t in common:
+        ae, be = a_titles[t], b_titles[t]
+        diffs = []
+        for key in set(list(ae.keys()) + list(be.keys())):
+            if key.startswith("_"):
+                continue
+            av = ae.get(key, "")
+            bv = be.get(key, "")
+            if av != bv:
+                diffs.append((key, av, bv))
+        if diffs:
+            modified.append((t, diffs))
+
+    # globals diff
+    g_diffs = []
+    for key in set(list(a.globals.keys()) + list(b.globals.keys())):
+        av = a.globals.get(key, "(unset)")
+        bv = b.globals.get(key, "(unset)")
+        if av != bv:
+            g_diffs.append((key, av, bv))
+
+    if g_diffs:
+        print("\033[36mGlobal settings:\033[0m")
+        for key, av, bv in g_diffs:
+            print(f"  {key}: {av} -> {bv}")
+
+    if added:
+        print(f"\n\033[32mAdded ({len(added)}):\033[0m")
+        for t in added:
+            print(f"  + {t}")
+
+    if removed:
+        print(f"\n\033[31mRemoved ({len(removed)}):\033[0m")
+        for t in removed:
+            print(f"  - {t}")
+
+    if modified:
+        print(f"\n\033[33mModified ({len(modified)}):\033[0m")
+        for title, diffs in modified:
+            print(f"  ~ {title}")
+            for key, av, bv in diffs:
+                print(f"      {key}: {av!r} -> {bv!r}")
+
+    if not added and not removed and not modified and not g_diffs:
+        print("\033[32mConfigs are identical.\033[0m")
+
+
+def cmd_themes(args):
+    """List available themes."""
+    print(f"{'Theme':<15} {'Background':<12} {'Accent':<12} {'Selection'}")
+    print("-" * 60)
+    for name, colors in sorted(THEMES.items()):
+        print(f"{name:<15} {colors['bg']:<12} {colors['accent']:<12} {colors['sel_bg']}")
+
+
+def cmd_icons(args):
+    """List available icons."""
+    print("Available icons:")
+    for icon in sorted(ICONS):
+        print(f"  {icon}")
+    print(f"\n{len(ICONS)} icons. Custom icons: use path to .tga file.")
+
+
+# ─── CLI ─────────────────────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="forb-config",
+        description="ForeB bootloader configuration tool",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  forb-config info boot/forebo.cfg
+  forb-config validate boot/forebo.cfg --esp /boot/efi
+  forb-config entries boot/forebo.cfg
+  forb-config set boot/forebo.cfg timeout 5
+  forb-config add boot/forebo.cfg --title "My Linux" --type linux --kernel /boot/vmlinuz
+  forb-config convert grub.cfg --to forebo
+  forb-config diff old.cfg new.cfg
+  forb-config themes
+"""
+    )
+
+    sub = parser.add_subparsers(dest="command", help="Command")
+
+    # info
+    p = sub.add_parser("info", help="Show config summary")
+    p.add_argument("config", help="Path to forebo.cfg")
+
+    # validate
+    p = sub.add_parser("validate", help="Validate config")
+    p.add_argument("config", help="Path to forebo.cfg")
+    p.add_argument("--esp", help="ESP mount point for file existence checks")
+
+    # get
+    p = sub.add_parser("get", help="Get a setting value")
+    p.add_argument("config", help="Path to forebo.cfg")
+    p.add_argument("key", help="Setting key")
+    p.add_argument("--index", type=int, help="Entry index (for entry-specific keys)")
+
+    # set
+    p = sub.add_parser("set", help="Set a setting value")
+    p.add_argument("config", help="Path to forebo.cfg")
+    p.add_argument("key", help="Setting key")
+    p.add_argument("value", help="New value")
+    p.add_argument("--index", type=int, help="Entry index (for entry-specific keys)")
+
+    # entries
+    p = sub.add_parser("entries", help="List boot entries")
+    p.add_argument("config", help="Path to forebo.cfg")
+
+    # add
+    p = sub.add_parser("add", help="Add a boot entry")
+    p.add_argument("config", help="Path to forebo.cfg")
+    p.add_argument("--title", required=True, help="Entry title")
+    p.add_argument("--type", choices=VALID_TYPES, help="Entry type")
+    p.add_argument("--kernel", help="Kernel/initrd/chain path")
+    p.add_argument("--initrd", help="Initrd path")
+    p.add_argument("--cmdline", help="Kernel command line")
+    p.add_argument("--icon", help="Icon name")
+
+    # remove
+    p = sub.add_parser("remove", help="Remove a boot entry")
+    p.add_argument("config", help="Path to forebo.cfg")
+    p.add_argument("index", type=int, help="Entry index")
+
+    # default
+    p = sub.add_parser("default", help="Get/set default entry")
+    p.add_argument("config", help="Path to forebo.cfg")
+    p.add_argument("value", nargs="?", help="New default (index or title)")
+
+    # timeout
+    p = sub.add_parser("timeout", help="Get/set timeout")
+    p.add_argument("config", help="Path to forebo.cfg")
+    p.add_argument("value", nargs="?", help="New timeout in seconds")
+
+    # convert
+    p = sub.add_parser("convert", help="Convert between formats")
+    p.add_argument("input", help="Input config file")
+    p.add_argument("--to", dest="format", required=True,
+                    choices=["forebo", "foreb", "grub", "limine", "systemd-boot", "syslinux"],
+                    help="Output format")
+    p.add_argument("--output", "-o", help="Output file (omit for stdout)")
+
+    # detect
+    p = sub.add_parser("detect", help="Detect installed bootloaders")
+    p.add_argument("path", nargs="?", help="Path to scan (default: /boot/efi)")
+
+    # migrate
+    p = sub.add_parser("migrate", help="Migrate from another bootloader")
+    p.add_argument("source", nargs="?", help="Source path (default: /boot/efi)")
+    p.add_argument("--backup", action="store_true", help="Backup existing config")
+
+    # diff
+    p = sub.add_parser("diff", help="Compare two configs")
+    p.add_argument("config_a", help="First config")
+    p.add_argument("config_b", help="Second config")
+
+    # themes
+    sub.add_parser("themes", help="List available themes")
+
+    # icons
+    sub.add_parser("icons", help="List available icons")
+
+    args = parser.parse_args()
+    if not args.command:
+        parser.print_help()
+        return 1
+
+    cmds = {
+        "info": cmd_info,
+        "validate": cmd_validate,
+        "get": cmd_get,
+        "set": cmd_set,
+        "entries": cmd_entries,
+        "add": cmd_add,
+        "remove": cmd_remove,
+        "default": cmd_default,
+        "timeout": cmd_timeout,
+        "convert": cmd_convert,
+        "detect": cmd_detect,
+        "migrate": cmd_migrate,
+        "diff": cmd_diff,
+        "themes": cmd_themes,
+        "icons": cmd_icons,
+    }
+
+    return cmds[args.command](args) or 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -150,7 +150,7 @@ static void serial_add_pressed_key(uint8 key_code) {
     }
 }
 
-static void serial_remove_pressed_key(uint8 key_code) {
+__attribute__((unused)) static void serial_remove_pressed_key(uint8 key_code) {
     for (int i = 0; i < serial_pressed_count; i++) {
         if (serial_pressed_keys[i] == key_code) {
             // Remove by shifting remaining keys
@@ -169,8 +169,6 @@ static void serial_process_escape_sequence(void) {
         // CSI sequences
         if (serial_escape_pos >= 3) {
             char final_char = serial_escape_buffer[serial_escape_pos - 1];
-            char intermediate = (serial_escape_pos >= 4) ? serial_escape_buffer[serial_escape_pos - 2] : 0;
-
             // Handle special keys
             uint8 key_code = 0;
             switch (final_char) {

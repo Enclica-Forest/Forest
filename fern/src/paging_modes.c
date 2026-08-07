@@ -21,11 +21,17 @@
  * - PKE (Protection Keys)
  */
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
+
 #include "include/paging_modes.h"
 #include "include/memory.h"
 #include "include/screen.h"
 #include "include/string.h"
 #include "include/tlb.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wasm-operand-widths"
 
 // ============================================================================
 // CONSTANTS AND MASKS
@@ -146,6 +152,7 @@ static inline void wrmsr(uint32_t msr, uint64_t val) {
     __asm__ volatile("wrmsr" :: "c"(msr), "a"((uint32_t)val), "d"((uint32_t)(val >> 32)));
 }
 
+#if defined(__x86_64__) || defined(_M_X64)
 static inline uint64_t read_cr0(void) {
     uint64_t val;
     __asm__ volatile("mov %%cr0, %0" : "=r"(val));
@@ -175,6 +182,38 @@ static inline uint64_t read_cr4(void) {
 static inline void write_cr4(uint64_t val) {
     __asm__ volatile("mov %0, %%cr4" :: "r"(val) : "memory");
 }
+#else
+static inline uint64_t read_cr0(void) {
+    uint32_t val;
+    __asm__ volatile("mov %%cr0, %0" : "=r"(val));
+    return (uint64_t)val;
+}
+
+static inline void write_cr0(uint64_t val) {
+    __asm__ volatile("mov %0, %%cr0" :: "r"((uint32_t)val) : "memory");
+}
+
+static inline uint64_t read_cr3(void) {
+    uint32_t val;
+    __asm__ volatile("mov %%cr3, %0" : "=r"(val));
+    return (uint64_t)val;
+}
+
+static inline void write_cr3(uint64_t val) {
+    __asm__ volatile("mov %0, %%cr3" :: "r"((uint32_t)val) : "memory");
+}
+
+static inline uint64_t read_cr4(void) {
+    uint32_t val;
+    __asm__ volatile("mov %%cr4, %0" : "=r"(val));
+    return (uint64_t)val;
+}
+
+static inline void write_cr4(uint64_t val) {
+    __asm__ volatile("mov %0, %%cr4" :: "r"((uint32_t)val) : "memory");
+}
+#endif
+#pragma GCC diagnostic pop
 
 /**
  * @brief Detect CPU paging capabilities
@@ -912,3 +951,5 @@ void paging_dump_stats(void) {
     print("\n");
     print("=========================\n\n");
 }
+
+#pragma GCC diagnostic pop

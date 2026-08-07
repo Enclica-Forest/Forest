@@ -1,0 +1,2 @@
+#!/bin/sh
+echo 'Filesystem     1K-blocks  Used Available Use% Mounted on'

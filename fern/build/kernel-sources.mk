@@ -112,6 +112,14 @@ QRCODEGEN_OBJECTS := $(OBJDIR)/qrcodegen.o
 # lists whose paths may overlap $(SRCDIR)/*.c (notably EXCLUDED_INTERRUPT_SRCS;
 # the graphics/input/canopy lists are subdir paths and overlap is harmless).
 # ---------------------------------------------------------------------------
+# 64-bit: exclude files with float ops incompatible with -msoft-float
+# Also exclude incomplete/in-progress64-bit files
+ifeq ($(ARCH),64)
+EXCLUDED_CSOURCES += $(SRCDIR)/bmp.c $(SRCDIR)/force.c $(SRCDIR)/panicui.c $(SRCDIR)/tty_render.c $(SRCDIR)/virtio_snd.c
+EXCLUDED_INPUT_SRCS += $(SRCDIR)/input/input_mux.c
+EXCLUDED_CSOURCES += $(SRCDIR)/x86_64/signal.c
+endif
+
 CSOURCES = $(filter-out \
     $(EXCLUDED_CSOURCES) \
     $(EXCLUDED_GRAPHICS_SRCS) \
@@ -130,6 +138,10 @@ COBJECTS = $(CSOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 GRAPHICS_SRCS = $(filter-out $(EXCLUDED_GRAPHICS_SRCS),\
     $(wildcard $(SRCDIR)/graphics/*.c) $(wildcard $(SRCDIR)/graphics/drivers/*.c))
 GRAPHICS_OBJECTS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(GRAPHICS_SRCS))
+
+# GL math library (src/gl/).
+GL_SRCS      = $(wildcard $(SRCDIR)/gl/*.c)
+GL_OBJECTS   = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(GL_SRCS))
 
 # Panic UI (top-level src/panicui*.c). Filtered by EXCLUDED_CSOURCES so
 # build/features/graphics.mk (ENABLE_PANICUI=no / ENABLE_GRAPHICS=no) can drop it.
@@ -158,7 +170,7 @@ CGDM_OBJECTS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,\
 # Interrupt sources (top-level src/interrupt*.c). Filtered by the base
 # EXCLUDED_CSOURCES plus feature-fragment EXCLUDED_INTERRUPT_SRCS appends.
 INTERRUPT_SRCS = $(wildcard $(SRCDIR)/interrupt*.c)
-INTERRUPT_OBJECTS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,\
+INTERRUPT_OBJECTS = $(patsubst $(SRCDIR)/interrupt%.c,$(OBJDIR)/interrupt%.o,\
     $(filter-out $(EXCLUDED_CSOURCES) $(EXCLUDED_INTERRUPT_SRCS),$(INTERRUPT_SRCS)))
 
 # Filesystem subsystem (src/fs/).
@@ -184,12 +196,52 @@ AARCH64_C_OBJECTS := $(patsubst $(SRCDIR)/aarch64/%.c,$(OBJDIR)/aarch64/%.o,$(fi
 AARCH64_S_OBJECTS := $(patsubst $(SRCDIR)/aarch64/%.S,$(OBJDIR)/aarch64/%.o,$(filter %.S,$(AARCH64_SRCS)))
 AARCH64_OBJECTS   := $(AARCH64_C_OBJECTS) $(AARCH64_S_OBJECTS)
 
+# AArch64 UEFI-specific objects (src/aarch64/uefi_boot.* + UEFI helpers).
+# Only the UEFI stub and shared UEFI modules are linked; the bare-metal
+# boot.S / startup.S are excluded because UEFI firmware handles early init.
+AARCH64_UEFI_C_OBJECTS := $(patsubst $(SRCDIR)/aarch64/%.c,$(OBJDIR)/aarch64/%.o,\
+    $(wildcard $(SRCDIR)/aarch64/uefi_boot.c))
+AARCH64_UEFI_S_OBJECTS := $(patsubst $(SRCDIR)/aarch64/%.S,$(OBJDIR)/aarch64/%.o,\
+    $(wildcard $(SRCDIR)/aarch64/uefi_boot.S))
+AARCH64_UEFI_UEFI_OBJECTS := $(patsubst $(SRCDIR)/uefi/%.c,$(OBJDIR)/uefi/%.o,\
+    $(wildcard $(SRCDIR)/uefi/*.c))
+AARCH64_UEFI_OBJECTS := $(AARCH64_UEFI_C_OBJECTS) $(AARCH64_UEFI_S_OBJECTS) \
+                         $(AARCH64_UEFI_UEFI_OBJECTS)
+
+# RISC-V 64-bit specific sources (src/riscv64/).
+RISCV64_SRCS        := $(wildcard $(SRCDIR)/riscv64/*.c) $(wildcard $(SRCDIR)/riscv64/*.S)
+RISCV64_C_OBJECTS   := $(patsubst $(SRCDIR)/riscv64/%.c,$(OBJDIR)/riscv64/%.o,$(filter %.c,$(RISCV64_SRCS)))
+RISCV64_S_OBJECTS   := $(patsubst $(SRCDIR)/riscv64/%.S,$(OBJDIR)/riscv64/%.o,$(filter %.S,$(RISCV64_SRCS)))
+RISCV64_OBJECTS     := $(RISCV64_C_OBJECTS) $(RISCV64_S_OBJECTS)
+
+# RISC-V UEFI-specific objects (src/riscv64/uefi_boot.* + UEFI helpers).
+RISCV64_UEFI_C_OBJECTS := $(patsubst $(SRCDIR)/riscv64/%.c,$(OBJDIR)/riscv64/%.o,\
+    $(wildcard $(SRCDIR)/riscv64/uefi_boot.c))
+RISCV64_UEFI_S_OBJECTS := $(patsubst $(SRCDIR)/riscv64/%.S,$(OBJDIR)/riscv64/%.o,\
+    $(wildcard $(SRCDIR)/riscv64/uefi_boot.S))
+RISCV64_UEFI_UEFI_OBJECTS := $(patsubst $(SRCDIR)/uefi/%.c,$(OBJDIR)/uefi/%.o,\
+    $(wildcard $(SRCDIR)/uefi/*.c))
+RISCV64_UEFI_OBJECTS := $(RISCV64_UEFI_C_OBJECTS) $(RISCV64_UEFI_S_OBJECTS) \
+                         $(RISCV64_UEFI_UEFI_OBJECTS)
+
+# x86_64-specific sources (src/x86_64/).
+X86_64_SRCS        := $(wildcard $(SRCDIR)/x86_64/*.c)
+ifeq ($(ARCH),64)
+X86_64_SRCS        := $(filter-out $(SRCDIR)/x86_64/signal.c,$(X86_64_SRCS))
+endif
+X86_64_C_OBJECTS   := $(patsubst $(SRCDIR)/x86_64/%.c,$(OBJDIR)/x86_64/%.o,$(filter %.c,$(X86_64_SRCS)))
+X86_64_OBJECTS     := $(X86_64_C_OBJECTS)
+
 # Cross-architecture interpreter (src/crossarcinterpret/).
 CROSSARC_SRCS    := $(wildcard $(SRCDIR)/crossarcinterpret/*.c)
 CROSSARC_OBJECTS := $(patsubst $(SRCDIR)/crossarcinterpret/%.c,$(OBJDIR)/crossarcinterpret/%.o,$(CROSSARC_SRCS))
 
+# Cross-architecture shared sources (src/arch/*.c).
+ARCH_SHARED_SRCS    := $(wildcard $(SRCDIR)/arch/*.c)
+ARCH_SHARED_OBJECTS := $(patsubst $(SRCDIR)/arch/%.c,$(OBJDIR)/arch/%.o,$(ARCH_SHARED_SRCS))
+
 # ASM objects (from .s and .asm files) -- x86/x86_64 only.
-ifeq ($(filter arm aarch64,$(ARCH)),)
+ifeq ($(filter arm aarch64 riscv64,$(ARCH)),)
 ASM_SRCS := $(wildcard $(SRCDIR)/*.s) $(wildcard $(SRCDIR)/*.asm)
 ASMOBJECTS := $(patsubst $(SRCDIR)/%.s,$(OBJDIR)/%.o,$(filter $(SRCDIR)/%.s,$(ASM_SRCS))) \
               $(patsubst $(SRCDIR)/%.asm,$(OBJDIR)/%.o,$(filter $(SRCDIR)/%.asm,$(ASM_SRCS)))
@@ -203,6 +255,10 @@ ifeq ($(ARCH),arm)
     ARCH_EXTRA_OBJECTS := $(ARM32_OBJECTS)
 else ifeq ($(ARCH),aarch64)
     ARCH_EXTRA_OBJECTS := $(AARCH64_OBJECTS)
+else ifeq ($(ARCH),riscv64)
+    ARCH_EXTRA_OBJECTS := $(RISCV64_OBJECTS)
+else ifeq ($(ARCH),64)
+    ARCH_EXTRA_OBJECTS := $(X86_64_OBJECTS)
 else
     ARCH_EXTRA_OBJECTS :=
 endif
@@ -218,9 +274,10 @@ endif
 # ELF_TEST_OBJECTS is intentionally left referenced-but-undefined here to
 # preserve existing behavior (the original Makefile never defined it).
 # ---------------------------------------------------------------------------
-ALL_OBJECTS = $(COBJECTS) $(GRAPHICS_OBJECTS) $(PANICUI_OBJECTS) \
+ALL_OBJECTS = $(COBJECTS) $(GRAPHICS_OBJECTS) $(GL_OBJECTS) $(PANICUI_OBJECTS) \
               $(INPUT_OBJECTS) $(CGDM_OBJECTS) $(BOOT_OBJECTS) $(ASMOBJECTS) \
               $(INTERRUPT_OBJECTS) $(UACPI_OBJECTS) $(ELF_TEST_OBJECTS) \
               $(FS_OBJECTS) $(USB_CSOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o) \
               $(HW_CSOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o) $(QRCODEGEN_OBJECTS) \
+              $(ARCH_SHARED_OBJECTS) \
               $(ARCH_EXTRA_OBJECTS) $(KERN_EXTRA_OBJS)

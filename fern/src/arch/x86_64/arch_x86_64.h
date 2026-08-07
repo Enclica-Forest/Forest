@@ -41,10 +41,9 @@
 #define X86_64_SEG_NULL      0x00
 #define X86_64_SEG_KCODE     0x08   /* RPL=0, 64-bit code  */
 #define X86_64_SEG_KDATA     0x10   /* RPL=0, data (64-bit data segs are flat) */
-#define X86_64_SEG_UCODE32   0x18   /* RPL=3, 32-bit compat user code (optional) */
-#define X86_64_SEG_UDATA     0x20   /* RPL=3, user data */
-#define X86_64_SEG_UCODE64   0x28   /* RPL=3, 64-bit user code (with RPL → 0x2B) */
-#define X86_64_SEG_TSS       0x30   /* 16-byte TSS descriptor (occupies two slots) */
+#define X86_64_SEG_UDATA     0x18   /* RPL=3, user data     (SYSRET base+8) */
+#define X86_64_SEG_UCODE64   0x20   /* RPL=3, 64-bit user code (SYSRET base+16) */
+#define X86_64_SEG_TSS       0x28   /* 16-byte TSS descriptor (occupies two slots) */
 
 /* Access byte bits (same as 32-bit, plus L and D bits in the flags nibble) */
 #define GDT64_ACCESS_PRESENT  (1U << 7)

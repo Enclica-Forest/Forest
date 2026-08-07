@@ -448,6 +448,8 @@ static void intel_read_current_mode(intel_private_t* priv) {
     uint32_t htotal = intel_read32(priv, INTEL_HTOTAL_A);
     uint32_t vtotal = intel_read32(priv, INTEL_VTOTAL_A);
     uint32_t pipesrc = intel_read32(priv, INTEL_PIPEASRC);
+    (void)htotal;
+    (void)vtotal;
     
     /* Extract active resolution */
     priv->width = (pipesrc >> 16) + 1;
@@ -667,6 +669,7 @@ static gfx_result_t intel_shutdown(gfx_device_t* dev) {
 
 static gfx_result_t intel_get_modes(gfx_device_t* dev, gfx_mode_t** modes, uint32_t* count) {
     intel_private_t* priv = (intel_private_t*)dev->driver_data;
+    (void)priv;
     
     /* Return current mode (we can't easily change modes) */
     gfx_mode_t* mode_list = (gfx_mode_t*)kmalloc(sizeof(gfx_mode_t));

@@ -93,7 +93,7 @@ static inotify_instance_t* find_inotify_by_fd(int fd) {
 }
 
 // Find watch by wd
-static inotify_watch_t* find_watch_by_wd(inotify_instance_t* instance, int wd) {
+__attribute__((unused)) static inotify_watch_t* find_watch_by_wd(inotify_instance_t* instance, int wd) {
     inotify_watch_t* watch = instance->watches;
     while (watch) {
         if (watch->wd == wd) {
@@ -192,7 +192,7 @@ static int add_event_to_buffer(inotify_instance_t* instance, int wd, uint32_t ma
         uint8_t* name_dst = instance->buffer + instance->buf_pos + INOTIFY_EVENT_SIZE;
         memory_set(name_dst, 0, padded_name_len);
         if (name && raw_name_len > 0) {
-            memory_copy(name, name_dst, raw_name_len);
+            memory_copy((const char*)name, (char*)name_dst, raw_name_len);
         }
     }
     
@@ -408,7 +408,7 @@ int inotify_read(int fd, void* buf, size_t count) {
         return -EINVAL;
     }
 
-    memory_copy(instance->buffer, buf, to_copy);
+    memory_copy((const char*)instance->buffer, buf, to_copy);
 
     // Shift remaining data
     if (instance->buf_pos > to_copy) {

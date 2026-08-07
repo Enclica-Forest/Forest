@@ -206,6 +206,12 @@ ifeq ($(ARCH),aarch64)
 endif
 
 # -----------------------------------------------------------------------------
+# Cross-architecture heap wrapper (src/arch/kheap.c)
+# -----------------------------------------------------------------------------
+ARCH_KHEAP_SRCS    := $(wildcard $(SRCDIR)/arch/kheap.c)
+ARCH_KHEAP_OBJECTS := $(ARCH_KHEAP_SRCS:$(SRCDIR)/arch/%.c=$(OBJDIR)/arch/%.o)
+
+# -----------------------------------------------------------------------------
 # QR code generator library (libs/qrcodegen/qrcodegen.c)
 # -----------------------------------------------------------------------------
 QRCODEGEN_SRCS    := $(wildcard $(QRCODEGEN_DIR)/qrcodegen.c)
@@ -228,6 +234,7 @@ ALL_OBJECTS := \
     $(ARM32_OBJECTS) \
     $(AARCH64_OBJECTS) \
     $(CROSSARC_OBJECTS) \
+    $(ARCH_KHEAP_OBJECTS) \
     $(ASMOBJECTS) \
     $(ARCH_EXTRA_OBJECTS) \
     $(BOOT_OBJECTS) \

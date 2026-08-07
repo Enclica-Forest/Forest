@@ -118,17 +118,17 @@ task_switch_asm:
 ;
 ; At this point the kernel stack holds a 64-bit IRETQ frame:
 ;   [RSP+0]  = RIP   (ELF entry point, user virtual address)
-;   [RSP+8]  = CS    (0x1B | 3 = user code selector, RPL=3)
+;   [RSP+8]  = CS    (0x23 = user code selector, RPL=3)
 ;   [RSP+16] = RFLAGS (IF set, IOPL=0)
 ;   [RSP+24] = RSP   (top of user stack)
-;   [RSP+32] = SS    (0x23 | 3 = user data selector, RPL=3)
+;   [RSP+32] = SS    (0x1B = user data selector, RPL=3)
 ;
 ; We load the user data selectors into DS/ES/FS/GS then IRETQ.
 ; ---------------------------------------------------------------------------
 global task_start_usermode_asm
 task_start_usermode_asm:
-    ; User data selector: GDT index 4, TI=0, RPL=3  →  (4<<3)|3 = 0x23
-    mov ax, 0x23
+    ; User data selector: GDT index 3, TI=0, RPL=3  →  (3<<3)|3 = 0x1B
+    mov ax, 0x1B
     mov ds, ax
     mov es, ax
     mov fs, ax

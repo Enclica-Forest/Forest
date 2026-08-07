@@ -14,6 +14,7 @@
 #include "include/memory.h"
 #include "include/string.h"
 #include "include/debuglog.h"
+#include "include/util.h"
 
 #if ENABLE_DRIVER_MODEL
 

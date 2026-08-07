@@ -20,7 +20,7 @@ TOOLSDIR := tools
 # Source directories
 USER_SRCDIR := userspace
 INITRD_DIR := initrd
-LIBC_DIR := libs/libc
+LIBC_DIR := $(abspath $(CURDIR)/../../libs/libc)
 FORESTCORE_DIR := libs/forestcore
 UACPI_SRCDIR := libs/uacpi/source
 

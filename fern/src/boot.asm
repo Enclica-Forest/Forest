@@ -61,9 +61,9 @@ section .data
 align 4
 boot_params:
 saved_magic:
-    resd 1
+    dd 0
 saved_mbi:
-    resd 1
+    dd 0
 
 section .text
 
@@ -168,16 +168,16 @@ early_exception_handler:
 
 ; Minimal IDT for early boot
 section .bss
-align 16
+alignb 16
 early_idt:
     resb 8 * 256        ; 256 IDT entries, 8 bytes each
 
-align 4096
+alignb 4096
 panic_safe_stack:
     resb 4096
 panic_safe_stack_top:
 
-align 16
+alignb 16
 boot_fault_snapshot:
     resd 8
 
@@ -188,7 +188,7 @@ boot_loader_stack:
 section .data
 align 4
 boot_stack_snapshot:
-    resd 8
+    times 8 dd 0
 
 section .data
 align 4

@@ -353,7 +353,7 @@ static void ttf_ael_insert(ttf_ael_node_t** ael, ttf_edge_t* edge) {
 }
 
 // Remove edge from AEL
-static void ttf_ael_remove(ttf_ael_node_t** ael, ttf_edge_t* edge) {
+__attribute__((unused)) static void ttf_ael_remove(ttf_ael_node_t** ael, ttf_edge_t* edge) {
     ttf_ael_node_t** pp = ael;
     while (*pp) {
         if ((*pp)->edge == edge) {

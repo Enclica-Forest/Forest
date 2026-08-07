@@ -70,7 +70,7 @@ static ssize_t random_read(struct device_node *dev, void *buffer, size_t count, 
 /* Full device (/dev/full) */
 static ssize_t full_write(struct device_node *dev, const void *buffer, size_t count, uint64_t offset)
 {
-    (void)dev; (void)buffer; (void)offset;
+    (void)dev; (void)buffer; (void)count; (void)offset;
     /* Always return no space error */
     return -28;
 }

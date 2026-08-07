@@ -1,0 +1,100 @@
+name: Build Forest-OS (32-bit & 64-bit)
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+jobs:
+  toolchain:
+    name: Cross-toolchain (both)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install host dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential texinfo flex bison gawk \
+            curl xz-utils nasm \
+            libgmp-dev libmpfr-dev libmpc-dev libisl-dev zlib1g-dev
+
+      - name: Cache toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
+            forestos-toolchain/install
+            forestos-toolchain/sysroot
+            forestos-toolchain/build
+          key: toolchain-${{ runner.os }}-${{ hashFiles('forestos-toolchain/build-toolchain.sh', 'forestos-toolchain/checksums.txt', 'forestos-toolchain/patches/**') }}
+          restore-keys: |
+            toolchain-${{ runner.os }}-
+
+      - name: Build cross-toolchain (32-bit + 64-bit)
+        run: |
+          chmod +x forestos-toolchain/build-toolchain.sh
+          forestos-toolchain/build-toolchain.sh --arch both --jobs $(nproc)
+
+      - name: Upload toolchain artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: forestos-toolchain
+          path: |
+            forestos-toolchain/install/
+            forestos-toolchain/sysroot/
+          retention-days: 7
+
+  kernel:
+    name: Kernel (${{ matrix.arch }}-${{ matrix.boot }})
+    needs: toolchain
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: 32
+            boot: bios
+            label: i686-bios
+          - arch: 64
+            boot: bios
+            label: x86_64-bios
+          - arch: 32
+            boot: uefi
+            label: i686-uefi
+          - arch: 64
+            boot: uefi
+            label: x86_64-uefi
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install host dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential nasm mtools xorriso \
+            ovmf qemu-system-x86
+
+      - name: Download toolchain artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: forestos-toolchain
+          path: forestos-toolchain/
+
+      - name: Make toolchain executable
+        run: |
+          chmod +x forestos-toolchain/install/bin/* 2>/dev/null || true
+
+      - name: Build kernel (${{ matrix.label }})
+        run: |
+          make ARCH=${{ matrix.arch }} BOOT_MODE=${{ matrix.boot }} BUILD_TYPE=release build
+
+      - name: Upload kernel binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-${{ matrix.label }}
+          path: |
+            build/*/boot/kernel.*
+          retention-days: 7

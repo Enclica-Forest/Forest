@@ -22,24 +22,13 @@ else ifeq ($(ARCH),64)
     FORESTOS_TOOLCHAIN_PREFIX := x86_64-forestos
     TOOLCHAIN_ARCH_DIR := $(FORESTOS_TOOLCHAIN_DIR)/install
 
-    # Check if Forest OS 64-bit toolchain exists; fall back to host x86_64.
     ifeq ($(wildcard $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-gcc),)
-        $(info Forest OS 64-bit toolchain not found - using host x86_64 toolchain)
-        FORESTOS_TOOLCHAIN_PREFIX := x86_64-linux-gnu
-        TOOLCHAIN_ARCH_DIR :=
-        CC := gcc
-        CXX := g++
-        LD := ld
-        AR := ar
-        STRIP := strip
-        OBJCOPY := objcopy
-        OBJDUMP := objdump
-        READELF := readelf
-        SIZE := size
-        FORESTOS_TOOLCHAIN_HAS_64BIT := false
-    else
-        FORESTOS_TOOLCHAIN_HAS_64BIT := true
+        $(error Forest-OS 64-bit cross-toolchain not found at \
+                $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-gcc. \
+                Build it first: cd forestos-toolchain && ./build-toolchain.sh --arch 64)
     endif
+
+    FORESTOS_TOOLCHAIN_HAS_64BIT := true
 
     ARCH_FLAGS    := -m64 -march=x86-64 -mcmodel=kernel
     ARCH_LDFLAGS  := -m elf_x86_64
@@ -122,26 +111,16 @@ else ifeq ($(ARCH),aarch64)
 endif
 
 # -----------------------------------------------------------------------------
-# x86/x86_64 toolchain selection (ARM/AArch64 set their tools above)
+# x86/x86_64 toolchain selection (Forest-OS cross-compiler only)
 # -----------------------------------------------------------------------------
 ifeq ($(filter arm aarch64,$(ARCH)),)
-    ifeq ($(FORESTOS_TOOLCHAIN_HAS_64BIT),false)
-        CC := gcc
-        CXX := g++
-        LD := ld
-        AS := as
-        NASM := nasm
-        OBJCOPY ?= objcopy
-        STRIP ?= strip
-    else
-        CC := $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-gcc
-        CXX := $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-g++
-        LD := $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-ld
-        AS := $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-as
-        NASM := nasm
-        OBJCOPY ?= $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-objcopy
-        STRIP ?= $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-strip
-    endif
+    CC := $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-gcc
+    CXX := $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-g++
+    LD := $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-ld
+    AS := $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-as
+    NASM := nasm
+    OBJCOPY ?= $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-objcopy
+    STRIP ?= $(TOOLCHAIN_ARCH_DIR)/bin/$(FORESTOS_TOOLCHAIN_PREFIX)-strip
 endif
 NASM ?= nasm
 

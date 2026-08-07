@@ -378,6 +378,8 @@ int mm_create_guard_pages(unsigned long start, size_t size, const char *purpose)
     
     guard_start = start - GUARD_PAGE_SIZE;
     guard_end = start + size;
+    (void)guard_start;
+    (void)guard_end;
     
     // Allocate guard page descriptor
     guard = kmalloc(sizeof(struct guard_page));
@@ -570,6 +572,7 @@ void mm_debug_dump_allocations(void)
  */
 void mm_debug_enable_feature(const char *feature)
 {
+    (void)feature;
     // TODO: Implement feature enable/disable
     // This would allow runtime configuration of debug features
 }

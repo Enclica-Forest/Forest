@@ -52,10 +52,17 @@ void cat_datetime_init(EFI_SYSTEM_TABLE *st)
 /* ------------------------------------------------------------------------- *
  * Low-level x86 port IO (PC-speaker beep for the countdown alarm).
  * ------------------------------------------------------------------------- */
+#if defined(__x86_64__) || defined(_M_X64)
 static inline void dt_outb(UINT16 port, UINT8 val)
 { __asm__ __volatile__("outb %0,%1" :: "a"(val), "Nd"(port)); }
 static inline UINT8 dt_inb(UINT16 port)
 { UINT8 r; __asm__ __volatile__("inb %1,%0" : "=a"(r) : "Nd"(port)); return r; }
+#else
+static inline void dt_outb(UINT16 port, UINT8 val)
+{ (void)port; (void)val; }
+static inline UINT8 dt_inb(UINT16 port)
+{ (void)port; return 0; }
+#endif
 
 /* Non-blocking PC-speaker control. dt_speaker_on() starts a square wave on PIT
  * channel 2 and returns immediately; the caller silences it later with

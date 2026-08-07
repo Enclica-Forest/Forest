@@ -251,7 +251,8 @@ static void sb_f(sbuf *s, double d) {
     for (int k = 0; k < 6; k++) {
         frac *= 10.0;
         int dig = (int)frac;
-        if (dig < 0) dig = 0; if (dig > 9) dig = 9;
+        if (dig < 0) dig = 0;
+        if (dig > 9) dig = 9;
         fr[fn++] = (char)('0' + dig);
         frac -= dig;
     }
@@ -309,10 +310,9 @@ force_call_on_stack(void *newsp, int (*fn)(void *), void *arg) {
         "call *%[fn]\n\t"
         "addl $4, %%esp\n\t"         /* drop arg */
         "popl %%esp\n\t"             /* restore old esp */
-        "movl %%eax, %[ret]\n\t"
-        : [ret] "=r"(ret)
+        : "=a"(ret)
         : [nsp] "r"(newsp), [fn] "r"(fn), [arg] "r"(arg)
-        : "eax", "ecx", "edx", "edi", "cc", "memory");
+        : "ecx", "edx", "edi", "cc", "memory");
     return ret;
 }
 
@@ -1040,12 +1040,13 @@ static force_node *parse_statement(parser *p) {
         case TT_RETURN:  {
             force_node *n = new_node(p, N_RETURN); if (!n) return 0; p_advance(p);
             if (p->cur.type != TT_SEMI) { n->a = parse_expr(p); if (!n->a) return 0; }
-            if (!p_expect(p, TT_SEMI, ";")) return 0; return n;
+            if (!p_expect(p, TT_SEMI, ";")) return 0;
+            return n;
         }
         case TT_SEMI:    { force_node *n = new_node(p, N_EXPRSTMT); if (!n) return 0; p_advance(p); return n; }
         case TT_IDENT:
             if (is_type_kw(p->cur.sval) && p->nxt.type == TT_IDENT) return parse_vardecl(p);
-            /* fallthrough to expr statement */
+            /* fallthrough */
         default: {
             force_node *n = new_node(p, N_EXPRSTMT); if (!n) return 0;
             n->a = parse_expr(p); if (!n->a) return 0;
@@ -1103,7 +1104,7 @@ static void out_write(force_ctx *c, const char *s, uint32 n) {
     if (c->out_len < FORCE_OUTBUF_CAP) c->outbuf[c->out_len] = 0;
 }
 
-static int64 to_int_or_err(force_ctx *c, force_value v, const char *ctxmsg) {
+static __attribute__((unused)) int64 to_int_or_err(force_ctx *c, force_value v, const char *ctxmsg) {
     if (v.type == FV_INT || v.type == FV_BOOL) return v.u.i;
     err_set2(c, FORCE_E_RUNTIME, 0, "expected int for ", ctxmsg);
     return 0;
@@ -1614,7 +1615,8 @@ static force_value call_native(force_ctx *c, int id, force_value *args, uint32 n
         case BI_SLEEP_MS: {
             if (nargs != 1 || (args[0].type != FV_INT && args[0].type != FV_FLOAT)) { err_set(c, FORCE_E_RUNTIME, 0, "sleep_ms(n)"); return V_NULL(); }
             int64 ms = (args[0].type == FV_INT) ? args[0].u.i : (int64)args[0].u.f;
-            if (ms < 0) ms = 0; if (ms > (int64)FORCE_MAX_SLEEP_MS) ms = FORCE_MAX_SLEEP_MS;
+            if (ms < 0) ms = 0;
+            if (ms > (int64)FORCE_MAX_SLEEP_MS) ms = FORCE_MAX_SLEEP_MS;
             timer_sleep_ms((uint32)ms);
             return V_NULL();
         }

@@ -23,6 +23,12 @@
 #include "time.h"
 #include "atomic.h"
 #include <string.h>
+#include "libc/stdio.h"
+
+/* Forward declarations for functions defined in missing_impls.c */
+int smp_get_current_cpu(void);
+void atomic64_add(atomic64_t *ptr, uint64_t value);
+void debug_printf(const char *fmt, ...);
 
 /* Statistics collection levels */
 typedef enum {

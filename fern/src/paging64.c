@@ -318,7 +318,7 @@ memory_result_t paging64_init(void) {
     // Check CPU features
     check_cpu_features();
     
-    // Allocate PML4
+    // Allocate PML4 (used as root in both 4-level and 5-level modes)
     paging64_state.pml4 = (uint64_t*)alloc_page_table();
     if (!paging64_state.pml4) {
         return MEMORY_ERROR_OUT_OF_MEMORY;
@@ -336,14 +336,45 @@ memory_result_t paging64_init(void) {
     print_hex((uint32_t)(uint64_t)paging64_state.pml4);
     print("\n");
     
+    if (paging64_state.la57_active) {
+        // 5-level paging: allocate PML5 as root
+        uint64_t* pml5 = (uint64_t*)alloc_page_table();
+        if (!pml5) {
+            return MEMORY_ERROR_OUT_OF_MEMORY;
+        }
+        
+        // PML5[0] -> PML4 (identity: covers first 256 TiB in canonical form)
+        pml5[0] = make_pte(
+            (uint64_t)paging64_state.pml4,
+            PTE_PRESENT | PTE_WRITABLE
+        );
+        
+        // Update root pointer
+        paging64_state.pml4 = pml5;
+        
+        print("[PAGING64] 5-level paging (LA57) active\n");
+        print("[PAGING64] PML5 at physical 0x");
+        print_hex((uint32_t)(uint64_t)pml5);
+        print("\n");
+    }
+    
     // Identity map first 4GB for kernel
     print("[PAGING64] Identity mapping first 4GB...\n");
     for (uint64_t addr = 0; addr < 0x100000000ULL; addr += PAGE_SIZE_2M) {
-        memory_result_t res = paging64_map_page_2m(
-            (uint64_t)paging64_state.pml4,
-            addr, addr,
-            PAGE64_PRESENT | PAGE64_WRITABLE
-        );
+        memory_result_t res;
+        if (paging64_state.la57_active) {
+            res = paging64_map_page_2m_5level(
+                (uint64_t)paging64_state.pml4,
+                addr, addr,
+                PAGE64_PRESENT | PAGE64_WRITABLE
+            );
+        } else {
+            res = paging64_map_page_2m(
+                (uint64_t)paging64_state.pml4,
+                addr, addr,
+                PAGE64_PRESENT | PAGE64_WRITABLE
+            );
+        }
         if (res != MEMORY_OK) {
             print("[PAGING64] Warning: Failed to map 0x");
             print_hex((uint32_t)addr);
@@ -355,15 +386,25 @@ memory_result_t paging64_init(void) {
     print("[PAGING64] Mapping higher half kernel...\n");
     uint64_t higher_half = 0xFFFFFFFF80000000ULL;
     for (uint64_t offset = 0; offset < 0x40000000ULL; offset += PAGE_SIZE_2M) {
-        paging64_map_page_2m(
-            (uint64_t)paging64_state.pml4,
-            higher_half + offset, offset,
-            PAGE64_PRESENT | PAGE64_WRITABLE | PAGE64_GLOBAL
-        );
+        if (paging64_state.la57_active) {
+            paging64_map_page_2m_5level(
+                (uint64_t)paging64_state.pml4,
+                higher_half + offset, offset,
+                PAGE64_PRESENT | PAGE64_WRITABLE | PAGE64_GLOBAL
+            );
+        } else {
+            paging64_map_page_2m(
+                (uint64_t)paging64_state.pml4,
+                higher_half + offset, offset,
+                PAGE64_PRESENT | PAGE64_WRITABLE | PAGE64_GLOBAL
+            );
+        }
     }
     
     paging64_state.initialized = true;
-    print("[PAGING64] 64-bit paging initialized\n");
+    print("[PAGING64] 64-bit paging initialized (");
+    print(paging64_state.la57_active ? "5-level" : "4-level");
+    print(")\n");
     
     return MEMORY_OK;
 }
@@ -683,6 +724,308 @@ bool paging64_enable_la57(void) {
  */
 bool paging64_is_la57_active(void) {
     return paging64_state.la57_active;
+}
+
+/**
+ * @brief Get the root table level (4 or 5) based on LA57 state
+ */
+int paging64_get_root_level(void) {
+    return paging64_state.la57_active ? 5 : 4;
+}
+
+// ============================================================================
+// 5-LEVEL PAGING FUNCTIONS (LA57)
+// ============================================================================
+
+/**
+ * @brief Extract PML5 index from virtual address (5-level paging)
+ */
+static inline uint64_t pml5_index(uint64_t vaddr) {
+    return (vaddr >> 48) & 0x1FF;
+}
+
+/**
+ * @brief Map a 4KB page using 5-level paging
+ *
+ * Walks PML5 -> PML4 -> PDPT -> PD -> PT to map a single 4KB page.
+ */
+memory_result_t paging64_map_page_5level(uint64_t pml5_phys, uint64_t vaddr,
+                                         uint64_t paddr, uint32_t flags) {
+    uint64_t* pml5 = (uint64_t*)pml5_phys;
+
+    // Get indices
+    uint64_t pml5_idx = pml5_index(vaddr);
+    uint64_t pml4_idx = pml4_index(vaddr);
+    uint64_t pdpt_idx = pdpt_index(vaddr);
+    uint64_t pd_idx = pd_index(vaddr);
+    uint64_t pt_idx = pt_index(vaddr);
+
+    // Build flags
+    uint64_t pte_flags = 0;
+    if (flags & PAGE64_PRESENT)   pte_flags |= PTE_PRESENT;
+    if (flags & PAGE64_WRITABLE)  pte_flags |= PTE_WRITABLE;
+    if (flags & PAGE64_USER)      pte_flags |= PTE_USER;
+    if (flags & PAGE64_GLOBAL)    pte_flags |= PTE_GLOBAL;
+    if ((flags & PAGE64_NX) && paging64_state.nx_supported) {
+        pte_flags |= PTE_NO_EXECUTE;
+    }
+
+    // Ensure PML4 exists
+    pte64_t* pml4 = ensure_table_exists(pml5, pml5_idx,
+                                         PTE_PRESENT | PTE_WRITABLE |
+                                         (flags & PAGE64_USER ? PTE_USER : 0));
+    if (!pml4) return MEMORY_ERROR_OUT_OF_MEMORY;
+
+    // Ensure PDPT exists
+    pte64_t* pdpt = ensure_table_exists(pml4, pml4_idx,
+                                         PTE_PRESENT | PTE_WRITABLE |
+                                         (flags & PAGE64_USER ? PTE_USER : 0));
+    if (!pdpt) return MEMORY_ERROR_OUT_OF_MEMORY;
+
+    // Ensure PD exists
+    pte64_t* pd = ensure_table_exists(pdpt, pdpt_idx,
+                                       PTE_PRESENT | PTE_WRITABLE |
+                                       (flags & PAGE64_USER ? PTE_USER : 0));
+    if (!pd) return MEMORY_ERROR_OUT_OF_MEMORY;
+
+    // Ensure PT exists
+    pte64_t* pt = ensure_table_exists(pd, pd_idx,
+                                       PTE_PRESENT | PTE_WRITABLE |
+                                       (flags & PAGE64_USER ? PTE_USER : 0));
+    if (!pt) return MEMORY_ERROR_OUT_OF_MEMORY;
+
+    // Check if already mapped
+    if (pte_present(pt[pt_idx])) {
+        return MEMORY_ERROR_ALREADY_MAPPED;
+    }
+
+    // Set the page table entry
+    pt[pt_idx] = make_pte(paddr, pte_flags);
+
+    // Invalidate TLB
+    tlb_invalidate_page(vaddr);
+
+    return MEMORY_OK;
+}
+
+/**
+ * @brief Map a 2MB page using 5-level paging
+ */
+memory_result_t paging64_map_page_2m_5level(uint64_t pml5_phys, uint64_t vaddr,
+                                            uint64_t paddr, uint32_t flags) {
+    uint64_t* pml5 = (uint64_t*)pml5_phys;
+
+    // Align addresses to 2MB
+    vaddr &= ~PAGE_MASK_2M;
+    paddr &= ~PAGE_MASK_2M;
+
+    // Get indices
+    uint64_t pml5_idx = pml5_index(vaddr);
+    uint64_t pml4_idx = pml4_index(vaddr);
+    uint64_t pdpt_idx = pdpt_index(vaddr);
+    uint64_t pd_idx = pd_index(vaddr);
+
+    // Build flags
+    uint64_t pte_flags = PTE_HUGE;
+    if (flags & PAGE64_PRESENT)   pte_flags |= PTE_PRESENT;
+    if (flags & PAGE64_WRITABLE)  pte_flags |= PTE_WRITABLE;
+    if (flags & PAGE64_USER)      pte_flags |= PTE_USER;
+    if (flags & PAGE64_GLOBAL)    pte_flags |= PTE_GLOBAL;
+    if ((flags & PAGE64_NX) && paging64_state.nx_supported) {
+        pte_flags |= PTE_NO_EXECUTE;
+    }
+
+    // Ensure PML4 exists
+    pte64_t* pml4 = ensure_table_exists(pml5, pml5_idx,
+                                         PTE_PRESENT | PTE_WRITABLE |
+                                         (flags & PAGE64_USER ? PTE_USER : 0));
+    if (!pml4) return MEMORY_ERROR_OUT_OF_MEMORY;
+
+    // Ensure PDPT exists
+    pte64_t* pdpt = ensure_table_exists(pml4, pml4_idx,
+                                         PTE_PRESENT | PTE_WRITABLE |
+                                         (flags & PAGE64_USER ? PTE_USER : 0));
+    if (!pdpt) return MEMORY_ERROR_OUT_OF_MEMORY;
+
+    // Ensure PD exists
+    pte64_t* pd = ensure_table_exists(pdpt, pdpt_idx,
+                                       PTE_PRESENT | PTE_WRITABLE |
+                                       (flags & PAGE64_USER ? PTE_USER : 0));
+    if (!pd) return MEMORY_ERROR_OUT_OF_MEMORY;
+
+    // Check if already mapped
+    if (pte_present(pd[pd_idx])) {
+        return MEMORY_ERROR_ALREADY_MAPPED;
+    }
+
+    // Set the PD entry as a 2MB page
+    pd[pd_idx] = (paddr & ADDR_MASK_2M) | pte_flags;
+
+    // Invalidate TLB
+    tlb_invalidate_page(vaddr);
+
+    return MEMORY_OK;
+}
+
+/**
+ * @brief Map a 1GB page using 5-level paging
+ */
+memory_result_t paging64_map_page_1g_5level(uint64_t pml5_phys, uint64_t vaddr,
+                                            uint64_t paddr, uint32_t flags) {
+    if (!paging64_state.gigabyte_pages) {
+        return MEMORY_ERROR_NOT_INITIALIZED;
+    }
+
+    uint64_t* pml5 = (uint64_t*)pml5_phys;
+
+    // Align addresses to 1GB
+    vaddr &= ~PAGE_MASK_1G;
+    paddr &= ~PAGE_MASK_1G;
+
+    // Get indices
+    uint64_t pml5_idx = pml5_index(vaddr);
+    uint64_t pml4_idx = pml4_index(vaddr);
+    uint64_t pdpt_idx = pdpt_index(vaddr);
+
+    // Build flags
+    uint64_t pte_flags = PTE_HUGE;
+    if (flags & PAGE64_PRESENT)   pte_flags |= PTE_PRESENT;
+    if (flags & PAGE64_WRITABLE)  pte_flags |= PTE_WRITABLE;
+    if (flags & PAGE64_USER)      pte_flags |= PTE_USER;
+    if (flags & PAGE64_GLOBAL)    pte_flags |= PTE_GLOBAL;
+    if ((flags & PAGE64_NX) && paging64_state.nx_supported) {
+        pte_flags |= PTE_NO_EXECUTE;
+    }
+
+    // Ensure PML4 exists
+    pte64_t* pml4 = ensure_table_exists(pml5, pml5_idx,
+                                         PTE_PRESENT | PTE_WRITABLE |
+                                         (flags & PAGE64_USER ? PTE_USER : 0));
+    if (!pml4) return MEMORY_ERROR_OUT_OF_MEMORY;
+
+    // Ensure PDPT exists
+    pte64_t* pdpt = ensure_table_exists(pml4, pml4_idx,
+                                         PTE_PRESENT | PTE_WRITABLE |
+                                         (flags & PAGE64_USER ? PTE_USER : 0));
+    if (!pdpt) return MEMORY_ERROR_OUT_OF_MEMORY;
+
+    // Check if already mapped
+    if (pte_present(pdpt[pdpt_idx])) {
+        return MEMORY_ERROR_ALREADY_MAPPED;
+    }
+
+    // Set the PDPT entry as a 1GB page
+    pdpt[pdpt_idx] = (paddr & ADDR_MASK_1G) | pte_flags;
+
+    // Invalidate TLB
+    tlb_invalidate_page(vaddr);
+
+    return MEMORY_OK;
+}
+
+/**
+ * @brief Unmap a page using 5-level paging
+ */
+memory_result_t paging64_unmap_page_5level(uint64_t pml5_phys, uint64_t vaddr) {
+    uint64_t* pml5 = (uint64_t*)pml5_phys;
+
+    uint64_t pml5_idx = pml5_index(vaddr);
+    if (!pte_present(pml5[pml5_idx])) {
+        return MEMORY_ERROR_NOT_MAPPED;
+    }
+
+    uint64_t* pml4 = (uint64_t*)pte_to_phys(pml5[pml5_idx]);
+    uint64_t pml4_idx = pml4_index(vaddr);
+    if (!pte_present(pml4[pml4_idx])) {
+        return MEMORY_ERROR_NOT_MAPPED;
+    }
+
+    uint64_t* pdpt = (uint64_t*)pte_to_phys(pml4[pml4_idx]);
+    uint64_t pdpt_idx = pdpt_index(vaddr);
+    if (!pte_present(pdpt[pdpt_idx])) {
+        return MEMORY_ERROR_NOT_MAPPED;
+    }
+
+    // Check for 1GB page
+    if (pte_huge(pdpt[pdpt_idx])) {
+        pdpt[pdpt_idx] = 0;
+        tlb_invalidate_page(vaddr);
+        return MEMORY_OK;
+    }
+
+    uint64_t* pd = (uint64_t*)pte_to_phys(pdpt[pdpt_idx]);
+    uint64_t pd_idx = pd_index(vaddr);
+    if (!pte_present(pd[pd_idx])) {
+        return MEMORY_ERROR_NOT_MAPPED;
+    }
+
+    // Check for 2MB page
+    if (pte_huge(pd[pd_idx])) {
+        pd[pd_idx] = 0;
+        tlb_invalidate_page(vaddr);
+        return MEMORY_OK;
+    }
+
+    uint64_t* pt = (uint64_t*)pte_to_phys(pd[pd_idx]);
+    uint64_t pt_idx = pt_index(vaddr);
+    if (!pte_present(pt[pt_idx])) {
+        return MEMORY_ERROR_NOT_MAPPED;
+    }
+
+    // Clear 4KB page
+    pt[pt_idx] = 0;
+    tlb_invalidate_page(vaddr);
+
+    return MEMORY_OK;
+}
+
+/**
+ * @brief Get physical address for virtual address using 5-level paging
+ */
+uint64_t paging64_virt_to_phys_5level(uint64_t pml5_phys, uint64_t vaddr) {
+    uint64_t* pml5 = (uint64_t*)pml5_phys;
+
+    uint64_t pml5_idx = pml5_index(vaddr);
+    if (!pte_present(pml5[pml5_idx])) {
+        return 0;
+    }
+
+    uint64_t* pml4 = (uint64_t*)pte_to_phys(pml5[pml5_idx]);
+    uint64_t pml4_idx = pml4_index(vaddr);
+    if (!pte_present(pml4[pml4_idx])) {
+        return 0;
+    }
+
+    uint64_t* pdpt = (uint64_t*)pte_to_phys(pml4[pml4_idx]);
+    uint64_t pdpt_idx = pdpt_index(vaddr);
+    if (!pte_present(pdpt[pdpt_idx])) {
+        return 0;
+    }
+
+    // 1GB page
+    if (pte_huge(pdpt[pdpt_idx])) {
+        return (pdpt[pdpt_idx] & ADDR_MASK_1G) | (vaddr & PAGE_MASK_1G);
+    }
+
+    uint64_t* pd = (uint64_t*)pte_to_phys(pdpt[pdpt_idx]);
+    uint64_t pd_idx = pd_index(vaddr);
+    if (!pte_present(pd[pd_idx])) {
+        return 0;
+    }
+
+    // 2MB page
+    if (pte_huge(pd[pd_idx])) {
+        return (pd[pd_idx] & ADDR_MASK_2M) | (vaddr & PAGE_MASK_2M);
+    }
+
+    uint64_t* pt = (uint64_t*)pte_to_phys(pd[pd_idx]);
+    uint64_t pt_idx = pt_index(vaddr);
+    if (!pte_present(pt[pt_idx])) {
+        return 0;
+    }
+
+    // 4KB page
+    return (pt[pt_idx] & ADDR_MASK_4K) | (vaddr & PAGE_MASK_4K);
 }
 
 /**
@@ -1292,6 +1635,185 @@ void x64_enable_nx(void) {
 
     /* Keep state consistent with the feature-detection path. */
     paging64_state.nx_supported = true;
+}
+
+/* --------------------------------------------------------------------------
+ * x64_* 5-level paging API (LA57)
+ *
+ * These functions provide the public API for 5-level page table walks.
+ * They mirror the 4-level x64_* functions but add one more level (PML5)
+ * at the top of the hierarchy.
+ * -------------------------------------------------------------------------- */
+
+int x64_map_page_5level(void* pml5, uint64_t virt, uint64_t phys, uint64_t flags) {
+    if (!pml5) return MEMORY_ERROR_NULL_PTR;
+
+    virt &= ~(uint64_t)PAGE_MASK_4K;
+    phys &= ~(uint64_t)PAGE_MASK_4K;
+
+    uint64_t pml5_idx = pml5_index(virt);
+    uint64_t pml4_idx = pml4_index(virt);
+    uint64_t pdpt_idx = pdpt_index(virt);
+    uint64_t pd_idx   = pd_index(virt);
+    uint64_t pt_idx   = pt_index(virt);
+
+    uint64_t usr = (flags & PAGE64_USER) ? PTE_USER : 0;
+
+    /* Walk/build the five-level hierarchy. */
+    uint64_t* pml4 = x64_get_or_create_child((uint64_t*)pml5, pml5_idx, usr);
+    if (!pml4) return MEMORY_ERROR_OUT_OF_MEMORY;
+
+    uint64_t* pdpt = x64_get_or_create_child(pml4, pml4_idx, usr);
+    if (!pdpt) return MEMORY_ERROR_OUT_OF_MEMORY;
+
+    uint64_t* pd = x64_get_or_create_child(pdpt, pdpt_idx, usr);
+    if (!pd) return MEMORY_ERROR_OUT_OF_MEMORY;
+
+    uint64_t* pt = x64_get_or_create_child(pd, pd_idx, usr);
+    if (!pt) return MEMORY_ERROR_OUT_OF_MEMORY;
+
+    uint64_t pte_flags = 0;
+    if (flags & PAGE64_PRESENT)  pte_flags |= PTE_PRESENT;
+    if (flags & PAGE64_WRITABLE) pte_flags |= PTE_WRITABLE;
+    if (flags & PAGE64_USER)     pte_flags |= PTE_USER;
+    if (flags & PAGE64_PWT)      pte_flags |= PTE_WRITE_THROUGH;
+    if (flags & PAGE64_PCD)      pte_flags |= PTE_CACHE_DISABLE;
+    if (flags & PAGE64_GLOBAL)   pte_flags |= PTE_GLOBAL;
+    if (flags & PAGE64_NX)       pte_flags |= PTE_NO_EXECUTE;
+
+    if (!(flags & (PAGE64_PRESENT | PAGE64_WRITABLE | PAGE64_USER |
+                   PAGE64_GLOBAL | PAGE64_NX))) {
+        pte_flags = PTE_PRESENT | PTE_WRITABLE;
+    }
+
+    if (pte_present(pt[pt_idx])) {
+        pt[pt_idx] = make_pte(phys, pte_flags);
+        x64_invlpg(virt);
+        return MEMORY_OK;
+    }
+
+    pt[pt_idx] = make_pte(phys, pte_flags);
+    return MEMORY_OK;
+}
+
+int x64_unmap_page_5level(void* pml5, uint64_t virt) {
+    if (!pml5) return MEMORY_ERROR_NULL_PTR;
+
+    virt &= ~(uint64_t)PAGE_MASK_4K;
+
+    uint64_t pml5_idx = pml5_index(virt);
+    uint64_t pml4_idx = pml4_index(virt);
+    uint64_t pdpt_idx = pdpt_index(virt);
+    uint64_t pd_idx   = pd_index(virt);
+    uint64_t pt_idx   = pt_index(virt);
+
+    uint64_t* tbl = (uint64_t*)pml5;
+
+    if (!pte_present(tbl[pml5_idx])) return MEMORY_ERROR_NOT_MAPPED;
+    tbl = (uint64_t*)pte_to_phys(tbl[pml5_idx]);
+
+    if (!pte_present(tbl[pml4_idx])) return MEMORY_ERROR_NOT_MAPPED;
+    tbl = (uint64_t*)pte_to_phys(tbl[pml4_idx]);
+
+    if (!pte_present(tbl[pdpt_idx])) return MEMORY_ERROR_NOT_MAPPED;
+    tbl = (uint64_t*)pte_to_phys(tbl[pdpt_idx]);
+
+    if (!pte_present(tbl[pd_idx])) return MEMORY_ERROR_NOT_MAPPED;
+    tbl = (uint64_t*)pte_to_phys(tbl[pd_idx]);
+
+    if (!pte_present(tbl[pt_idx])) return MEMORY_ERROR_NOT_MAPPED;
+
+    tbl[pt_idx] = 0;
+    x64_invlpg(virt);
+    return MEMORY_OK;
+}
+
+uint64_t x64_get_phys_5level(void* pml5, uint64_t virt) {
+    if (!pml5) return 0;
+
+    uint64_t pml5_idx = pml5_index(virt);
+    uint64_t pml4_idx = pml4_index(virt);
+    uint64_t pdpt_idx = pdpt_index(virt);
+    uint64_t pd_idx   = pd_index(virt);
+    uint64_t pt_idx   = pt_index(virt);
+
+    uint64_t* tbl = (uint64_t*)pml5;
+
+    if (!pte_present(tbl[pml5_idx])) return 0;
+    tbl = (uint64_t*)pte_to_phys(tbl[pml5_idx]);
+
+    if (!pte_present(tbl[pml4_idx])) return 0;
+    tbl = (uint64_t*)pte_to_phys(tbl[pml4_idx]);
+
+    if (!pte_present(tbl[pdpt_idx])) return 0;
+    if (pte_huge(tbl[pdpt_idx]))
+        return (tbl[pdpt_idx] & ADDR_MASK_1G) | (virt & PAGE_MASK_1G);
+    tbl = (uint64_t*)pte_to_phys(tbl[pdpt_idx]);
+
+    if (!pte_present(tbl[pd_idx])) return 0;
+    if (pte_huge(tbl[pd_idx]))
+        return (tbl[pd_idx] & ADDR_MASK_2M) | (virt & PAGE_MASK_2M);
+    tbl = (uint64_t*)pte_to_phys(tbl[pd_idx]);
+
+    if (!pte_present(tbl[pt_idx])) return 0;
+    return (tbl[pt_idx] & ADDR_MASK_4K) | (virt & PAGE_MASK_4K);
+}
+
+bool x64_is_mapped_5level(void* pml5, uint64_t virt) {
+    if (!pml5) return false;
+
+    uint64_t pml5_idx = pml5_index(virt);
+    uint64_t pml4_idx = pml4_index(virt);
+    uint64_t pdpt_idx = pdpt_index(virt);
+    uint64_t pd_idx   = pd_index(virt);
+    uint64_t pt_idx   = pt_index(virt);
+
+    uint64_t* tbl = (uint64_t*)pml5;
+
+    if (!pte_present(tbl[pml5_idx])) return false;
+    tbl = (uint64_t*)pte_to_phys(tbl[pml5_idx]);
+
+    if (!pte_present(tbl[pml4_idx])) return false;
+    tbl = (uint64_t*)pte_to_phys(tbl[pml4_idx]);
+
+    if (!pte_present(tbl[pdpt_idx])) return false;
+    if (pte_huge(tbl[pdpt_idx])) return true;
+    tbl = (uint64_t*)pte_to_phys(tbl[pdpt_idx]);
+
+    if (!pte_present(tbl[pd_idx])) return false;
+    if (pte_huge(tbl[pd_idx])) return true;
+    tbl = (uint64_t*)pte_to_phys(tbl[pd_idx]);
+
+    return pte_present(tbl[pt_idx]);
+}
+
+void x64_identity_map_range_5level(void* pml5, uint64_t start, uint64_t end,
+                                   uint64_t flags) {
+    if (!pml5 || start >= end) return;
+
+    start &= ~(uint64_t)PAGE_MASK_4K;
+    end    = (end + PAGE_MASK_4K) & ~(uint64_t)PAGE_MASK_4K;
+
+    uint64_t map_flags = flags | PAGE64_PRESENT;
+
+    for (uint64_t addr = start; addr < end; addr += PAGE_SIZE_4K) {
+        x64_map_page_5level(pml5, addr, addr, map_flags);
+    }
+}
+
+void x64_map_kernel_higher_half_5level(void* pml5, uint64_t phys_start,
+                                       uint64_t phys_end) {
+    if (!pml5 || phys_start >= phys_end) return;
+
+    phys_start &= ~(uint64_t)PAGE_MASK_4K;
+    phys_end    = (phys_end + PAGE_MASK_4K) & ~(uint64_t)PAGE_MASK_4K;
+
+    uint64_t flags = PAGE64_PRESENT | PAGE64_WRITABLE | PAGE64_GLOBAL;
+
+    for (uint64_t phys = phys_start; phys < phys_end; phys += PAGE_SIZE_4K) {
+        uint64_t virt = KERNEL_HIGHER_HALF_OFFSET + (phys - phys_start);
+        x64_map_page_5level(pml5, virt, phys, flags);
+    }
 }
 
 #endif /* __x86_64__ */

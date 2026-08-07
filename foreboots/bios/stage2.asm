@@ -2062,7 +2062,24 @@ load_kernel:
 
     mov  edi, KERNEL_HDR_BUF
     cmp  dword [fs:edi], 0x464C457F  ; ELF magic 0x7F 'E' 'L' 'F'
+    je   .khdr_ok
+    ; Probe: firmwares that expose the WHOLE CD as the boot drive (real HW)
+    ; need every LBA rebased by the El Torito boot image LBA; stage1 stored
+    ; that raw 2048-sector LBA at CD_BOOT_LBA.  Retry once with base=LBA*4.
+    mov  eax, [es:CD_BOOT_LBA]
+    test eax, eax
+    jz   .fail
+    shl  eax, 2
+    mov  [es:LBA_BASE_OFFSET], eax
+    mov  eax, KERNEL_START_SECTOR
+    mov  ecx, KERNEL_HDR_SECTORS
+    mov  esi, KERNEL_HDR_BUF
+    call foreb_read
+    jc   .fail
+    mov  edi, KERNEL_HDR_BUF
+    cmp  dword [fs:edi], 0x464C457F
     jne  .fail
+.khdr_ok:
     mov  al, [fs:edi + 4]            ; EI_CLASS
     cmp  al, ELFCLASS64
     je   .k64

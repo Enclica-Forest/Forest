@@ -28,31 +28,31 @@
 #define SERIAL_COM1 0x3F8
 
 // Serial output helpers for mouse debugging
-static inline void mouse_serial_char(char c) {
+__attribute__((unused)) static inline void mouse_serial_char(char c) {
     while ((inportb(SERIAL_COM1 + 5) & 0x20) == 0);
     outportb(SERIAL_COM1, c);
 }
 
-static void mouse_serial_str(const char* s) {
+__attribute__((unused)) static void mouse_serial_str(const char* s) {
     while (*s) {
         mouse_serial_char(*s++);
     }
 }
 
-static void mouse_serial_hex8(uint8 val) {
+__attribute__((unused)) static void mouse_serial_hex8(uint8 val) {
     const char hex[] = "0123456789ABCDEF";
     mouse_serial_char(hex[(val >> 4) & 0xF]);
     mouse_serial_char(hex[val & 0xF]);
 }
 
-static void mouse_serial_hex32(uint32 val) {
+__attribute__((unused)) static void mouse_serial_hex32(uint32 val) {
     mouse_serial_hex8((val >> 24) & 0xFF);
     mouse_serial_hex8((val >> 16) & 0xFF);
     mouse_serial_hex8((val >> 8) & 0xFF);
     mouse_serial_hex8(val & 0xFF);
 }
 
-static void mouse_serial_int(int val) {
+__attribute__((unused)) static void mouse_serial_int(int val) {
     char buf[16];
     int i = 0;
     if (val < 0) {
@@ -456,8 +456,8 @@ static void ps2_mouse_process_packet(void) {
 #endif
 
     // Update absolute position
-    int old_x = mouse_state.x;
-    int old_y = mouse_state.y;
+    int old_x __attribute__((unused)) = mouse_state.x;
+    int old_y __attribute__((unused)) = mouse_state.y;
     mouse_state.x += dx;
     mouse_state.y += dy;
 

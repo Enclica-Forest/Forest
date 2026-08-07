@@ -16,6 +16,7 @@ typedef enum {
     SOUND_DEVICE_ENSONIQ_AUDIOPCI,
     SOUND_DEVICE_OPL3,
     SOUND_DEVICE_USB_AUDIO,
+    SOUND_DEVICE_VIRTIO,
     SOUND_DEVICE_UNIVERSAL
 } SoundDeviceType;
 
@@ -118,6 +119,7 @@ SoundDriver* sound_hda_driver(void);
 SoundDriver* sound_ensoniq_driver(void);
 SoundDriver* sound_opl3_driver(void);
 SoundDriver* sound_usb_sound_driver(void);
+SoundDriver* sound_virtio_driver(void);
 SoundDriver* sound_universal_driver(void);
 
 /* =========================================================================

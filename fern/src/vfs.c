@@ -553,7 +553,7 @@ vfs_node_t* vfs_open(const char* path, uint32_t flags) {
             token = next_slash + 1;
         }
     }
-
+    */
     // Handle /sys paths specially - commented out due to missing sysfs implementation
     /*
     if (strncmp(lookup_path, "sys/", 4) == 0) {
@@ -704,7 +704,7 @@ bool vfs_read_file(const char* path, const uint8** data, uint32* size) {
         debuglog(DEBUG_ERROR, "[VFS] File not found: '%s'\n", lookup_path);
 
         // Debug: List files containing the search term
-        if (lookup_path && strstr(lookup_path, "shell")) {
+        if (strstr(lookup_path, "shell")) {
             debuglog(DEBUG_INFO, "[VFS] Searching for files containing 'shell':\n");
             uint32 count = ramdisk_file_count();
             for (uint32 i = 0; i < count; i++) {

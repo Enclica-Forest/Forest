@@ -10,6 +10,7 @@
  *   ARCH_X86_64  - x86-64 / AMD64 (64-bit x86)
  *   ARCH_ARM32   - ARMv7-A (32-bit ARM, Thumb-2 capable)
  *   ARCH_ARM64   - AArch64 / ARMv8-A (64-bit ARM)
+ *   ARCH_RISCV64 - RISC-V 64-bit (RV64GC)
  */
 
 #ifndef FOREST_ARCH_H
@@ -24,6 +25,7 @@
 #   define ARCH_X86_32   0
 #   define ARCH_ARM32    0
 #   define ARCH_ARM64    0
+#   define ARCH_RISCV64  0
 #   define ARCH_BITS     64
 #   define ARCH_NAME     "x86_64"
 #   define ARCH_LITTLE_ENDIAN 1
@@ -33,6 +35,7 @@
 #   define ARCH_X86_64   0
 #   define ARCH_ARM32    0
 #   define ARCH_ARM64    0
+#   define ARCH_RISCV64  0
 #   define ARCH_BITS     32
 #   define ARCH_NAME     "x86_32"
 #   define ARCH_LITTLE_ENDIAN 1
@@ -42,6 +45,7 @@
 #   define ARCH_X86_64   0
 #   define ARCH_X86_32   0
 #   define ARCH_ARM32    0
+#   define ARCH_RISCV64  0
 #   define ARCH_BITS     64
 #   define ARCH_NAME     "aarch64"
 #   define ARCH_LITTLE_ENDIAN 1  /* AArch64 is LE by default; BE variant uncommon */
@@ -51,9 +55,20 @@
 #   define ARCH_ARM64    0
 #   define ARCH_X86_64   0
 #   define ARCH_X86_32   0
+#   define ARCH_RISCV64  0
 #   define ARCH_BITS     32
 #   define ARCH_NAME     "arm32"
 #   define ARCH_LITTLE_ENDIAN 1  /* Assumes ARMv7 LE configuration */
+
+#elif defined(__riscv) && (__riscv_xlen == 64)
+#   define ARCH_RISCV64  1
+#   define ARCH_X86_64   0
+#   define ARCH_X86_32   0
+#   define ARCH_ARM32    0
+#   define ARCH_ARM64    0
+#   define ARCH_BITS     64
+#   define ARCH_NAME     "riscv64"
+#   define ARCH_LITTLE_ENDIAN 1  /* RISC-V is LE by default */
 
 #else
 #   error "Fern: unsupported target architecture."
@@ -173,6 +188,26 @@ typedef struct {
 } arch_cpu_state_arm64_t;
 
 typedef arch_cpu_state_arm64_t arch_cpu_state_t;
+
+#elif ARCH_RISCV64
+typedef struct {
+    /* General-purpose registers x1-x31 (x0 is always zero) */
+    uint64_t ra;            /* x1 - return address */
+    uint64_t gp;            /* x3 - global pointer */
+    uint64_t tp;            /* x4 - thread pointer */
+    uint64_t t0, t1, t2;
+    uint64_t s0, s1;        /* x8/x9 - saved registers (s0 = fp) */
+    uint64_t a0, a1, a2, a3, a4, a5, a6, a7;
+    uint64_t s2, s3, s4, s5, s6, s7, s8, s9, s10, s11;
+    uint64_t t3, t4, t5, t6;
+    /* CSRs */
+    uint64_t sstatus;       /* supervisor status register */
+    uint64_t sepc;          /* supervisor exception PC */
+    uint64_t scause;        /* supervisor cause register */
+    uint64_t stval;         /* supervisor trap value */
+} arch_cpu_state_riscv64_t;
+
+typedef arch_cpu_state_riscv64_t arch_cpu_state_t;
 #endif /* arch cpu state */
 
 /* =========================================================================
@@ -201,6 +236,10 @@ static inline arch_word_t arch_get_sp(void)
     arch_word_t sp;
     __asm__ volatile ("mov %0, sp" : "=r"(sp));
     return sp;
+#elif ARCH_RISCV64
+    arch_word_t sp;
+    __asm__ volatile ("mv %0, sp" : "=r"(sp));
+    return sp;
 #endif
 }
 
@@ -223,6 +262,10 @@ static inline arch_word_t arch_get_ip(void)
     arch_word_t ip;
     __asm__ volatile ("adr %0, ." : "=r"(ip));
     return ip;
+#elif ARCH_RISCV64
+    arch_word_t ip;
+    __asm__ volatile ("auipc %0, 0" : "=r"(ip));
+    return ip;
 #endif
 }
 
@@ -234,6 +277,8 @@ static inline void arch_halt(void)
 #elif ARCH_ARM32
     __asm__ volatile ("wfi");   /* Wait For Interrupt */
 #elif ARCH_ARM64
+    __asm__ volatile ("wfi");
+#elif ARCH_RISCV64
     __asm__ volatile ("wfi");
 #endif
 }
@@ -253,6 +298,8 @@ static inline void arch_enable_irq(void)
     );
 #elif ARCH_ARM64
     __asm__ volatile ("msr daifclr, #2" ::: "memory"); /* clear IRQ mask */
+#elif ARCH_RISCV64
+    __asm__ volatile ("csrsi sstatus, 0x2" ::: "memory"); /* set SIE bit */
 #endif
 }
 
@@ -271,44 +318,14 @@ static inline void arch_disable_irq(void)
     );
 #elif ARCH_ARM64
     __asm__ volatile ("msr daifset, #2" ::: "memory"); /* set IRQ mask */
+#elif ARCH_RISCV64
+    __asm__ volatile ("csrci sstatus, 0x2" ::: "memory"); /* clear SIE bit */
 #endif
 }
 
-/* ----- Memory barrier ----- */
-static inline void arch_mb(void)
-{
-#if ARCH_IS_X86
-    __asm__ volatile ("mfence" ::: "memory");
-#elif ARCH_ARM32
-    __asm__ volatile ("dmb sy" ::: "memory");
-#elif ARCH_ARM64
-    __asm__ volatile ("dmb sy" ::: "memory");
-#endif
-}
-
-/* ----- Read memory barrier ----- */
-static inline void arch_rmb(void)
-{
-#if ARCH_IS_X86
-    __asm__ volatile ("lfence" ::: "memory");
-#elif ARCH_ARM32
-    __asm__ volatile ("dmb ish" ::: "memory");
-#elif ARCH_ARM64
-    __asm__ volatile ("dmb ishld" ::: "memory");
-#endif
-}
-
-/* ----- Write memory barrier ----- */
-static inline void arch_wmb(void)
-{
-#if ARCH_IS_X86
-    __asm__ volatile ("sfence" ::: "memory");
-#elif ARCH_ARM32
-    __asm__ volatile ("dmb ishst" ::: "memory");
-#elif ARCH_ARM64
-    __asm__ volatile ("dmb ishst" ::: "memory");
-#endif
-}
+#ifndef FOREST_ARCH_BARRIER_H
+/* barrier functions moved to arch/barrier.h */
+#endif /* FOREST_ARCH_BARRIER_H */
 
 /* ----- CPU relax (spin-wait hint) ----- */
 static inline void arch_cpu_relax(void)
@@ -319,6 +336,8 @@ static inline void arch_cpu_relax(void)
     __asm__ volatile ("yield" ::: "memory");
 #elif ARCH_ARM64
     __asm__ volatile ("yield" ::: "memory");
+#elif ARCH_RISCV64
+    __asm__ volatile (".word 0x0100000F" ::: "memory"); /* REP.NOP (pause equivalent) */
 #endif
 }
 
@@ -330,6 +349,8 @@ static inline void arch_nop(void)
 #elif ARCH_ARM32
     __asm__ volatile ("nop");
 #elif ARCH_ARM64
+    __asm__ volatile ("nop");
+#elif ARCH_RISCV64
     __asm__ volatile ("nop");
 #endif
 }
@@ -365,6 +386,8 @@ static inline void arch_nop(void)
 #   include "arm32/arch_arm32.h"
 #elif ARCH_ARM64
 #   include "aarch64/arch_aarch64.h"
+#elif ARCH_RISCV64
+#   include "riscv64/arch_riscv64.h"
 #endif
 
 /* =========================================================================
@@ -382,7 +405,7 @@ void arch_init(void);
 /**
  * arch_get_name - Return a short ASCII string identifying the architecture.
  *
- * Returns one of: "x86_32", "x86_64", "arm32", "aarch64".
+ * Returns one of: "x86_32", "x86_64", "arm32", "aarch64", "riscv64".
  */
 const char *arch_get_name(void);
 
@@ -402,5 +425,8 @@ size_t arch_get_page_size(void);
  * performed lazily on first call and cached for subsequent calls.
  */
 bool arch_supports_feature(uint32_t feature);
+
+/* Pull in unified memory-barrier definitions (arch_mb, arch_rmb, arch_wmb). */
+#include "barrier.h"
 
 #endif /* FOREST_ARCH_H */

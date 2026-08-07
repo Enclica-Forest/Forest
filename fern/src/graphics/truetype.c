@@ -28,11 +28,11 @@ static inline uint32_t ttf_swap32(uint32_t val) {
            ((val >> 24) & 0xFF);
 }
 
-static inline int16_t ttf_swap16s(int16_t val) {
+__attribute__((unused)) static inline int16_t ttf_swap16s(int16_t val) {
     return (int16_t)ttf_swap16((uint16_t)val);
 }
 
-static inline int32_t ttf_swap32s(int32_t val) {
+__attribute__((unused)) static inline int32_t ttf_swap32s(int32_t val) {
     return (int32_t)ttf_swap32((uint32_t)val);
 }
 
@@ -391,7 +391,7 @@ static uint16_t ttf_cmap_lookup_format4(ttf_font_t* font, uint32_t codepoint) {
         glyph_index = (uint16_t)((codepoint + id_delta) & 0xFFFF);
     } else {
         // Calculate offset into glyphIdArray
-        size_t offset = (id_range_offset / 2) + (codepoint - start_code);
+        (void)(id_range_offset / 2);
         const uint8_t* glyph_id_ptr = id_range_offsets + lo * 2 + id_range_offset +
                                        (codepoint - start_code) * 2;
         glyph_index = ttf_read16(glyph_id_ptr);
@@ -637,7 +637,7 @@ ttf_result_t ttf_get_glyph_outline(
     const uint8_t* ptr = glyph_data + 10;
 
     // Read endPtsOfContours array
-    if (10 + num_contours * 2 > glyph_size) {
+    if ((uint32_t)(10 + num_contours * 2) > glyph_size) {
         kfree(outline);
         return TTF_ERROR_INVALID_TABLE;
     }

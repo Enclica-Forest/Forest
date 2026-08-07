@@ -84,17 +84,16 @@
  *   Index 0  0x00  null
  *   Index 1  0x08  kernel code   (DPL=0, L=1)
  *   Index 2  0x10  kernel data   (DPL=0)
- *   Index 3  0x18  user code32   (DPL=3, 32-bit compat)
- *   Index 4  0x20  user data     (DPL=3)
- *   Index 5  0x28  user code64   (DPL=3, L=1)
- *   Index 6  0x30  TSS low    \
- *   Index 7  0x38  TSS high   /
+ *   Index 3  0x18  user data     (DPL=3)
+ *   Index 4  0x20  user code64   (DPL=3, L=1)
+ *   Index 5  0x28  TSS low    \
+ *   Index 6  0x30  TSS high   /
  *
  * STAR fields:
  *   STAR[47:32] = 0x08  (SYSCALL: kernel CS = 0x08, kernel SS = 0x08+8 = 0x10)
- *   STAR[63:48] = 0x18  (SYSRET:  user   SS = 0x18+8  = 0x20, user CS = 0x18+16 = 0x28)
+ *   STAR[63:48] = 0x10  (SYSRET:  user   SS = 0x10+8  = 0x18, user CS = 0x10+16 = 0x20)
  *   The CPU ORs RPL=3 into both CS and SS on SYSRET, yielding
- *   user CS = 0x2B (code64) and user SS = 0x23 (data).
+ *   user CS = 0x23 (code64) and user SS = 0x1B (data).
  * ========================================================================= */
 
 /** Raw offset of kernel code descriptor in the GDT (no RPL). */
@@ -103,9 +102,9 @@
 /** STAR[47:32]: SYSCALL kernel CS base.  SS = base+8 = 0x10 (kernel data). */
 #define STAR_KERNEL_CS      GDT64_KERNEL_CS
 
-/** STAR[63:48]: SYSRET user base.  CS = base+16 = 0x28 (user code64),
- *                                  SS = base+8  = 0x20 (user data).  */
-#define STAR_USER_BASE      0x18U
+/** STAR[63:48]: SYSRET user base.  CS = base+16 = 0x20 (user code64),
+ *                                  SS = base+8  = 0x18 (user data).  */
+#define STAR_USER_BASE      0x10U
 
 /* =========================================================================
  * Per-CPU data area (pointed to by GS.base in kernel mode)

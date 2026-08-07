@@ -1,14 +1,11 @@
 #include "include/power.h"
 
-#include "include/acpi.h"
 #include "include/driver.h"
 #include "include/interrupt.h"
 #include "include/screen.h"
 #include "include/sound.h"
-#include "include/system.h"
 #include "include/task.h"
 #include "include/timer.h"
-#include "include/util.h"
 #include "include/debuglog.h"
 
 static void power_log(const char* msg) {
@@ -37,85 +34,18 @@ static void cleanup_subsystems(void) {
     driver_shutdown_all();
 }
 
-static void fallback_shutdown_ports(void) {
-    outportw(0x604, 0x2000);
-    outportw(0xB004, 0x2000);
-    outportw(0x4004, 0x3400);
-    outportw(0x600, 0x34);
-}
-
-static void fallback_shutdown_halt(void) {
-    power_log("System halted - safe to power off manually");
-    while (1) {
-        __asm__ __volatile__("cli; hlt");
-    }
-}
-
-static void fallback_keyboard_reset(void) {
-    const int timeout = 100000;
-    for (int i = 0; i < timeout; i++) {
-        if ((inportb(0x64) & 0x02) == 0) {
-            break;
-        }
-    }
-    outportb(0x64, 0xFE);
-}
-
-static void fallback_triple_fault(void) {
-    struct {
-        uint16 limit;
-        uint32 base;
-    } __attribute__((packed)) null_idt = {0, 0};
-
-    __asm__ __volatile__("cli");
-    __asm__ __volatile__("lidt %0" : : "m"(null_idt));
-    __asm__ __volatile__("int $3");
-}
-
-static void fallback_shutdown(void) {
-    fallback_shutdown_ports();
-    fallback_shutdown_halt();
-}
-
-static void fallback_reboot(void) {
-    fallback_keyboard_reset();
-    fallback_triple_fault();
-}
-
 bool power_request(power_action_t action) {
-    if (action == POWER_ACTION_REBOOT) {
-        power_log("Reboot requested");
-    } else {
-        power_log("Shutdown requested");
-    }
+    power_log(action == POWER_ACTION_REBOOT ? "Reboot requested" : "Shutdown requested");
+    cleanup_subsystems();
+    irq_disable_safe();
 
-    if (action == POWER_ACTION_SHUTDOWN) {
-        if (acpi_shutdown()) {
-            power_log("ACPI shutdown dispatched");
-            fallback_shutdown_halt();
-        }
-        power_log("ACPI shutdown failed, preparing legacy fallback");
-        cleanup_subsystems();
-        irq_disable_safe();
-        fallback_shutdown();
-    } else {
-        if (acpi_reboot()) {
-            power_log("ACPI reboot dispatched");
-            timer_sleep_ms(100);
-        }
-        power_log("ACPI reboot did not complete, preparing fallback");
-        cleanup_subsystems();
-        irq_disable_safe();
-        fallback_reboot();
+    switch (action) {
+        case POWER_ACTION_SHUTDOWN: power_shutdown(); break;
+        case POWER_ACTION_REBOOT:   power_reboot();   break;
+        case POWER_ACTION_SUSPEND:  power_suspend();  break;
+        case POWER_ACTION_HALT:     power_halt();     break;
+        default: break;
     }
 
     return false;
-}
-
-bool power_shutdown(void) {
-    return power_request(POWER_ACTION_SHUTDOWN);
-}
-
-bool power_reboot(void) {
-    return power_request(POWER_ACTION_REBOOT);
 }

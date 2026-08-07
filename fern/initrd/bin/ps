@@ -1,0 +1,3 @@
+##!/bin/sh
+echo "  PID TTY      TIME CMD"
+echo "    1 ?        0:00 init"

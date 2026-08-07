@@ -42,6 +42,7 @@ static void add_to_free_list(enhanced_heap_block_t* block, int size_class);
 
 // Emergency reporting function
 static void enhanced_heap_emergency_report(const char* msg, void* ptr) {
+    (void)ptr;
     volatile uint16_t* vga = (volatile uint16_t*)0xB8000;
     int row = 5; // Use row 5 for heap errors
     int col = 0;
@@ -447,6 +448,7 @@ void* enhanced_heap_alloc(size_t size, const char* caller) {
 
 // Enhanced heap free
 void enhanced_heap_free(void* ptr, const char* caller) {
+    (void)caller;
     if (!ptr || !enhanced_heap_state.initialized) {
         return;
     }
@@ -483,8 +485,8 @@ void enhanced_heap_free(void* ptr, const char* caller) {
     enhanced_heap_state.stats.bytes_allocated -= user_size;
     enhanced_heap_state.stats.bytes_free += block->size;
     
-    debuglog(DEBUG_INFO, "[ENHANCED_HEAP] Freed block of size %u in size class %u\n",
-        user_size, size_class);
+    debuglog(DEBUG_INFO, "[ENHANCED_HEAP] Freed block of size %u in size class %d\n",
+        (unsigned)user_size, size_class);
 }
 
 // Validate pointer

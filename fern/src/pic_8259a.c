@@ -103,10 +103,10 @@ int pic_8259a_init_advanced(void)
     
     /* Register spurious interrupt handlers */
     idt_register_handler(PIC1_VECTOR_BASE + PIC1_SPURIOUS_IRQ, 
-                        (interrupt_handler_t)pic_spurious_handler, 
+                        (interrupt_handler_t)(void *)pic_spurious_handler, 
                         "PIC1 Spurious IRQ");
     idt_register_handler(PIC2_VECTOR_BASE + PIC2_SPURIOUS_IRQ, 
-                        (interrupt_handler_t)pic_spurious_handler, 
+                        (interrupt_handler_t)(void *)pic_spurious_handler, 
                         "PIC2 Spurious IRQ");
     
     pic_state.initialized = true;
@@ -474,5 +474,5 @@ struct interrupt_chip_ops pic_8259a_chip_ops = {
     .unmask = pic_8259a_unmask_irq,
     .eoi = pic_8259a_send_eoi,
     .disable = pic_8259a_disable,
-    .get_stats = (void (*)(void *))pic_8259a_get_stats
+    .get_stats = (void (*)(void *))(void *)pic_8259a_get_stats
 };

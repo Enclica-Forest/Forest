@@ -151,7 +151,7 @@ static void record_segment_info(const elf32_phdr_t* phdr, elf_load_info_t* info)
     }
 }
 
-static void zero_bss_region(uint32 start, uint32 end) {
+__attribute__((unused)) static void zero_bss_region(uint32 start, uint32 end) {
     if (end <= start) {
         return;
     }

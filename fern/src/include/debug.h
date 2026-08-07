@@ -36,15 +36,9 @@ void debug_print_dec(unsigned int value);
 // Conditional debug macros
 #ifdef DEBUG_BUILD
     #define DEBUG_PRINT(fmt, ...) debug_print(fmt, ##__VA_ARGS__)
-    #define DEBUG_ERROR(fmt, ...) debug_error(fmt, ##__VA_ARGS__)
-    #define DEBUG_WARN(fmt, ...) debug_warn(fmt, ##__VA_ARGS__)
-    #define DEBUG_INFO(fmt, ...) debug_info(fmt, ##__VA_ARGS__)
     #define DEBUG_VERBOSE(fmt, ...) debug_verbose(fmt, ##__VA_ARGS__)
 #else
     #define DEBUG_PRINT(fmt, ...) do { } while(0)
-    #define DEBUG_ERROR(fmt, ...) do { } while(0)
-    #define DEBUG_WARN(fmt, ...) do { } while(0)
-    #define DEBUG_INFO(fmt, ...) do { } while(0)
     #define DEBUG_VERBOSE(fmt, ...) do { } while(0)
 #endif
 

@@ -1,0 +1,2 @@
+#!/bin/sh
+echo 'Shutting down...' && poweroff 2>/dev/null || reboot

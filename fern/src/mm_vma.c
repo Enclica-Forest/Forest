@@ -103,16 +103,18 @@ static void rb_erase_vma(struct rb_root *root, vm_area_struct_t *vma)
 // Default VMA operations
 static void vma_open_default(vm_area_struct_t *vma)
 {
-    // Default: nothing to do
+    (void)vma;
 }
 
 static void vma_close_default(vm_area_struct_t *vma)
 {
-    // Default: nothing to do
+    (void)vma;
 }
 
 static int vma_fault_default(vm_area_struct_t *vma, struct vm_fault *vmf)
 {
+    (void)vma;
+    (void)vmf;
     return VM_FAULT_SIGBUS; // Default: invalid access
 }
 
@@ -125,6 +127,7 @@ static const struct vm_operations_struct default_vm_ops = {
 // Anonymous VMA fault handler
 static int vma_fault_anonymous(vm_area_struct_t *vma, struct vm_fault *vmf)
 {
+    (void)vma;
     // Allocate zero page for anonymous memory
     page_t *page = alloc_page(GFP_KERNEL | __GFP_ZERO);
     if (!page) {

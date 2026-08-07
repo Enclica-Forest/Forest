@@ -372,11 +372,16 @@ static void uefi_settings_draw(wm_window *w, int cx, int cy, int cw, int ch)
 
     /* Button bar: [Refresh] [Close] */
     {
-        wm_button b[2];
-        int ids[2] = { UE_REFRESH, UE_CLOSE };
-        const char *lb[2] = { "Refresh", "Close" };
-        int nb = bar_build(cw, ch, ids, lb, 2, 0, b);
-        if (nb) bar_draw(cx, cy, cw, ch, b, nb, g_ues.b_hover, g_ues.b_press);
+        int bh = wm_button_h();
+        int bw1 = wm_button_measure("Refresh");
+        int bw2 = wm_button_measure("Close");
+        int gap = 8 * sc;
+        int bx = cx + cw - bw2 - 10 * sc;
+        int by = cy + ch - bh - 6 * sc;
+        wm_button br = { bx - bw1 - gap, by, bw1, bh, UE_REFRESH, 1, "Refresh" };
+        wm_button bc = { bx, by, bw2, bh, UE_CLOSE, 1, "Close" };
+        wm_button_draw(&br, g_ues.b_hover == UE_REFRESH, g_ues.b_press == UE_REFRESH);
+        wm_button_draw(&bc, g_ues.b_hover == UE_CLOSE, g_ues.b_press == UE_CLOSE);
     }
 }
 
@@ -434,22 +439,32 @@ static int uefi_settings_event(wm_window *w, const wm_event *ev)
         return 0;
 
     case WM_EV_MOUSE_MOVE: {
-        wm_button b[2];
-        int nb = bar_build(cw, ch, 0, 0, 0, UE_CLOSE, b);
-        /* Also check the Refresh button. */
-        int ids2[2] = { UE_REFRESH, UE_CLOSE };
-        const char *lb2[2] = { "Refresh", "Close" };
-        nb = bar_build(cw, ch, ids2, lb2, 2, 0, b);
-        g_ues.b_hover = bar_hit(b, nb, ev->mx, ev->my);
+        int bh = wm_button_h();
+        int bw1 = wm_button_measure("Refresh");
+        int bw2 = wm_button_measure("Close");
+        int gap = 8 * sc;
+        int bx = cw - bw2 - 10 * sc;
+        int by = ch - bh - 6 * sc;
+        wm_button br = { bx - bw1 - gap, by, bw1, bh, UE_REFRESH, 1, "Refresh" };
+        wm_button bc = { bx, by, bw2, bh, UE_CLOSE, 1, "Close" };
+        g_ues.b_hover = 0;
+        if (wm_button_hit(&br, ev->mx, ev->my)) g_ues.b_hover = UE_REFRESH;
+        else if (wm_button_hit(&bc, ev->mx, ev->my)) g_ues.b_hover = UE_CLOSE;
         return 0;
     }
 
     case WM_EV_MOUSE_DOWN: {
-        int ids2[2] = { UE_REFRESH, UE_CLOSE };
-        const char *lb2[2] = { "Refresh", "Close" };
-        wm_button b[2];
-        int nb = bar_build(cw, ch, ids2, lb2, 2, 0, b);
-        int id = bar_hit(b, nb, ev->mx, ev->my);
+        int bh = wm_button_h();
+        int bw1 = wm_button_measure("Refresh");
+        int bw2 = wm_button_measure("Close");
+        int gap = 8 * sc;
+        int bx = cw - bw2 - 10 * sc;
+        int by = ch - bh - 6 * sc;
+        wm_button br = { bx - bw1 - gap, by, bw1, bh, UE_REFRESH, 1, "Refresh" };
+        wm_button bc = { bx, by, bw2, bh, UE_CLOSE, 1, "Close" };
+        int id = 0;
+        if (wm_button_hit(&br, ev->mx, ev->my)) id = UE_REFRESH;
+        else if (wm_button_hit(&bc, ev->mx, ev->my)) id = UE_CLOSE;
         if (id) { g_ues.b_press = id; return 0; }
 
         /* Row click: compute row from mouse Y. */
@@ -476,11 +491,18 @@ static int uefi_settings_event(wm_window *w, const wm_event *ev)
 
     case WM_EV_MOUSE_UP: {
         if (!g_ues.b_press) return 0;
-        int ids2[2] = { UE_REFRESH, UE_CLOSE };
-        const char *lb2[2] = { "Refresh", "Close" };
-        wm_button b[2];
-        int nb = bar_build(cw, ch, ids2, lb2, 2, 0, b);
-        int id = bar_hit(b, nb, ev->mx, ev->my), p = g_ues.b_press;
+        int bh = wm_button_h();
+        int bw1 = wm_button_measure("Refresh");
+        int bw2 = wm_button_measure("Close");
+        int gap = 8 * sc;
+        int bx = cw - bw2 - 10 * sc;
+        int by = ch - bh - 6 * sc;
+        wm_button br = { bx - bw1 - gap, by, bw1, bh, UE_REFRESH, 1, "Refresh" };
+        wm_button bc = { bx, by, bw2, bh, UE_CLOSE, 1, "Close" };
+        int id = 0;
+        if (wm_button_hit(&br, ev->mx, ev->my)) id = UE_REFRESH;
+        else if (wm_button_hit(&bc, ev->mx, ev->my)) id = UE_CLOSE;
+        int p = g_ues.b_press;
         g_ues.b_press = 0;
         if (id == p) {
             if (p == UE_CLOSE) return WM_CLOSE_REQUEST;

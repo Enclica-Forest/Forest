@@ -289,6 +289,17 @@ NO_OPTIMIZE int apic_enable_local_apic(void)
     return 0;
 }
 
+/* Wrapper functions to adapt handler signatures to interrupt_handler_t */
+__attribute__((unused)) static irq_return_t apic_spurious_handler_wrapper(int vector, void *dev_id, struct interrupt_context *ctx) {
+    (void)vector; (void)dev_id;
+    return apic_spurious_handler(ctx);
+}
+
+__attribute__((unused)) static irq_return_t apic_error_handler_wrapper(int vector, void *dev_id, struct interrupt_context *ctx) {
+    (void)vector; (void)dev_id;
+    return apic_error_handler(ctx);
+}
+
 /*
  * Setup spurious interrupt vector
  */
@@ -308,7 +319,7 @@ static int apic_setup_spurious_vector(void)
     
     /* Register spurious interrupt handler */
     idt_register_handler(APIC_SPURIOUS_VECTOR, 
-                        (interrupt_handler_t)apic_spurious_handler, 
+                        apic_spurious_handler_wrapper, 
                         "APIC Spurious");
     
     debuglog_printf("APIC: Spurious vector configured (vector=0x%02x)\n", 
@@ -338,7 +349,7 @@ static int apic_setup_lvt_entries(void)
     
     /* Setup error interrupt */
     idt_register_handler(IRQ_APIC_ERROR, 
-                        (interrupt_handler_t)apic_error_handler, 
+                        apic_error_handler_wrapper, 
                         "APIC Error");
     apic_write_register(LAPIC_REG_ERROR_LVT, IRQ_APIC_ERROR);
     
@@ -553,6 +564,7 @@ int apic_send_ipi(uint32_t dest_apic_id, uint32_t vector, uint32_t delivery_mode
  */
 static irq_return_t apic_spurious_handler(struct interrupt_context *ctx)
 {
+    (void)ctx;
     atomic64_inc(&apic.spurious_interrupts);
     
     debuglog_printf("APIC: Spurious interrupt received\n");
@@ -564,8 +576,9 @@ static irq_return_t apic_spurious_handler(struct interrupt_context *ctx)
 /*
  * APIC timer interrupt handler
  */
-static irq_return_t apic_timer_handler(struct interrupt_context *ctx)
+__attribute__((unused)) static irq_return_t apic_timer_handler(struct interrupt_context *ctx)
 {
+    (void)ctx;
     atomic64_inc(&apic.timer_interrupts);
     
     /* Handle timer interrupt */
@@ -580,6 +593,7 @@ static irq_return_t apic_timer_handler(struct interrupt_context *ctx)
  */
 static irq_return_t apic_error_handler(struct interrupt_context *ctx)
 {
+    (void)ctx;
     uint32_t error_status;
     
     atomic64_inc(&apic.error_interrupts);

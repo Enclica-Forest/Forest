@@ -1,5 +1,7 @@
 #include "include/types.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wbuiltin-declaration-mismatch"
 int __sync_fetch_and_add_4(volatile int* ptr, int value) {
     int old;
     __asm__ volatile(
@@ -13,3 +15,4 @@ int __sync_fetch_and_add_4(volatile int* ptr, int value) {
 int __sync_fetch_and_sub_4(volatile int* ptr, int value) {
     return __sync_fetch_and_add_4(ptr, -value);
 }
+#pragma GCC diagnostic pop

@@ -502,7 +502,7 @@ void kmem_cache_free(kmem_cache_t *cache, void *obj)
     unsigned long pfn = ((unsigned long)obj) >> PAGE_SHIFT;
     page_t *page = pfn_to_page(pfn);
     
-    if (!page || !(page->flags & PG_SLAB) || page->slab_cache != cache) {
+    if (!page || !(page->flags & PG_SLAB) || page->slab_cache != (void *)cache) {
         print("[SLAB] Error: Invalid object 0x"); print_hex((uint32)obj); print("\n");
         return;
     }
@@ -523,8 +523,8 @@ void kmem_cache_free(kmem_cache_t *cache, void *obj)
         struct list_head *pos;
         list_for_each(pos, lists[i]) {
             slab_t *s = list_entry(pos, slab_t, list);
-            if (obj >= s->s_mem && 
-                obj < (char *)s->s_mem + cache->slab_size) {
+            if ((char *)obj >= (char *)s->s_mem && 
+                (char *)obj < (char *)s->s_mem + cache->slab_size) {
                 slab = s;
                 break;
             }

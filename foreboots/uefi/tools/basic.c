@@ -44,6 +44,17 @@ static int b_ci_eq(const char *a, const char *b)
     }
 }
 
+static int b_ci_starts_with(const char *s, const char *prefix)
+{
+    for (int i = 0; prefix[i]; i++) {
+        char a = s[i], b = prefix[i];
+        if (a >= 'A' && a <= 'Z') a += 32;
+        if (b >= 'A' && b <= 'Z') b += 32;
+        if (a != b) return 0;
+    }
+    return 1;
+}
+
 static void b_strcpy(char *dst, const char *src, int cap)
 {
     int i = 0;
@@ -364,6 +375,30 @@ static int b_exec_stmt(const char *line)
             }
         }
 
+        /* PRINT bare text (no quotes): print everything up to : or end-of-line
+         * as a literal string. This covers the common BASIC idiom
+         *   10 PRINT HELLO WORLD
+         * where the user omits quotes. Excludes single-letter variable refs
+         * (e.g. PRINT A) which should go through the expression evaluator. */
+        if (*p != '(' && !(*p >= '0' && *p <= '9') && *p != '-' && *p != '+') {
+            /* Check if this is a single variable: one letter followed by
+             * operator/separator/end (not another letter or space-then-letter). */
+            int is_single_var = (((*p >= 'A' && *p <= 'Z') || (*p >= 'a' && *p <= 'z'))
+                                 && !((p[1] >= 'A' && p[1] <= 'Z') ||
+                                      (p[1] >= 'a' && p[1] <= 'z')));
+            if (!is_single_var) {
+                while (*p && *p != ':' && *p != ';' && *p != ',') {
+                    con_putc(*p);
+                    p++;
+                }
+                while (*p == ' ' || *p == '\t') p++;
+                if (*p == ';') { p++; }
+                else if (*p == ',') { con_putc('\t'); p++; }
+                else { con_putc('\n'); }
+                return 0;
+            }
+        }
+
         /* PRINT expr[;|,expr...] */
         ep = p;
         ep_error = 0;
@@ -381,14 +416,17 @@ static int b_exec_stmt(const char *line)
     /* LET var = expr (LET is optional) */
     if (b_ci_eq(p, "LET")) { p += 3; while (*p == ' ' || *p == '\t') p++; }
 
-    /* Check if it's an assignment: single letter followed by '=' */
-    if (((*p >= 'A' && *p <= 'Z') || (*p >= 'a' && *p <= 'z')) &&
-        p[1] == '=') {
-        int *ref = b_var_ref(*p);
-        if (!ref) { con_puts("?BAD VARIABLE\n"); return -1; }
-        p += 2;
-        *ref = b_eval(p);
-        return 0;
+    /* Check if it's an assignment: single letter followed by '=' (with optional spaces) */
+    if (((*p >= 'A' && *p <= 'Z') || (*p >= 'a' && *p <= 'z'))) {
+        const char *eq = p + 1;
+        while (*eq == ' ' || *eq == '\t') eq++;
+        if (*eq == '=') {
+            int *ref = b_var_ref(*p);
+            if (!ref) { con_puts("?BAD VARIABLE\n"); return -1; }
+            eq++;
+            *ref = b_eval(eq);
+            return 0;
+        }
     }
 
     /* INPUT var */
@@ -415,7 +453,7 @@ static int b_exec_stmt(const char *line)
         int cond = b_eval(p);
         /* b_eval set ep to point past the expression. Scan for THEN from there. */
         const char *rest = ep;
-        while (*rest && !b_ci_eq(rest, "THEN")) rest++;
+        while (*rest && !b_ci_starts_with(rest, "THEN")) rest++;
         if (!*rest) { con_puts("?MISSING THEN\n"); return -1; }
         rest += 4; /* skip THEN */
         while (*rest == ' ' || *rest == '\t') rest++;
@@ -483,7 +521,7 @@ static int b_exec_stmt(const char *line)
 
         /* Find TO keyword. */
         const char *to_p = p;
-        while (*to_p && !b_ci_eq(to_p, "TO")) to_p++;
+        while (*to_p && !b_ci_starts_with(to_p, "TO")) to_p++;
         if (!*to_p) { con_puts("?MISSING TO\n"); return -1; }
 
         /* Evaluate start value. */
@@ -498,10 +536,10 @@ static int b_exec_stmt(const char *line)
 
         /* Find STEP or end. */
         const char *step_p = to_p;
-        while (*step_p && !b_ci_eq(step_p, "STEP")) step_p++;
+        while (*step_p && !b_ci_starts_with(step_p, "STEP")) step_p++;
         int step_val = 1;
         char to_str[BASIC_LINE_LEN];
-        if (b_ci_eq(step_p, "STEP")) {
+        if (b_ci_starts_with(step_p, "STEP")) {
             len = (int)(step_p - to_p);
             if (len >= BASIC_LINE_LEN) len = BASIC_LINE_LEN - 1;
             b_strcpy(to_str, to_p, len + 1);
@@ -670,15 +708,7 @@ int basic_repl(void)
         }
 
         /* Direct command. */
-        if (b_ci_eq(p, "RUN")) { b_run(); continue; }
-        if (b_ci_eq(p, "NEW")) {
-            basic_line_count = 0;
-            for (int i = 0; i < 26; i++) basic_vars[i] = 0;
-            basic_gosub_sp = 0;
-            basic_for_sp = 0;
-            con_puts("OK\n");
-            continue;
-        }
+        if (b_ci_eq(p, "RUN"))  { b_run(); continue; }
         if (b_ci_eq(p, "LIST")) {
             for (int i = 0; i < basic_line_count; i++) {
                 con_puti(basic_line_nums[i]);
@@ -686,6 +716,14 @@ int basic_repl(void)
                 con_puts(basic_program[i]);
                 con_putc('\n');
             }
+            continue;
+        }
+        if (b_ci_eq(p, "NEW")) {
+            basic_line_count = 0;
+            for (int i = 0; i < 26; i++) basic_vars[i] = 0;
+            basic_gosub_sp = 0;
+            basic_for_sp = 0;
+            con_puts("OK\n");
             continue;
         }
         if (b_ci_eq(p, "HELP")) {

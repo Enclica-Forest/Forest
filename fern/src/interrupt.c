@@ -280,7 +280,7 @@ static bool handle_invalid_opcode(struct interrupt_frame* frame) {
         debuglog_write(", opcode sequence: ");
 
         // Show sequence of up to 16 bytes as potential opcodes
-        for (int i = 0; i < 16 && (uintptr_t)(instruction + i) < 0xFFFFFFFFFFFFFFF0; i++) {
+        for (int i = 0; i < 16 && (uintptr_t)(instruction + i) < 0xFFFFFFF0u; i++) {
             if (i > 0) debuglog_write(" ");
             debuglog_write_hex(instruction[i]);
         }
@@ -322,8 +322,13 @@ static void default_exception_handler(int int_no, struct interrupt_frame* frame,
 #endif
 
     // Get current CR3 for debugging
+#if ARCH_64BIT
+    uint64 cr3;
+    __asm__ __volatile__("mov %%cr3, %0" : "=r"(cr3));
+#else
     uint32 cr3;
     __asm__ __volatile__("mov %%cr3, %0" : "=r"(cr3));
+#endif
 
     // Log to debug first (if available)
     if (debuglog_is_ready()) {
@@ -656,6 +661,8 @@ volatile bool timer_subsystem_ready = false;
 int request_irq(unsigned int irq, irq_handler_t handler, unsigned long flags,
                 const char *name, void *dev_id)
 {
+    (void)flags;
+    (void)name;
     if (irq >= IDT_ENTRIES || interrupt_handlers[irq] != NULL) {
         return -1; // Already registered or invalid IRQ
     }
@@ -672,6 +679,7 @@ int request_irq_advanced(unsigned int irq, irq_handler_t handler,
 
 void free_irq_advanced(unsigned int irq, void *dev_id)
 {
+    (void)dev_id;
     if (irq < IDT_ENTRIES) {
         interrupt_handlers[irq] = NULL;
         interrupt_dev_ids[irq] = NULL;

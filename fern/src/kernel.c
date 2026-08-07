@@ -60,6 +60,7 @@
 #include "include/usb/usb.h"
 #include "include/ps2_watchdog.h"
 #include "include/smp.h"
+#include "arch/smp.h"
 
 // Enhanced Memory System v2.0 Components
 #include "include/a20.h"
@@ -1298,7 +1299,9 @@ static bool get_initrd_bounds(uint32 magic, uint32 mbi_addr, uint32* out_start, 
                     update_v2_framebuffer_globals();
                     if (!g_silent_boot) {
                         print_colored("Found multiboot framebuffer: addr=0x", TEXT_ATTR_LIGHT_CYAN, TEXT_ATTR_BLACK);
+#if ARCH_64BIT
                         print_hex((uint32_t)(g_multiboot_framebuffer_internal.addr >> 32));
+#endif
                         print_hex((uint32_t)g_multiboot_framebuffer_internal.addr);
                         print_colored(", ", TEXT_ATTR_LIGHT_CYAN, TEXT_ATTR_BLACK);
                         print_hex(g_multiboot_framebuffer_internal.width);
@@ -1368,6 +1371,8 @@ void startk(uint32 magic, uint32 mbi_addr) {
     // This ensures we don't lose the info if stack gets corrupted
     uint32 saved_magic = magic;
     uint32 saved_mbi = mbi_addr;
+    (void)saved_magic;
+    (void)saved_mbi;
     g_multiboot_magic = magic;
     g_multiboot_info_addr = mbi_addr;
     
@@ -1423,7 +1428,9 @@ void startk(uint32 magic, uint32 mbi_addr) {
     if (kernel_get_multiboot_framebuffer(&fb_addr, &fb_width, &fb_height, &fb_bpp, &fb_pitch)) {
         if (!g_silent_boot) {
             print_colored("FB: ", TEXT_ATTR_LIGHT_GRAY, TEXT_ATTR_BLACK);
+#if ARCH_64BIT
             print_hex((uint32_t)(fb_addr >> 32));
+#endif
             print_hex((uint32_t)fb_addr);
             print_colored(" ", TEXT_ATTR_LIGHT_GRAY, TEXT_ATTR_BLACK);
             print_hex(fb_width);
@@ -1613,7 +1620,27 @@ void kmain(uint32 magic, uint32 mbi_addr) {
         debuglog(DEBUG_INFO, "[KERNEL] Pre-gfxinit: 0xF0000000 -> phys=0x%08x\n", _phys);
     }
     initialize_framebuffer_console_early();
-    
+
+    // Initialize GL software renderer if framebuffer is available
+#ifdef ENABLE_OPENGL
+    if (!g_framebuffer_disabled && g_multiboot_framebuffer) {
+        extern void gl_init_with_framebuffer(void);
+        gl_init_with_framebuffer();
+        boot_status("GL software renderer", true);
+
+        extern int gl_test_all(void);
+        gl_test_all();
+
+        extern void gl_demo_init(void);
+        gl_demo_init();
+        boot_status("GL demo (rotating cube)", true);
+    } else {
+        boot_status("GL software renderer (skipped)", true);
+    }
+#else
+    boot_status("GL software renderer (disabled)", true);
+#endif
+
     // Initialize intelligent memory region manager
     memory_region_manager_init();
     boot_status("Memory region manager", true);
@@ -1835,6 +1862,19 @@ void kmain(uint32 magic, uint32 mbi_addr) {
         }
     }
 
+    // SMP full initialization — starts Application Processors via INIT-SIPI-SIPI.
+    // Must run after heap is initialized (AP stacks are allocated via kmalloc).
+    {
+        uint32_t prev_count = smp_get_cpu_count();
+        uint32_t online = smp_init_arch();
+        if (online > prev_count) {
+            boot_status("SMP processor startup", true);
+            debuglog(DEBUG_INFO, "[SMP] %u CPUs now online (was %u)\n", online, prev_count);
+        } else {
+            boot_status("SMP processor startup (single CPU)", true);
+        }
+    }
+
     bool pci_ok = pci_init();
     boot_status("PCI/PCIe configuration", pci_ok);
 
@@ -1890,6 +1930,7 @@ void kmain(uint32 magic, uint32 mbi_addr) {
     bool net_ok = false;
     boot_status("Network core", false);
 #endif
+    (void)net_ok;
 
     bool initrd_ok = ramdisk_init(magic, mbi_addr);
     // boot_require("Initrd presence + parsing", initrd_ok, "Initrd missing");
@@ -2220,6 +2261,13 @@ void kmain(uint32 magic, uint32 mbi_addr) {
     // are already enabled (see the sti above), so IRQ handlers and the
     // scheduler keep running for any kernel tasks that were started at boot.
     for (;;) {
+#ifdef ENABLE_OPENGL
+        extern int gl_is_initialized(void);
+        if (gl_is_initialized()) {
+            extern void gl_demo_render(void);
+            gl_demo_render();
+        }
+#endif
         __asm__ __volatile__("hlt");
     }
 }

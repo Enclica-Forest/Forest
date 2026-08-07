@@ -21,7 +21,7 @@ static void format_string(char** buf, size_t* remaining, const char* str) {
     }
 }
 
-static void format_uint(char** buf, size_t* remaining, unsigned long value,
+__attribute__((unused)) static void format_uint(char** buf, size_t* remaining, unsigned long value,
                         unsigned int base, bool uppercase) {
     const char* digits = uppercase ? "0123456789ABCDEF" : "0123456789abcdef";
     char tmp[32];

@@ -33,7 +33,7 @@ vector_alloc_error_t interrupt_vector_allocate(vector_priority_t priority,
                                               const char *name, uint8_t *vector) {
     if (!vec_ctx.initialized || !vector) return VECTOR_ALLOC_ERROR_INVALID_PARAMS;
     
-    for (uint8_t i = USER_VECTOR_START; i <= USER_VECTOR_END; i++) {
+    for (uint16_t i = USER_VECTOR_START; i <= USER_VECTOR_END; i++) {
         if (!vec_ctx.allocated[i]) {
             vec_ctx.allocated[i] = true;
             vec_ctx.priorities[i] = priority;

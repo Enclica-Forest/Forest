@@ -504,7 +504,7 @@ bool session_save_framebuffer(uint32_t session_num) {
     memcpy(session->fb_snapshot, (void*)fb->virtual_addr, fb->size);
     session->fb_snapshot_valid = true;
     debuglog(DEBUG_INFO, "[SESSION] Saved framebuffer for session %u (%u bytes)\n",
-             session_num, fb->size);
+             session_num, (unsigned)fb->size);
     return true;
 }
 
@@ -757,7 +757,7 @@ static void session_draw_transition_status(const char* message) {
 // gate a call to it, is itself uncalled). The framebuffer cross-fade and
 // snapshot restore it performs never run on a real VT switch today -
 // src/hotkey.c switches VTs directly and immediately instead.
-static void session_perform_transition(uint32_t from_session, uint32_t to_session) {
+__attribute__((unused)) static void session_perform_transition(uint32_t from_session, uint32_t to_session) {
     tty_session_t* from = session_get(from_session);
     tty_session_t* to = session_get(to_session);
 
@@ -1300,6 +1300,7 @@ static bool launch_user_session(auth_user_info_t* user_info, tty_session_t* sess
     }
     }
 
+    (void)&&shell_fallback;
 shell_fallback:
     debuglog(DEBUG_INFO, "[SESSION] Launching shell fallback for user '%s' on TTY %u\n",
              user_info->name, session->session_id);

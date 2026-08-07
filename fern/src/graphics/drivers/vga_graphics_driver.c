@@ -157,7 +157,7 @@ static bool vga_gfx_hw_present(void) {
     
     /* Check for VGA feature control register */
     gfx_outb(0x3DA, 0x00);
-    uint8_t status = gfx_inb(0x3DA);
+    (void)gfx_inb(0x3DA);
     
     /* VGA should have display enable and vertical retrace bits */
     return true;
@@ -327,7 +327,7 @@ static void vga_clear_framebuffer(uint8_t* fb, size_t size) {
 /**
  * Set a single DAC palette entry
  */
-static void vga_set_dac_entry(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
+__attribute__((unused)) static void vga_set_dac_entry(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
     gfx_outb(VGA_DAC_WRITE_INDEX, index);
     gfx_outb(VGA_DAC_DATA, r);
     gfx_outb(VGA_DAC_DATA, g);
@@ -612,6 +612,7 @@ static gfx_result_t vga_gfx_reset(gfx_device_t* dev) {
 }
 
 static gfx_result_t vga_gfx_get_modes(gfx_device_t* dev, gfx_mode_t** modes, uint32_t* count) {
+    (void)dev;
     /* VGA graphics modes */
     static const struct { 
         uint32_t w, h, bpp; 

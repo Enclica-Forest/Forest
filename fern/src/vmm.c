@@ -41,9 +41,15 @@ static inline void vmm_pretouch_identity_page(uint32 addr) {
 }
 
 static inline uint32 vmm_get_active_cr3_phys(void) {
+#if defined(__x86_64__) || defined(_M_X64)
+    uint64 cr3;
+    __asm__ __volatile__("mov %%cr3, %0" : "=r"(cr3));
+    return (uint32)cr3;
+#else
     uint32 cr3;
     __asm__ __volatile__("mov %%cr3, %0" : "=r"(cr3));
     return cr3;
+#endif
 }
 
 #if VMM_DEBUG_LOG

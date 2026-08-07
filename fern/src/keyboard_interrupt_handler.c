@@ -357,6 +357,7 @@ static void handle_key_repeat(void) {
 }
 
 static io_operation_result_t keyboard_interrupt_handler(void *device_data) {
+    (void)device_data;
     kbd_ctx.total_interrupts++;
     
     uint8_t status = keyboard_read_status();
@@ -386,6 +387,7 @@ static io_operation_result_t keyboard_interrupt_handler(void *device_data) {
 }
 
 static io_operation_result_t keyboard_initialize(void *device_data) {
+    (void)device_data;
     keyboard_write_command(0xAE);
     
     keyboard_write_data(0xF4);
@@ -407,6 +409,7 @@ static io_operation_result_t keyboard_initialize(void *device_data) {
 }
 
 static void keyboard_enable_interrupts(void *device_data, bool enable) {
+    (void)device_data;
     if (enable) {
         keyboard_write_command(0xAE);
     } else {

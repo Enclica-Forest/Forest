@@ -440,6 +440,7 @@ int recovery_run(EFI_HANDLE image, EFI_SYSTEM_TABLE *st,
     input_init(sBS, &ms, (int)ui_width(), (int)ui_height());
 
     wm_init(th);
+    wm_init_cache(sBS);
     int W = (int)ui_width(), H = (int)ui_height();
     int cw = W * 3 / 4; if (cw > 980) cw = 980; if (cw < 480) cw = 480; if (cw > W - 40) cw = W - 40;
     int ch = H * 3 / 4; if (ch > 640) ch = 640; if (ch < 320) ch = 320; if (ch > H - 40) ch = H - 40;

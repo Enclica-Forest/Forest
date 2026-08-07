@@ -1,0 +1,318 @@
+#!/usr/bin/env python3
+"""
+forb-mkrescue - Create a ForeB bootable rescue image
+
+Drop-in replacement for grub-mkrescue. Creates a bootable CD/USB/floppy image
+using the ForeB bootloader instead of GRUB.
+
+Usage:
+    forb-mkrescue [OPTION...] -o FILE [SOURCE...]
+
+This tool generates a bootable UEFI image that can be written to CD, USB,
+or floppy. It replaces the GRUB rescue image with a ForeB-based one that
+includes an interactive shell, recovery tools, and a graphical boot menu.
+
+Examples:
+    forb-mkrescue -o rescue.iso
+    forb-mkrescue -o rescue.iso /boot
+    forb-mkrescue --product-name "My OS" --product-version "1.0" -o rescue.iso
+
+The output image is a hybrid ISO that boots on both UEFI and BIOS systems
+(if BIOS support is available via an embedded core image).
+"""
+
+import sys
+import os
+import subprocess
+import tempfile
+import shutil
+import argparse
+from pathlib import Path
+
+def find_tool(name):
+    """Find a required tool in PATH."""
+    path = shutil.which(name)
+    if not path:
+        print(f"Error: {name} not found. Install it and try again.", file=sys.stderr)
+        sys.exit(1)
+    return path
+
+def run(cmd, check=True, capture=False):
+    """Run a command."""
+    try:
+        result = subprocess.run(cmd, check=check, capture_output=capture, text=True)
+        return result
+    except subprocess.CalledProcessError as e:
+        print(f"Error running: {' '.join(cmd)}", file=sys.stderr)
+        if e.stderr:
+            print(e.stderr, file=sys.stderr)
+        sys.exit(1)
+
+def find_repo_root():
+    """Find the ForeB repository root."""
+    # Try relative to this script
+    script_dir = Path(__file__).resolve().parent.parent.parent
+    if (script_dir / "build" / "BOOTX64.EFI").exists():
+        return script_dir
+    # Try environment variable
+    env_root = os.environ.get("FORB_REPO")
+    if env_root and Path(env_root).exists():
+        return Path(env_root)
+    # Try common locations
+    for p in ["/usr/share/forb", "/usr/local/share/forb"]:
+        if Path(p).exists():
+            return Path(p)
+    return None
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="forb-mkrescue",
+        description="Create a ForeB bootable rescue image",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  forb-mkrescue -o rescue.iso
+  forb-mkrescue -o rescue.iso /path/to/sources
+  forb-mkrescue --product-name "My Linux" -o rescue.iso
+
+This is a drop-in replacement for grub-mkrescue that creates
+ForeB-based rescue images instead of GRUB-based ones.
+"""
+    )
+
+    parser.add_argument("-o", "--output", required=True,
+                        help="Output image file [required]")
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="Print verbose messages")
+    parser.add_argument("--product-name", default="ForeB Rescue",
+                        help="Product name [default: ForeB Rescue]")
+    parser.add_argument("--product-version", default="1.0",
+                        help="Product version [default: 1.0]")
+    parser.add_argument("--xorriso", default=None,
+                        help="Path to xorriso [default: auto-detect]")
+    parser.add_argument("--label-color", default=None,
+                        help="Label text color (ignored, reserved for compatibility)")
+    parser.add_argument("--label-bgcolor", default=None,
+                        help="Label background color (ignored, reserved)")
+    parser.add_argument("--label-font", default=None,
+                        help="Label font file (ignored, reserved)")
+    parser.add_argument("--compress", default=None,
+                        help="Compression (ignored, reserved for compatibility)")
+    parser.add_argument("--core-compress", default=None,
+                        help="Core compression (ignored, reserved)")
+    parser.add_argument("--sbat", default=None,
+                        help="SBAT metadata file (ignored, reserved)")
+    parser.add_argument("--modules", default=None,
+                        help="Pre-load modules (ignored, reserved)")
+    parser.add_argument("--fonts", default=None,
+                        help="Fonts to install (ignored, reserved)")
+    parser.add_argument("--themes", default=None,
+                        help="Themes to install (ignored, reserved)")
+    parser.add_argument("--locales", default=None,
+                        help="Locales to install (ignored, reserved)")
+    parser.add_argument("--install-modules", default=None,
+                        help="Install only these modules (ignored, reserved)")
+    parser.add_argument("-d", "--directory", default=None,
+                        help="Use images under DIR (ignored, reserved)")
+    parser.add_argument("--rom-directory", default=None,
+                        help="Save ROM images in DIR (ignored, reserved)")
+    parser.add_argument("--arcs-boot", action="store_true",
+                        help="Enable ARCS boot (ignored, reserved)")
+    parser.add_argument("--sparc-boot", action="store_true",
+                        help="Enable sparc boot (ignored, reserved)")
+    parser.add_argument("--disable-cli", action="store_true",
+                        help="Disable CLI (ignored, reserved)")
+    parser.add_argument("--disable-shim-lock", action="store_true",
+                        help="Disable shim lock (ignored, reserved)")
+    parser.add_argument("--appended-signature-size", default=None,
+                        help="Appended signature size (ignored, reserved)")
+    parser.add_argument("-k", "--pubkey", default=None,
+                        help="Public key for signature checking (ignored, reserved)")
+    parser.add_argument("-x", "--x509key", default=None,
+                        help="X509 certificate (ignored, reserved)")
+    parser.add_argument("--dtb", default=None,
+                        help="Device tree blob (ignored, reserved)")
+    parser.add_argument("--locale-directory", default=None,
+                        help="Locale directory (ignored, reserved)")
+    parser.add_argument("sources", nargs="*",
+                        help="Source files/directories to include")
+
+    # Parse known args only - pass rest through to xorriso
+    args, xorriso_passthrough = parser.parse_known_args()
+
+    xorriso = args.xorriso or find_tool("xorriso")
+
+    # Find ForeB repo
+    repo = find_repo_root()
+    if not repo:
+        print("Error: Cannot find ForeB repository root.", file=sys.stderr)
+        print("Set FORB_REPO=/path/to/foreboots or install forb-install.", file=sys.stderr)
+        sys.exit(1)
+
+    efi_app = repo / "build" / "BOOTX64.EFI"
+    forebo_cfg = repo / "forebo.cfg"
+    assets_dir = repo / "assets"
+
+    if not efi_app.exists():
+        print(f"Error: BOOTX64.EFI not found at {efi_app}", file=sys.stderr)
+        print("Run 'make uefi' first to build the UEFI application.", file=sys.stderr)
+        sys.exit(1)
+
+    if args.verbose:
+        print(f"ForeB repo:   {repo}")
+        print(f"EFI app:      {efi_app}")
+        print(f"Config:       {forebo_cfg}")
+        print(f"Output:       {args.output}")
+
+    # Create temporary working directory
+    with tempfile.TemporaryDirectory(prefix="forb-mkrescue-") as tmpdir:
+        tmp = Path(tmpdir)
+
+        # Build ESP structure
+        esp_dir = tmp / "esp"
+        esp_dir.mkdir()
+        (esp_dir / "EFI").mkdir()
+        (esp_dir / "EFI" / "BOOT").mkdir()
+        (esp_dir / "forebo").mkdir()
+        (esp_dir / "forebo" / "icons").mkdir()
+
+        # Copy EFI application
+        shutil.copy2(efi_app, esp_dir / "EFI" / "BOOT" / "BOOTX64.EFI")
+        if args.verbose:
+            print(f"  Copied BOOTX64.EFI")
+
+        # Copy config
+        if forebo_cfg.exists():
+            shutil.copy2(forebo_cfg, esp_dir / "forebo" / "forebo.cfg")
+            if args.verbose:
+                print(f"  Copied forebo.cfg")
+
+        # Copy assets
+        bg_bmp = assets_dir / "bg.bmp"
+        if bg_bmp.exists():
+            shutil.copy2(bg_bmp, esp_dir / "forebo" / "bg.bmp")
+
+        icons_dir = assets_dir / "icons"
+        if icons_dir.exists():
+            for icon in icons_dir.glob("*.tga"):
+                shutil.copy2(icon, esp_dir / "forebo" / "icons" / icon.name)
+            if args.verbose:
+                print(f"  Copied icons")
+
+        # Copy source files if provided
+        if args.sources:
+            for src in args.sources:
+                src_path = Path(src)
+                if src_path.is_dir():
+                    dest = esp_dir / "forebo" / "data" / src_path.name
+                    shutil.copytree(src_path, dest)
+                elif src_path.is_file():
+                    shutil.copy2(src_path, esp_dir / "forebo" / "data" / src_path.name)
+                if args.verbose:
+                    print(f"  Included source: {src}")
+
+        # Create FAT16 ESP image
+        esp_img = tmp / "esp.img"
+        esp_size_kb = 49152  # 48 MiB
+        run([
+            "mkfs.fat", "-C", "-F", "16", "-n", "FOREB",
+            str(esp_img), str(esp_size_kb)
+        ], capture=True)
+
+        # Populate ESP
+        run(["mmd", "-i", str(esp_img), "::/EFI", "::/EFI/BOOT",
+             "::/forebo", "::/forebo/icons"], capture=True)
+        run(["mcopy", "-i", str(esp_img),
+             str(esp_dir / "EFI" / "BOOT" / "BOOTX64.EFI"),
+             "::/EFI/BOOT/BOOTX64.EFI"], capture=True)
+
+        if forebo_cfg.exists():
+            run(["mcopy", "-i", str(esp_img),
+                 str(esp_dir / "forebo" / "forebo.cfg"),
+                 "::/forebo/forebo.cfg"], capture=True)
+
+        if bg_bmp.exists():
+            run(["mcopy", "-i", str(esp_img),
+                 str(esp_dir / "forebo" / "bg.bmp"),
+                 "::/forebo/bg.bmp"], capture=True)
+
+        if icons_dir.exists():
+            for icon in icons_dir.glob("*.tga"):
+                run(["mcopy", "-i", str(esp_img),
+                     str(icon), "::/forebo/icons/"], capture=True)
+
+        # Copy source data if any
+        data_dir = esp_dir / "forebo" / "data"
+        if data_dir.exists():
+            run(["mmd", "-i", str(esp_img), "::/forebo/data"], capture=True)
+            for item in data_dir.iterdir():
+                run(["mcopy", "-i", str(esp_img),
+                     str(item), "::/forebo/data/"], capture=True)
+
+        if args.verbose:
+            print(f"  Created ESP image ({esp_size_kb} KiB)")
+
+        # Create ISO with xorriso
+        xorriso_cmd = [
+            xorriso, "-as", "mkisofs",
+            "-V", "FOREB_RESCUE",
+            "-o", args.output,
+            "-e", "boot/efi/esp.img",
+            "-no-emul-boot",
+            "-isohybrid-gpt-basdat",
+        ]
+
+        # Add product info
+        if args.product_name:
+            xorriso_cmd.extend(["--protective-msdos-label"])
+
+        # Add source directories as El Torito boot image
+        xorriso_cmd.extend([
+            "-b", "EFI/BOOT/BOOTX64.EFI",
+            "-no-emul-boot",
+            "-boot-load-size", "48",
+            "-boot-info-table",
+        ])
+
+        # Add the ESP as the EFI boot partition
+        # First, copy the ESP into the ISO root
+        iso_root = tmp / "iso_root"
+        iso_root.mkdir()
+        efi_dir = iso_root / "boot" / "efi"
+        efi_dir.mkdir(parents=True)
+        shutil.copy2(esp_img, efi_dir / "esp.img")
+
+        # Copy forebo.cfg to boot dir for easy access
+        if forebo_cfg.exists():
+            boot_dir = iso_root / "boot"
+            shutil.copy2(forebo_cfg, boot_dir / "forebo.cfg")
+
+        xorriso_cmd.extend([
+            "-r", "-J",
+            "-eltorito-alt-boot",
+            "-e", "boot/efi/esp.img",
+            "-no-emul-boot",
+            "-isohybrid-gpt-basdat",
+            str(iso_root)
+        ])
+
+        # Append any passthrough arguments for xorriso
+        for arg in xorriso_passthrough:
+            if arg.startswith("--"):
+                continue  # skip our own flags
+            xorriso_cmd.append(arg)
+
+        if args.verbose:
+            print(f"  Running: {' '.join(xorriso_cmd)}")
+
+        run(xorriso_cmd, capture=not args.verbose)
+
+        # Report result
+        output_path = Path(args.output)
+        size_mb = output_path.stat().st_size / (1024 * 1024)
+        print(f"Created rescue image: {args.output} ({size_mb:.1f} MiB)")
+        print(f"  Bootable on: UEFI systems")
+        print(f"  Write with: dd if={args.output} of=/dev/sdX bs=4M status=progress")
+
+if __name__ == "__main__":
+    main()

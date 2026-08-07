@@ -31,6 +31,7 @@ static struct {
 
 // Emergency reporting for critical VMM errors
 static void vmm_emergency_report(const char* msg, uint32_t addr) {
+    (void)addr;
     volatile uint16_t* vga = (volatile uint16_t*)0xB8000;
     int row = 7; // Use row 7 for VMM errors
     int col = 0;
@@ -167,7 +168,7 @@ vmm_address_space_t* secure_vmm_create_address_space(vmm_address_space_type_t ty
         SAFE_FREE(space);
         return NULL;
     }
-    space->page_directory_virt = (uint32_t*)dir;
+    memcpy(&space->page_directory_virt, &dir, sizeof(space->page_directory_virt));
     space->page_directory_phys = (uint32_t)dir;
     
     // Initialize address space

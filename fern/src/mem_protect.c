@@ -182,7 +182,7 @@ static bool enable_nx(void) {
 /**
  * @brief Disable NX bit
  */
-static void disable_nx(void) {
+__attribute__((unused)) static void disable_nx(void) {
     if (!protect_state.nx_enabled) {
         return;
     }
@@ -220,7 +220,7 @@ static bool enable_smep(void) {
 /**
  * @brief Disable SMEP
  */
-static void disable_smep(void) {
+__attribute__((unused)) static void disable_smep(void) {
     if (!protect_state.smep_enabled) {
         return;
     }

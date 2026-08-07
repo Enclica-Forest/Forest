@@ -10,6 +10,7 @@
 
 #define TASK_PRIORITY_MAX          7
 #define TASK_PRIORITY_GUI          6
+#undef TASK_PRIORITY_REALTIME
 #define TASK_PRIORITY_REALTIME     7
 #define TASK_GUI_TICK_BONUS        3
 #define TASK_PRIORITY_BOOST_TICKS  50
@@ -150,6 +151,8 @@ typedef struct task {
     // created via thread_create() rather than task_create()/_kernel()
     // directly. NULL otherwise. Never dereferenced by task.c itself.
     void* thread_wrapper;
+
+    void* vfp_context;
 
     struct task* next;
     struct task* next_in_pgrp;

@@ -107,6 +107,7 @@ static inline float cosf(float x) {
     float x4 = x2 * x2;
     return 1.0f - x2 / 2.0f + x4 / 24.0f;
 }
+static inline float tanf(float x) { return sinf(x) / cosf(x); }
 static inline float sqrtf(float x) { return __builtin_sqrtf(x); }
 static inline float fabsf(float x) { return x < 0.0f ? -x : x; }
 static inline float floorf(float x) { return __builtin_floorf(x); }

@@ -68,7 +68,7 @@ int stacktrace_init_symbols(void) {
 }
 #else
 
-static const char* get_syscall_name(uint32_t syscall_num) {
+__attribute__((unused)) static const char* get_syscall_name(uint32_t syscall_num) {
     if (syscall_num < sizeof(syscall_names)/sizeof(syscall_names[0])) {
         return syscall_names[syscall_num];
     }

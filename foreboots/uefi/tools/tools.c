@@ -1380,12 +1380,20 @@ static void build_bootmgr(tstate *t)
 }
 
 /* ---- System / Firmware Info ---- */
+#if defined(__x86_64__) || defined(_M_X64)
 static void cpuid(UINT32 leaf, UINT32 sub, UINT32 r[4])
 {
     UINT32 a,b,c,d;
     __asm__ volatile("cpuid":"=a"(a),"=b"(b),"=c"(c),"=d"(d):"a"(leaf),"c"(sub));
     r[0]=a; r[1]=b; r[2]=c; r[3]=d;
 }
+#else
+static void cpuid(UINT32 leaf, UINT32 sub, UINT32 r[4])
+{
+    (void)leaf; (void)sub;
+    r[0]=r[1]=r[2]=r[3]=0;
+}
+#endif
 static void build_sysinfo(tstate *t)
 {
     tl_begin(t->text,t->col,&t->n,TL_MAXLINES);

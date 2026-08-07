@@ -12,7 +12,7 @@ void elf_loader_test(void) {
     extern uint8_t userspace_elf_data[];
     extern size_t userspace_elf_size;
     
-    if (userspace_elf_data) {
+    if (userspace_elf_size > 0) {
         print(test_msg);
         print("Testing userspace ELF validation...\n");
         

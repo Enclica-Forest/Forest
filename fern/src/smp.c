@@ -206,7 +206,7 @@ single_cpu_fallback:
 }
 
 uint32 smp_get_cpu_count(void) {
-    return g_smp_state.cpu_count > 0 ? g_smp_state.cpu_count : 1;
+    return g_smp_state.online_cpus > 0 ? g_smp_state.online_cpus : 1;
 }
 
 bool smp_has_smp(void) {

@@ -87,11 +87,11 @@ static irq_return_t pit_timer_interrupt_handler(struct interrupt_context *ctx);
 static uint64_t pit_calculate_ns_per_tick(void);
 
 /* Timer source callbacks */
-static int pit_timer_source_init(struct timer_source *source);
-static void pit_timer_source_cleanup(struct timer_source *source);
+__attribute__((unused)) static int pit_timer_source_init(struct timer_source *source);
+__attribute__((unused)) static void pit_timer_source_cleanup(struct timer_source *source);
 static uint64_t pit_timer_source_read(struct timer_source *source);
-static int pit_timer_source_set_periodic(struct timer_source *source, uint64_t period_ns);
-static int pit_timer_source_set_oneshot(struct timer_source *source, uint64_t timeout_ns);
+__attribute__((unused)) static int pit_timer_source_set_periodic(struct timer_source *source, uint64_t period_ns);
+__attribute__((unused)) static int pit_timer_source_set_oneshot(struct timer_source *source, uint64_t timeout_ns);
 static void pit_timer_source_stop(struct timer_source *source);
 
 /*
@@ -168,8 +168,6 @@ static int pit_set_frequency(uint32_t frequency)
     divisor = PIT_FREQUENCY / frequency;
     if (divisor == 0) {
         divisor = 1;
-    } else if (divisor > PIT_MAX_COUNT) {
-        divisor = PIT_MAX_COUNT;
     }
     
     spin_lock_irqsave(&pit.lock, flags);
@@ -289,7 +287,7 @@ int pit_init_advanced(void)
     
     /* Register interrupt handler for IRQ 0 */
     idt_register_handler(IRQ_TIMER, 
-                        (interrupt_handler_t)pit_timer_interrupt_handler, 
+                        (interrupt_handler_t)(void*)pit_timer_interrupt_handler, 
                         "PIT Timer");
     
     /* Set up timer source */
@@ -369,24 +367,28 @@ uint32_t pit_get_frequency(void)
  */
 static int pit_timer_source_init(struct timer_source *source)
 {
+    (void)source;
     debug_print("PIT: Timer source initialized\n");
     return 0;
 }
 
 static void pit_timer_source_cleanup(struct timer_source *source)
 {
+    (void)source;
     pit_timer_source_stop(source);
     debug_print("PIT: Timer source cleaned up\n");
 }
 
 static uint64_t pit_timer_source_read(struct timer_source *source)
 {
+    (void)source;
     /* Return accumulated system time */
     return pit.system_time_ns;
 }
 
 static int pit_timer_source_set_periodic(struct timer_source *source, uint64_t period_ns)
 {
+    (void)source;
     uint32_t frequency;
     
     if (period_ns == 0) {
@@ -394,7 +396,7 @@ static int pit_timer_source_set_periodic(struct timer_source *source, uint64_t p
     }
     
     /* Convert period to frequency */
-    frequency = 1000000000ULL / period_ns;
+    frequency = (uint32_t)(1000000000ULL / period_ns);
     
     if (frequency < PIT_MIN_FREQUENCY) {
         frequency = PIT_MIN_FREQUENCY;
@@ -410,6 +412,7 @@ static int pit_timer_source_set_periodic(struct timer_source *source, uint64_t p
 
 static int pit_timer_source_set_oneshot(struct timer_source *source, uint64_t timeout_ns)
 {
+    (void)source;
     uint32_t ticks;
     unsigned long flags;
     
@@ -444,6 +447,7 @@ static int pit_timer_source_set_oneshot(struct timer_source *source, uint64_t ti
 
 static void pit_timer_source_stop(struct timer_source *source)
 {
+    (void)source;
     unsigned long flags;
     
     spin_lock_irqsave(&pit.lock, flags);

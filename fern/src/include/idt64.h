@@ -15,6 +15,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "gdt64.h"
 
 #ifdef __x86_64__
 

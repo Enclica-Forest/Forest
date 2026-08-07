@@ -16,7 +16,7 @@
 
 # Common flags
 COMMON_CFLAGS := $(ARCH_FLAGS) -ffreestanding -nostdlib -fno-pic -fno-pie \
-                 -Wall -Wextra -I$(SRCDIR)/include -Ilibs/uacpi/include \
+                 -Wall -Wextra -I$(SRCDIR)/include -I$(SRCDIR) -Ilibs/uacpi/include \
                  -Ilibs/qrcodegen \
                  -fcf-protection=none
 
@@ -108,8 +108,12 @@ else
 endif
 endif
 
-# Special interrupt handling flags
-INTERRUPT_CFLAGS := $(CFLAGS) -mgeneral-regs-only
+# Special interrupt handling flags (x86-only: -mgeneral-regs-only disables SSE)
+ifeq ($(filter arm aarch64 riscv64,$(ARCH)),)
+    INTERRUPT_CFLAGS := $(CFLAGS) -mgeneral-regs-only
+else
+    INTERRUPT_CFLAGS := $(CFLAGS)
+endif
 
 # Vendored / third-party library flags: same as CFLAGS but -Werror is dropped
 # and known-irrelevant warnings silenced, so upstream code doesn't fail the
@@ -118,7 +122,11 @@ LIB_CFLAGS := $(filter-out -Werror,$(CFLAGS)) -Wno-overflow
 
 # Linker script selection
 ifeq ($(BOOT_MODE),uefi)
-    LINKER_SCRIPT := src/link_uefi_$(ARCH).ld
+    ifeq ($(ARCH),riscv64)
+        LINKER_SCRIPT := src/riscv64/link_uefi.ld
+    else
+        LINKER_SCRIPT := src/link_uefi_$(ARCH).ld
+    endif
 else ifeq ($(ARCH),64)
     LINKER_SCRIPT := src/link64.ld
 else ifeq ($(ARCH),arm)
@@ -131,6 +139,8 @@ else ifeq ($(ARCH),aarch64)
     ifeq ($(wildcard src/aarch64/link.ld),)
         LINKER_SCRIPT := src/link.ld
     endif
+else ifeq ($(ARCH),riscv64)
+    LINKER_SCRIPT := src/riscv64/link.ld
 else
     LINKER_SCRIPT := src/link.ld
 endif
@@ -147,6 +157,10 @@ else ifeq ($(ARCH),aarch64)
     # AArch64 boot stub
     BOOT_ASM :=
     BOOT_OBJ :=
+else ifeq ($(ARCH),riscv64)
+    # RISC-V boot stub (entry point from riscv64 sources)
+    BOOT_ASM :=
+    BOOT_OBJ :=
 else
     BOOT_ASM := src/boot.asm
     BOOT_OBJ := boot.o
@@ -161,13 +175,17 @@ endif
 
 LDFLAGS += -T $(LINKER_SCRIPT) --allow-multiple-definition
 
-# NASM Assembly flags (NASM only used for x86/x86_64)
+# NASM Assembly flags (NASM only used for x86/x86_64; ARM/AArch64/RISC-V use GNU as)
 ifeq ($(ARCH),32)
-    NASMFLAGS := -f elf32 -D__i386__
+    NASMFLAGS := -f elf32 -D__i386__ -w-zext-reloc -w-zeroing
 else ifeq ($(ARCH),64)
-    NASMFLAGS := -f elf64 -D__x86_64__
+    NASMFLAGS := -f elf64 -D__x86_64__ -w-zext-reloc -w-zeroing
+    # 5-level paging (LA57) support — gated by build config
+    ifeq ($(ENABLE_5LEVEL_PAGING),yes)
+        NASMFLAGS += -DENABLE_5LEVEL_PAGING
+    endif
 else
-    # ARM/AArch64: no NASM, GNU as is used via $(AS)
+    # ARM/AArch64/RISC-V: no NASM, GNU as is used via $(AS)
     NASMFLAGS :=
 endif
 

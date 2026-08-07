@@ -1,0 +1,2 @@
+#!/bin/sh
+for f in "$@"; do [ -f "\$f" ] && cat "\$f"; done

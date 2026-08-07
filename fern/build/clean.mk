@@ -26,7 +26,7 @@
 
 clean:
 	@echo "$(OK_COLOR)Cleaning build files for $(ARCH)-bit $(BOOT_MODE) $(BUILD_TYPE)...$(NO_COLOR)"
-	@rm -rf $(OBJDIR) $(OUTDIR)
+	@rm -rf $(OBJDIR) $(OUTDIR) 2>/dev/null || find $(OBJDIR) $(OUTDIR) -delete 2>/dev/null || true
 
 clean-all:
 	@echo "$(OK_COLOR)Cleaning all build files...$(NO_COLOR)"

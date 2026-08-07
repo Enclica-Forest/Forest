@@ -193,6 +193,7 @@ graphics_result_t probe_pci_graphics_devices(void) {
                 uint32_t class_code = pci_read_config_dword(bus, slot, func, 8);
                 uint8_t class = (class_code >> 24) & 0xFF;
                 uint8_t subclass = (class_code >> 16) & 0xFF;
+                (void)subclass;
                 
                 if (class == PCI_CLASS_DISPLAY) {
                     debuglog(DEBUG_INFO, "Found graphics device: %04x:%04x at %02x:%02x.%x\n",
@@ -222,7 +223,6 @@ graphics_result_t probe_pci_graphics_devices(void) {
                         // Find end of list and append
                         graphics_device_t* current = device_list;
                         while (current && current != new_device) {
-                            if (current + 1 == NULL) break;
                             current++;
                         }
                         // For simplicity, we'll use a different approach

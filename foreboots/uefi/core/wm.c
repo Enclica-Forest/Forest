@@ -23,17 +23,106 @@ struct wm_window {
     int         drag_off_x, drag_off_y;
     int         wants_close;
     int         animated;                 /* continuously animates -> force repaint */
+    /* Content cache: snapshot of the window's visible pixels in the back
+     * buffer. On idle frames (no events, no drag, no animation) the cache is
+     * restored instead of calling draw_one(), skipping hundreds of fill_rect
+     * calls per window. The cache is invalidated (dirty=1) on any event,
+     * move, theme change, or open. */
+    int         dirty;                    /* 1 = needs full redraw this frame   */
+    UINT8      *cache;                    /* snapshot of visible window content */
+    UINTN       cache_pitch;              /* bytes per row in the cache buffer  */
+    int         cache_x, cache_y;         /* origin of the cached region        */
+    int         cache_w, cache_h;         /* size of the cached region          */
 };
 
 static struct wm_window g_win[WM_MAX_WINDOWS];
 static int  g_order[WM_MAX_WINDOWS];       /* ids, back(0)-to-front(n-1)        */
 static int  g_norder;
 static struct forebo_theme g_theme;
+static EFI_BOOT_SERVICES *g_bs;          /* for cache AllocatePool/FreePool    */
 
 /* Fast-path bookkeeping (avoid per-frame O(n) scans). */
 static int  g_dragid = -1;                 /* window id mid-titlebar-drag, else -1 */
 static int  g_any_wants_close = 0;         /* set when any window requests close   */
 static int  g_event_frame = 0;             /* an event was dispatched this frame   */
+
+/* ---- per-window content cache ------------------------------------------ *
+ * Each window optionally caches a snapshot of its visible pixels so that on
+ * idle frames (no events, no drag, no animation) the expensive draw_one()
+ * callback is skipped entirely: the cache is restored with a fast row-by-row
+ * memcpy and the window region is marked dirty for ui_present(). The cache is
+ * invalidated (dirty=1) whenever the window moves, receives input, or the
+ * theme changes. Glass (frosted) windows never cache because their content
+ * depends on the changing backdrop. */
+static void wm_cache_alloc(wm_window *w, int x, int y, int cw, int ch)
+{
+    if (!w || cw <= 0 || ch <= 0) return;
+    UINTN bytes = (UINTN)cw * (UINTN)ch * 4u;
+    if (bytes > 4u * 1024u * 1024u) return;   /* sanity: skip huge windows */
+    if (w->cache && w->cache_w == cw && w->cache_h == ch) return;  /* reuse */
+    if (w->cache && g_bs) { g_bs->FreePool(w->cache); w->cache = 0; }
+    VOID *p = 0;
+    if (g_bs && !EFI_ERROR(g_bs->AllocatePool(EfiLoaderData, bytes, &p)) && p) {
+        w->cache = (UINT8 *)p;
+        w->cache_pitch = (UINTN)cw * 4u;
+        w->cache_x = x; w->cache_y = y;
+        w->cache_w = cw; w->cache_h = ch;
+    }
+}
+
+static void wm_cache_free(wm_window *w)
+{
+    if (!w) return;
+    if (w->cache && g_bs) g_bs->FreePool(w->cache);
+    w->cache = 0;
+    w->cache_w = w->cache_h = 0;
+}
+
+/* Snapshot the visible window region from the back buffer into the cache. */
+static void wm_cache_snapshot(wm_window *w, int x, int y, int cw, int ch)
+{
+    if (!w || !w->cache || cw <= 0 || ch <= 0) return;
+    UINT64 base = ui_backbuffer_base();
+    UINT32 pitch = ui_draw_pitch();
+    if (!base || !pitch) return;
+    for (int yy = 0; yy < ch; yy++) {
+        const UINT8 *src = (const UINT8 *)base + (UINTN)(y + yy) * pitch + (UINTN)x * 4u;
+        UINT8 *dst = w->cache + (UINTN)yy * w->cache_pitch;
+        /* 8-byte copy for cached rows (back buffer is plain cached RAM). */
+        UINTN n = (UINTN)cw * 4u;
+        UINTN i = 0;
+        for (; i + 8 <= n; i += 8) {
+            *(UINT64 *)(dst + i) = *(const UINT64 *)(src + i);
+        }
+        for (; i < n; i++) dst[i] = src[i];
+    }
+}
+
+/* Restore the cached window content back to the back buffer. */
+static void wm_cache_restore(wm_window *w)
+{
+    if (!w || !w->cache || w->cache_w <= 0 || w->cache_h <= 0) return;
+    UINT64 base = ui_backbuffer_base();
+    UINT32 pitch = ui_draw_pitch();
+    if (!base || !pitch) return;
+    int x = w->cache_x, y = w->cache_y;
+    for (int yy = 0; yy < w->cache_h; yy++) {
+        UINT8 *dst = (UINT8 *)base + (UINTN)(y + yy) * pitch + (UINTN)x * 4u;
+        const UINT8 *src = w->cache + (UINTN)yy * w->cache_pitch;
+        UINTN n = (UINTN)w->cache_w * 4u;
+        UINTN i = 0;
+        for (; i + 8 <= n; i += 8) {
+            *(UINT64 *)(dst + i) = *(const UINT64 *)(src + i);
+        }
+        for (; i < n; i++) dst[i] = src[i];
+    }
+}
+
+/* Mark a window dirty so its content is fully redrawn next frame. */
+static void wm_mark_dirty(int id)
+{
+    if (id >= 0 && id < WM_MAX_WINDOWS) g_win[id].dirty = 1;
+}
 
 /* Optional custom chrome faces (NULL = drawn look). Owned by the caller. */
 static const struct img_image *g_win_img = 0;   /* window client face   */
@@ -133,9 +222,14 @@ void wm_init(const struct forebo_theme *theme)
     else       forebo_theme_default(&g_theme);
 }
 
+void wm_init_cache(EFI_BOOT_SERVICES *bs) { g_bs = bs; }
+
 void wm_set_theme(const struct forebo_theme *theme)
 {
     if (theme) g_theme = *theme;
+    /* Theme change affects every window's chrome: invalidate all caches. */
+    for (int i = 0; i < WM_MAX_WINDOWS; i++)
+        if (g_win[i].used) g_win[i].dirty = 1;
 }
 
 wm_window *wm_open(const char *title, int w, int h,
@@ -161,6 +255,8 @@ wm_window *wm_open(const char *title, int w, int h,
     win->draw = draw;
     win->evcb = evcb;
     win->user = user;
+    win->dirty = 1;                     /* force full redraw on first frame    */
+    win->cache = 0; win->cache_w = win->cache_h = 0;
     sstrcpy(win->title, title ? title : "Window", (int)sizeof(win->title));
     win->tlen = 0; while (win->title[win->tlen]) win->tlen++;
 
@@ -183,6 +279,7 @@ void wm_close(wm_window *w)
         ev.button = 0; ev.scancode = 0; ev.unicode = 0; ev.wheel = 0;
         w->evcb(w, &ev);
     }
+    wm_cache_free(w);
     g_win[id].used = 0;
     if (g_dragid == id) g_dragid = -1;
     order_remove(id);
@@ -192,6 +289,8 @@ void wm_close_all(void)
 {
     for (int i = g_norder - 1; i >= 0; i--) wm_close(&g_win[g_order[i]]);
     g_norder = 0;
+    /* Free any orphaned caches (defensive). */
+    for (int i = 0; i < WM_MAX_WINDOWS; i++) wm_cache_free(&g_win[i]);
 }
 
 int wm_active_count(void)
@@ -241,6 +340,7 @@ static void dispatch_mouse(wm_window *w, int type, int mx, int my, int button,
 {
     if (!w->evcb) return;
     g_event_frame = 1;                 /* a real event reaches a callback */
+    w->dirty = 1;                      /* event -> content may change     */
     int cx, cy, cw, ch;
     client_rect(w, &cx, &cy, &cw, &ch);
     wm_event ev;
@@ -274,6 +374,7 @@ void wm_run_frame(mouse_state *m, EFI_INPUT_KEY *key)
                 if (dragw->y < 0) dragw->y = 0;
                 if (dragw->x > SW - 40) dragw->x = SW - 40;
                 if (dragw->y > SH - 10) dragw->y = SH - 10;
+                dragw->dirty = 1;      /* moved -> invalidate cache       */
             } else {
                 dragw->dragging = 0;
                 g_dragid = -1;
@@ -302,7 +403,8 @@ void wm_run_frame(mouse_state *m, EFI_INPUT_KEY *key)
                     w->drag_off_x = m->x - w->x;
                     w->drag_off_y = m->y - w->y;
                 } else {
-                    dispatch_mouse(w, WM_EV_MOUSE_DOWN, m->x, m->y, m->right ? 1 : 0, 0);
+                    dispatch_mouse(w, WM_EV_MOUSE_DOWN, m->x, m->y,
+                                   m->right_pressed ? 1 : 0, 0);
                 }
                 break;
             }
@@ -321,6 +423,7 @@ void wm_run_frame(mouse_state *m, EFI_INPUT_KEY *key)
         wm_window *f = wm_focused();
         if (f) {
             g_event_frame = 1;         /* a key reaches the focused window */
+            f->dirty = 1;              /* key -> content may change        */
             int handled = 0;
             if (f->evcb) {
                 wm_event ev;
@@ -599,9 +702,38 @@ void wm_draw(void)
     for (int i = 0; i < g_norder; i++) {
         int id = g_order[i];
         if (!g_win[id].used || skip[i]) continue;
-        ui_clip_push(vb[i][0], vb[i][1], vb[i][2], vb[i][3]);
-        draw_one(&g_win[id], i == g_norder - 1, glass_fx, shadow_on);
+        wm_window *w = &g_win[id];
+        int vx = vb[i][0], vy = vb[i][1], vw = vb[i][2], vh = vb[i][3];
+        if (vw <= 0 || vh <= 0) continue;
+
+        /* Content cache fast path: if the window is clean (no events, no move,
+         * no theme change) and has a valid cache matching the current visible
+         * region, restore it with a fast memcpy instead of calling draw_one().
+         * This skips the expensive client draw callback (hundreds of fill_rect
+         * calls for gradient bars, colour swatches, etc.) on idle frames.
+         * Glass windows never cache because their content depends on the
+         * changing backdrop. */
+        int can_cache = !glass_fx && w->draw;
+        if (can_cache && !w->dirty && w->cache &&
+            w->cache_x == vx && w->cache_y == vy &&
+            w->cache_w == vw && w->cache_h == vh) {
+            /* Fast path: restore cached window content. */
+            wm_cache_restore(w);
+            ui_mark_dirty(vx, vy, vw, vh);
+            continue;
+        }
+
+        /* Slow path: full redraw + snapshot to cache. */
+        ui_clip_push(vx, vy, vw, vh);
+        draw_one(w, i == g_norder - 1, glass_fx, shadow_on);
         ui_clip_pop();
+
+        /* Snapshot the drawn window into the cache for next frame. */
+        if (can_cache) {
+            wm_cache_alloc(w, vx, vy, vw, vh);
+            wm_cache_snapshot(w, vx, vy, vw, vh);
+        }
+        w->dirty = 0;
     }
 }
 

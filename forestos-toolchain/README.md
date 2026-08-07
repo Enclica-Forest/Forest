@@ -86,13 +86,15 @@ in this package provides exactly that.
 
 ## `sysroot-skeleton/` — the tracked header source
 
-`build-toolchain.sh` populates the generated `sysroot/` from two sources:
+`build-toolchain.sh` populates the generated `sysroot/` from three sources:
 
 1. **`sysroot-skeleton/`** (tracked here) — the small, git-safe header island
    the Fern kernel actually reaches through the sysroot, plus a placeholder for
    the generated `lib/` objects.
 2. The Fern kernel headers under `fern/src/include/` (copied in for the wider
    set of userspace / wrapper headers).
+3. **`libs/libc/`** (consolidated libc) — the single source of truth for all
+   libc headers, overlaid into the sysroot during build.
 
 ### Why the skeleton exists
 

@@ -62,9 +62,23 @@ struct interrupt_frame;
 #define MEMORY_KERNEL_START     0x00100000  // 1MB - where kernel starts
 #define MEMORY_PMM_START        0x00400000  // 4MB - where PMM bitmap starts
 #define MEMORY_PMM_SIZE         0x40000     // 256KB for PMM bitmap
-#define MEMORY_KERNEL_HEAP_START (MEMORY_PMM_START + MEMORY_PMM_SIZE) // Heap starts after PMM
-#define MEMORY_KERNEL_HEAP_INITIAL_SIZE (16 * 1024 * 1024)  // 16MB bootstrap heap (covers 6 render layers + WM surfaces)
-#define MEMORY_KERNEL_HEAP_MAX_SIZE     (128 * 1024 * 1024) // 128MB max heap (tuned for large assets)
+
+// Per-architecture kernel heap layout (high-half on 64-bit, identity on 32-bit)
+#if defined(__x86_64__) || defined(_M_X64)
+#   define MEMORY_KERNEL_HEAP_START       0xFFFF800000000000ULL
+#   define MEMORY_KERNEL_HEAP_MAX_SIZE    (256U * 1024U * 1024U)
+#elif defined(__aarch64__) || defined(_M_ARM64)
+#   define MEMORY_KERNEL_HEAP_START       0xFFFFFF8000000000ULL
+#   define MEMORY_KERNEL_HEAP_MAX_SIZE    (256U * 1024U * 1024U)
+#elif defined(__riscv) && (__riscv_xlen == 64)
+#   define MEMORY_KERNEL_HEAP_START       0xFFFFFFC040000000ULL
+#   define MEMORY_KERNEL_HEAP_MAX_SIZE    (256U * 1024U * 1024U)
+#else
+    /* 32-bit: heap starts after PMM bitmap */
+#   define MEMORY_KERNEL_HEAP_START       (MEMORY_PMM_START + MEMORY_PMM_SIZE)
+#   define MEMORY_KERNEL_HEAP_MAX_SIZE    (128U * 1024U * 1024U)
+#endif
+#define MEMORY_KERNEL_HEAP_INITIAL_SIZE   (16U * 1024U * 1024U)
 #define MEMORY_USER_START       0x40000000  // 1GB - user space starts
 #define MEMORY_USER_END         0xC0000000  // 3GB - user space ends
 #define USER_STACK_TOP          0xBFFFF000  // Top of user-mode stack
@@ -105,8 +119,11 @@ typedef struct {
 } __attribute__((packed)) page_entry_t;
 
 // Page directory and table structures
+#ifndef page_directory_t_DEFINED
+#define page_directory_t_DEFINED
 typedef page_entry_t page_table_t[1024];
 typedef page_entry_t page_directory_t[1024];
+#endif
 
 // Helper to convert a page directory pointer to the physical address for CR3.
 static inline uintptr_t vmm_pdir_phys(page_directory_t* dir) {
@@ -165,6 +182,8 @@ typedef struct {
 } memory_stats_t;
 
 // Simple result codes
+#ifndef FOREST_MEMORY_RESULT_DEFINED
+#define FOREST_MEMORY_RESULT_DEFINED
 typedef enum {
     MEMORY_OK = 0,
     MEMORY_ERROR_NULL_PTR,
@@ -175,6 +194,7 @@ typedef enum {
     MEMORY_ERROR_INVALID_SIZE,
     MEMORY_ERROR_NOT_INITIALIZED
 } memory_result_t;
+#endif
 
 // =============================================================================
 // PHYSICAL MEMORY MANAGER (PMM)

@@ -67,7 +67,7 @@ extern page_directory_t* vmm_get_kernel_page_directory(void);
 
 // Validate block magic and structure
 static bool is_valid_block(heap_block_t* block) {
-    if (!block) {
+    if (block == NULL) {
         return false;
     }
     
@@ -444,6 +444,7 @@ static heap_block_t* expand_heap_with_prealloc(uint32 needed_size,
                                                 phys_addr_t* frames,
                                                 uint32 frame_count,
                                                 uint32 total_pages) {
+    (void)needed_size;
     uint32 expand_size = total_pages * MEMORY_PAGE_SIZE;
     if (heap_state.current_end + expand_size > heap_state.start_addr + heap_state.max_size) {
         return NULL;

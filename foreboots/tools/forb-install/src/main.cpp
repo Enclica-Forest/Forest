@@ -19,6 +19,7 @@ static void print_help() {
 "  scan       parse the ESP configs and print a report (read-only)\n"
 "  generate   print the translated forebo.cfg (--output FILE)\n"
 "  install    install ForeB alongside the current bootloader (needs root)\n"
+"  batch      install multiple bootloaders from a JSON manifest\n"
 "  lint       validate a forebo.cfg file for correctness\n"
 "  uninstall  remove ForeB from the ESP and NVRAM (needs root)\n"
 "  list       list all bootloaders detected on the ESP and in NVRAM\n"
@@ -42,14 +43,20 @@ static void print_help() {
 "  --no-extras           do not append the ForeB utility entries\n"
 "  --strict              treat warnings as errors\n"
 "  -v, --verbose         also print notes\n"
+"  -q, --quiet           suppress all output except errors\n"
 "\n"
 "generate options:\n"
 "  --output FILE         write to FILE instead of stdout\n"
 "\n"
 "install options:\n"
+"  --clean               remove old ForeB installation before installing\n"
 "  --no-nvram            skip efibootmgr NVRAM registration\n"
 "  --make-default        put ForeB first in BootOrder\n"
 "  --dry-run             print every action without doing it\n"
+"\n"
+"batch options:\n"
+"  --manifest FILE       path to JSON manifest (required)\n"
+"  --continue-on-error   continue installing other bootloaders after failure\n"
 "\n"
 "uninstall options:\n"
 "  --dry-run             print what would be removed without doing it\n"
@@ -82,13 +89,14 @@ static void print_help() {
 "  " << TOOL << " scan                           # see what's on the ESP\n"
 "  " << TOOL << " generate -o forebo.cfg         # preview translated config\n"
 "  " << TOOL << " install --dry-run              # preview install actions\n"
+"  " << TOOL << " install --clean                # remove old ForeB, then install\n"
 "  " << TOOL << " install --force                # overwrite existing install\n"
 "  " << TOOL << " install --make-default         # make ForeB the default\n"
 "\n"
 "Examples:\n"
 "  " << TOOL << " scan --esp /boot/efi\n"
 "  " << TOOL << " generate --config /boot/efi/grub/grub.cfg\n"
-"  " << TOOL << " install --esp /boot/efi --force --make-default\n"
+"  " << TOOL << " install --esp /boot/efi --clean --make-default\n"
 "\n"
 "exit codes: 0 ok, 1 error, 2 usage\n";
 }
@@ -144,7 +152,7 @@ int main(int argc, char** argv) {
     // subcommand is the first non-option token.
     for (; i < args.size(); ++i) {
         const std::string& s = args[i];
-        if (s == "scan" || s == "generate" || s == "install" ||
+        if (s == "scan" || s == "generate" || s == "install" || s == "batch" ||
             s == "lint" || s == "uninstall" || s == "migrate" || s == "list" || s == "backup" ||
             s == "export") {
             a.command = s;
@@ -206,6 +214,8 @@ int main(int argc, char** argv) {
             a.strict = true;
         } else if (s == "--force") {
             a.force = true;
+        } else if (s == "--clean" && (a.command == "install" || a.command == "batch")) {
+            a.clean = true;
         } else if (s == "--color") {
             // Already handled above
         } else if (s == "--no-color") {
@@ -226,11 +236,11 @@ int main(int argc, char** argv) {
             a.backup = true;
         } else if (s == "--format" && a.command == "export") {
             if (!take_value(args, i, s, a.export_format)) return 2;
-        } else if (s == "--no-nvram" && a.command == "install") {
+        } else if (s == "--no-nvram" && (a.command == "install" || a.command == "batch")) {
             a.no_nvram = true;
-        } else if (s == "--make-default" && a.command == "install") {
+        } else if (s == "--make-default" && (a.command == "install" || a.command == "batch")) {
             a.make_default = true;
-        } else if (s == "--dry-run" && (a.command == "install" || a.command == "uninstall" || a.command == "migrate")) {
+        } else if (s == "--dry-run" && (a.command == "install" || a.command == "uninstall" || a.command == "migrate" || a.command == "batch")) {
             a.dry_run = true;
         } else if (s == "--yes" && a.command == "uninstall") {
             a.yes = true;
@@ -255,9 +265,11 @@ int main(int argc, char** argv) {
     }
 
     Reporter rep(a.verbose, a.force);
+    rep.quiet = a.quiet;
     if (a.command == "scan") return cmd_scan(a, rep);
     if (a.command == "generate") return cmd_generate(a, rep);
     if (a.command == "install") return cmd_install(a, rep);
+    if (a.command == "batch") return cmd_batch(a, rep);
     if (a.command == "lint") return cmd_lint(a, rep);
     if (a.command == "uninstall") return cmd_uninstall(a, rep);
     if (a.command == "migrate") return cmd_migrate(a, rep);

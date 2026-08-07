@@ -128,11 +128,11 @@ static irq_return_t hpet_timer_interrupt_handler(struct interrupt_context *ctx);
 
 /* Timer source callbacks - match struct timer_source function pointer signatures */
 static int hpet_timer_source_init(struct timer_source *self);
-static void hpet_timer_source_cleanup(struct timer_source *self);
+__attribute__((unused)) static void hpet_timer_source_cleanup(struct timer_source *self);
 static uint64_t hpet_timer_source_read(struct timer_source *self);
 static void hpet_timer_source_set_periodic(struct timer_source *self, uint64_t period_ns);
 static void hpet_timer_source_set_oneshot(struct timer_source *self, uint64_t timeout_ns);
-static void hpet_timer_source_stop(struct timer_source *self);
+__attribute__((unused)) static void hpet_timer_source_stop(struct timer_source *self);
 
 /*
  * Read HPET register
@@ -224,7 +224,7 @@ static int hpet_detect_from_acpi(void)
                 (hpet.revision >> 4) & 0xF, hpet.revision & 0xF,
                 hpet.num_timers,
                 hpet.supports_64bit ? "64-bit" : "32-bit",
-                hpet.frequency);
+                (unsigned long)hpet.frequency);
     
     hpet.detected = true;
     return 0;
@@ -445,8 +445,9 @@ static void hpet_free_timer(int timer_id)
 /*
  * HPET timer interrupt handler
  */
-static irq_return_t hpet_timer_interrupt_handler(struct interrupt_context *ctx)
+__attribute__((unused)) static irq_return_t hpet_timer_interrupt_handler(struct interrupt_context *ctx)
 {
+    (void)ctx;
     /* Determine which timer caused the interrupt */
     uint64_t status = hpet_read_register(HPET_GENERAL_INT_STATUS);
     
@@ -477,7 +478,7 @@ static int hpet_timer_source_init(struct timer_source *self)
     return 0;
 }
 
-static void hpet_timer_source_cleanup(struct timer_source *self)
+__attribute__((unused)) static void hpet_timer_source_cleanup(struct timer_source *self)
 {
     (void)self;  /* HPET uses global state */
     debuglog_printf("HPET: Timer source cleaned up\n");
@@ -524,7 +525,7 @@ static void hpet_timer_source_set_periodic(struct timer_source *self, uint64_t p
     *timer->comparator_reg = period_ticks;
 
     debuglog_printf("HPET: Set periodic timer %d, period=%lu ns (%lu ticks)\n",
-                timer_id, period_ns, period_ticks);
+                timer_id, (unsigned long)period_ns, (unsigned long)period_ticks);
 }
 
 static void hpet_timer_source_set_oneshot(struct timer_source *self, uint64_t timeout_ns)
@@ -552,10 +553,10 @@ static void hpet_timer_source_set_oneshot(struct timer_source *self, uint64_t ti
     *timer->comparator_reg = target_value;
 
     debuglog_printf("HPET: Set oneshot timer %d, timeout=%lu ns (target=%lu)\n",
-                timer_id, timeout_ns, target_value);
+                timer_id, (unsigned long)timeout_ns, (unsigned long)target_value);
 }
 
-static void hpet_timer_source_stop(struct timer_source *self)
+__attribute__((unused)) static void hpet_timer_source_stop(struct timer_source *self)
 {
     (void)self;  /* HPET uses global state */
     /* Stop all timers in use */

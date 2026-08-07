@@ -141,6 +141,31 @@ static inline void write_cntv_tval_el0(uint32_t v)
 }
 
 /* ------------------------------------------------------------------ */
+/* CNTP — Physical Timer system registers                               */
+/* ------------------------------------------------------------------ */
+
+#define CNTP_CTL_ENABLE     (UINT64_C(1) << 0)
+#define CNTP_CTL_IMASK      (UINT64_C(1) << 1)
+#define CNTP_CTL_ISTATUS    (UINT64_C(1) << 2)
+
+static inline void write_cntp_tval_el1(uint32_t v)
+{
+    __asm__ volatile("msr cntp_tval_el1, %0" :: "r"((uint64_t)v));
+}
+
+static inline void write_cntp_ctl_el1(uint64_t v)
+{
+    __asm__ volatile("msr cntp_ctl_el1, %0" :: "r"(v));
+}
+
+static inline uint64_t read_cntp_ctl_el1(void)
+{
+    uint64_t v;
+    __asm__ volatile("mrs %0, cntp_ctl_el1" : "=r"(v));
+    return v;
+}
+
+/* ------------------------------------------------------------------ */
 /* Compatibility aliases requested by the Fern AArch64 spec       */
 /* These map the aarch64_* prefix used in some call-sites to the       */
 /* canonical names above.                                               */
@@ -213,6 +238,16 @@ uint32_t aarch64_timer_get_freq(void);
  * the caller handles any race with the timer IRQ.
  */
 void aarch64_timer_set_interval(uint32_t hz);
+
+/**
+ * aarch64_timer_init_phys - Initialise the AArch64 physical timer (CNTP).
+ *
+ * @hz: Desired periodic interrupt rate in Hz.
+ *
+ * Uses CNTP_TVAL_EL1 / CNTP_CTL_EL1 for the periodic tick.
+ * The GIC (gicv3_init) must have been called before this function.
+ */
+void aarch64_timer_init_phys(uint32_t hz);
 
 /**
  * aarch64_timer_reload - Advance CNTV_CVAL by one interval.

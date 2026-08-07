@@ -9,10 +9,13 @@ typedef enum {
     POWER_ACTION_REBOOT = 1,
     POWER_ACTION_SUSPEND = 2,
     POWER_ACTION_HIBERNATE = 3,
+    POWER_ACTION_HALT = 4,
 } power_action_t;
 
 bool power_request(power_action_t action);
 bool power_shutdown(void);
 bool power_reboot(void);
+bool power_suspend(void);
+bool power_halt(void);
 
 #endif

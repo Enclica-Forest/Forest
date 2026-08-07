@@ -96,6 +96,7 @@ const std::vector<Extra> EXTRAS = {
 // ===========================================================================
 void Reporter::warn(const std::string& msg) {
     warnings.push_back(msg);
+    if (quiet) return;
     if (Color::enabled)
         std::cerr << Color::yellow << "warning: " << Color::reset << msg << "\n";
     else
@@ -104,12 +105,13 @@ void Reporter::warn(const std::string& msg) {
 
 void Reporter::note(const std::string& msg) {
     notes.push_back(msg);
-    if (verbose) {
-        if (Color::enabled)
-            std::cerr << Color::cyan << "note: " << Color::reset << msg << "\n";
-        else
-            std::cerr << "note: " << msg << "\n";
+    if (quiet || !verbose) {
+        return;
     }
+    if (Color::enabled)
+        std::cerr << Color::cyan << "note: " << Color::reset << msg << "\n";
+    else
+        std::cerr << "note: " << msg << "\n";
 }
 
 void Reporter::error(const std::string& msg) {
@@ -120,6 +122,7 @@ void Reporter::error(const std::string& msg) {
 }
 
 void Reporter::success(const std::string& msg) {
+    if (quiet) return;
     if (Color::enabled)
         std::cerr << Color::green << "success: " << Color::reset << msg << "\n";
     else

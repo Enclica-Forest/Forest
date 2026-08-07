@@ -154,7 +154,7 @@ static void tty_draw_logo_scaled(int32_t dest_x, int32_t dest_y, int32_t dest_wi
         if (src_y >= (int32_t)src_height) src_y = src_height - 1;
 
         // Handle BMP row ordering (bottom-up by default)
-        uint32_t bmp_row = top_down ? src_y : (src_height - 1 - src_y);
+        uint32_t bmp_row = top_down ? (uint32_t)src_y : (uint32_t)(src_height - 1 - src_y);
 
         for (int32_t dx = 0; dx < dest_width; dx++) {
             // Calculate source X coordinate
@@ -286,7 +286,7 @@ void tty_display_cpu_dots(void) {
 }
 
 // Clear CPU core dots from framebuffer
-static void tty_clear_cpu_dots(void) {
+__attribute__((unused)) static void tty_clear_cpu_dots(void) {
     uint32_t cpu_count = smp_get_cpu_count();
     if (cpu_count == 0) cpu_count = 1;
 
@@ -453,7 +453,7 @@ void tty_draw_scroll_indicator(void) {
 
     int32_t thumb_h = bar_h / 4;
     if (thumb_h < 4) thumb_h = 4;
-    float cursor_ratio = (rows > 1) ? (float)cursor_y / (float)(rows - 1) : 0.0f;
+    float cursor_ratio = (rows > 1) ? (float)cursor_y / (float)((int32_t)(rows - 1)) : 0.0f;
     int32_t thumb_y = bar_top + (int32_t)(cursor_ratio * (float)(bar_h - thumb_h));
 
     graphics_color_t dim = {40, 40, 48, 255};

@@ -4,6 +4,7 @@
 #include "../include/debuglog.h"
 #include "../include/mm.h"
 #include "../include/pci.h"
+#include "../include/string.h"
 
 static gpu_accel_context_t accel_ctx = {
     .type = GPU_ACCEL_NONE,

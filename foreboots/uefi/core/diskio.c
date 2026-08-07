@@ -12,10 +12,12 @@
 #ifndef DISKIO_DEBUG
 #define DISKIO_DEBUG 0
 #endif
-#if DISKIO_DEBUG
+#if DISKIO_DEBUG && (defined(__x86_64__) || defined(_M_X64))
 static inline void dio_outb(unsigned short port, unsigned char val)
 { __asm__ __volatile__("outb %0,%1" : : "a"(val), "Nd"(port)); }
 static void dlog(const char *s){ if(!s) return; while(*s) dio_outb(0x3F8,(unsigned char)*s++); }
+#elif DISKIO_DEBUG
+static void dlog(const char *s){ (void)s; }
 #else
 static void dlog(const char *s){ (void)s; }
 #endif

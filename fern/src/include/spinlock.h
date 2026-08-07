@@ -45,7 +45,7 @@ static inline unsigned long spinlock_irq_save(void) {
         :
         : "memory"
     );
-#else
+#elif defined(__i386__)
     __asm__ volatile (
         "pushfl\n\t"
         "cli\n\t"
@@ -54,6 +54,31 @@ static inline unsigned long spinlock_irq_save(void) {
         :
         : "memory"
     );
+#elif defined(__aarch64__)
+    __asm__ volatile (
+        "mrs %0, daif\n\t"
+        "msr daifset, #2"
+        : "=r" (flags)
+        :
+        : "memory"
+    );
+#elif defined(__arm__)
+    __asm__ volatile (
+        "mrs %0, cpsr\n\t"
+        "cpsid i"
+        : "=r" (flags)
+        :
+        : "memory"
+    );
+#elif defined(__riscv) && (__riscv_xlen == 64)
+    __asm__ volatile (
+        "csrrci %0, sstatus, 0x2"
+        : "=r" (flags)
+        :
+        : "memory"
+    );
+#else
+    flags = 0;
 #endif
     return flags;
 }
@@ -67,7 +92,7 @@ static inline void spinlock_irq_restore(unsigned long flags) {
         : "rm" (flags)
         : "memory", "cc"
     );
-#else
+#elif defined(__i386__)
     __asm__ volatile (
         "pushl %0\n\t"
         "popfl"
@@ -75,6 +100,28 @@ static inline void spinlock_irq_restore(unsigned long flags) {
         : "rm" (flags)
         : "memory", "cc"
     );
+#elif defined(__aarch64__)
+    __asm__ volatile (
+        "msr daif, %0"
+        :
+        : "r" (flags)
+        : "memory"
+    );
+#elif defined(__arm__)
+    __asm__ volatile (
+        "msr cpsr_c, %0"
+        :
+        : "r" (flags)
+        : "memory"
+    );
+#elif defined(__riscv) && (__riscv_xlen == 64)
+    __asm__ volatile (
+        "csrs sstatus, %0"
+        :
+        : "r" (flags & 0x2)
+        : "memory"
+    );
+    (void)flags;
 #endif
 }
 

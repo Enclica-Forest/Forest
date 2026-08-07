@@ -79,6 +79,7 @@ extern int32_t linux_sys_personality(uint32_t persona);
  */
 int32_t linux_syscall_handle(uint32_t syscall_num, uint32_t arg1, uint32_t arg2, uint32_t arg3, 
                              uint32_t arg4, uint32_t arg5, uint32_t arg6) {
+    (void)arg6;
     int32_t result = 0;
     
     switch (syscall_num) {
@@ -130,6 +131,9 @@ int32_t linux_syscall_handle(uint32_t syscall_num, uint32_t arg1, uint32_t arg2,
 #define PR_SET_SECCOMP  22
 
 int32_t linux_sys_prctl(int32_t option, uint32_t arg2, uint32_t arg3, uint32_t arg4, uint32_t arg5) {
+    (void)arg3;
+    (void)arg4;
+    (void)arg5;
     task_t* task = current_task;
     
     switch (option) {

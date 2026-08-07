@@ -23,6 +23,7 @@ void devfs_cleanup(void);
 
 /* Mock implementations for missing functions */
 static void mock_debug_print(const char *format, ...) {
+    (void)format;
     /* This would integrate with Fern debug system */
 }
 
@@ -37,7 +38,7 @@ static void mock_memory_set(void *ptr, int value, size_t size) {
 /* Character device implementations */
 
 /* Null device (/dev/null) */
-static ssize_t null_read(struct device_node *dev, void *buffer, size_t count, uint64_t offset)
+__attribute__((unused)) static ssize_t null_read(struct device_node *dev, void *buffer, size_t count, uint64_t offset)
 {
     (void)dev; (void)buffer; (void)count; (void)offset;
     return 0;  /* EOF - reading /dev/null always returns 0 bytes */
@@ -96,7 +97,7 @@ static ssize_t random_read(struct device_node *dev, void *buffer, size_t count, 
 /* Full device (/dev/full) */
 static ssize_t full_write(struct device_node *dev, const void *buffer, size_t count, uint64_t offset)
 {
-    (void)dev; (void)buffer; (void)offset;
+    (void)dev; (void)buffer; (void)count; (void)offset;
     /* Always return ENOSPC */
     return -28;
 }

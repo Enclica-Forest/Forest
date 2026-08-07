@@ -1,6 +1,6 @@
 /*
  * sys/types.h - Data types
- *
+ * 
  * POSIX compatible data type definitions for Fern libc.
  */
 #ifndef _SYS_TYPES_H
@@ -197,6 +197,9 @@ typedef char *caddr_t;
 
 /* daddr_t for disk addresses */
 typedef int32_t daddr_t;
+
+/* id_t for general identifier */
+typedef uint32_t id_t;
 
 #ifdef __cplusplus
 }

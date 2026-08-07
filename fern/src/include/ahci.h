@@ -242,7 +242,7 @@ typedef struct {
 
 extern ahci_controller_t g_ahci_controller;
 
-bool ahci_init(void);
+bool ahci_init(uint64_t ahci_base);
 void ahci_shutdown(void);
 bool ahci_detect_controller(void);
 bool ahci_detect_ports(void);

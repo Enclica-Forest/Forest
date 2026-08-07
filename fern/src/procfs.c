@@ -225,11 +225,11 @@ static uint32 procfs_copy_range(const char* data, uint32 data_len, uint8* buffer
     }
     uint32 remaining = data_len - offset;
     uint32 copy_len = (remaining < size) ? remaining : size;
-    memory_copy(data + offset, buffer, copy_len);
+    memory_copy((const char*)(data + offset), (char*)buffer, copy_len);
     return copy_len;
 }
 
-static uint32 procfs_get_fd_count_for_pid(uint32 pid) {
+__attribute__((unused)) static uint32 procfs_get_fd_count_for_pid(uint32 pid) {
     uint32 count = 3; // stdin/stdout/stderr
     task_t* target = procfs_find_task_by_pid(pid);
     if (target && target->tty_fd > 2) {
@@ -263,7 +263,7 @@ static bool procfs_is_valid_fd_for_pid(uint32 pid, uint32 fd) {
     }
 
     task_t* target = procfs_find_task_by_pid(pid);
-    return (target && target->tty_fd >= 0 && (uint32)target->tty_fd == fd);
+    return (target && target->tty_fd >= 0 && (uint32)(unsigned)target->tty_fd == fd);
 }
 
 static const char* procfs_task_state_name(task_state_t state) {
@@ -597,7 +597,7 @@ static uint32 proc_read_tty_options(uint8* buffer, uint32 size, uint32 offset) {
         g_tty_opt_status_bar ? 1u : 0u);
 
     uint32 copy_len = (uint32)((len > (int)size) ? size : (uint32)len);
-    memory_copy(buf, buffer, copy_len);
+    memory_copy((const char*)buf, (char*)buffer, copy_len);
     return copy_len;
 }
 
@@ -634,8 +634,8 @@ static uint32 proc_read_cpuinfo(uint8* buffer, uint32 size, uint32 offset) {
     len += snprintf(buf + len, sizeof(buf) - len, "cache_alignment\t: 64\n");
     len += snprintf(buf + len, sizeof(buf) - len, "address sizes\t: 36 bits physical, 32 bits virtual\n");
     
-    uint32 copy_len = len > size ? size : len;
-    memory_copy(buf, buffer, copy_len);
+    uint32 copy_len = ((uint32)len > size) ? size : (uint32)len;
+    memory_copy((const char*)buf, (char*)buffer, copy_len);
     return copy_len;
 }
 
@@ -697,8 +697,8 @@ static uint32 proc_read_meminfo(uint8* buffer, uint32 size, uint32 offset) {
     len += snprintf(buf + len, sizeof(buf) - len, "DirectMap2M:\t0 kB\n");
     len += snprintf(buf + len, sizeof(buf) - len, "DirectMap1G:\t0 kB\n");
     
-    uint32 copy_len = len > size ? size : len;
-    memory_copy(buf, buffer, copy_len);
+    uint32 copy_len = ((uint32)len > size) ? size : (uint32)len;
+    memory_copy((const char*)buf, (char*)buffer, copy_len);
     return copy_len;
 }
 
@@ -716,8 +716,8 @@ static uint32 proc_read_uptime(uint8* buffer, uint32 size, uint32 offset) {
     int len = snprintf(buf, sizeof(buf), "%u.%02u %u.%02u\n",
         seconds, hundredths, seconds, hundredths);
     
-    uint32 copy_len = len > size ? size : len;
-    memory_copy(buf, buffer, copy_len);
+    uint32 copy_len = ((uint32)len > size) ? size : (uint32)len;
+    memory_copy((const char*)buf, (char*)buffer, copy_len);
     return copy_len;
 }
 
@@ -751,8 +751,8 @@ static uint32 proc_read_loadavg(uint8* buffer, uint32 size, uint32 offset) {
         load15 / 65536, (load15 % 65536) * 100 / 65536,
         proc_count, proc_count, last_pid);
     
-    uint32 copy_len = len > size ? size : len;
-    memory_copy(buf, buffer, copy_len);
+    uint32 copy_len = ((uint32)len > size) ? size : (uint32)len;
+    memory_copy((const char*)buf, (char*)buffer, copy_len);
     return copy_len;
 }
 
@@ -791,8 +791,8 @@ static uint32 proc_read_stat(uint8* buffer, uint32 size, uint32 offset) {
     len += snprintf(buf + len, sizeof(buf) - len, "procs_running %u\n", proc_count);
     len += snprintf(buf + len, sizeof(buf) - len, "procs_blocked %u\n", 0);
     
-    uint32 copy_len = len > size ? size : len;
-    memory_copy(buf, buffer, copy_len);
+    uint32 copy_len = ((uint32)len > size) ? size : (uint32)len;
+    memory_copy((const char*)buf, (char*)buffer, copy_len);
     return copy_len;
 }
 
@@ -805,8 +805,8 @@ static uint32 proc_read_version(uint8* buffer, uint32 size, uint32 offset) {
         "Linux version 3.0.0-forestos (root@forestos) "
         "(gcc version 12.2.0) #1 SMP " __DATE__ " " __TIME__ "\n");
     
-    uint32 copy_len = len > size ? size : len;
-    memory_copy(buf, buffer, copy_len);
+    uint32 copy_len = ((uint32)len > size) ? size : (uint32)len;
+    memory_copy((const char*)buf, (char*)buffer, copy_len);
     return copy_len;
 }
 
@@ -822,8 +822,8 @@ static uint32 proc_read_self_link(uint8* buffer, uint32 size, uint32 offset) {
     char buf[64];
     int len = snprintf(buf, sizeof(buf), "%u", task->id);
     
-    uint32 copy_len = len > size ? size : len;
-    memory_copy(buf, buffer, copy_len);
+    uint32 copy_len = ((uint32)len > size) ? size : (uint32)len;
+    memory_copy((const char*)buf, (char*)buffer, copy_len);
     return copy_len;
 }
 
@@ -858,7 +858,7 @@ static uint32 proc_read_process_cmdline(uint8* buffer, uint32 size, uint32 offse
 
     uint32 remaining = len - offset;
     uint32 copy_len = (remaining < size) ? remaining : size;
-    memory_copy(buf + offset, buffer, copy_len);
+    memory_copy((const char*)(buf + offset), (char*)buffer, copy_len);
     return copy_len;
 }
 
@@ -1016,8 +1016,8 @@ static uint32 proc_read_process_status(uint8* buffer, uint32 size, uint32 offset
         len += snprintf(buf + len, sizeof(buf) - len, "nonvoluntary_ctxt_switches:\t0\n");
     }
     
-    uint32 copy_len = len > size ? size : len;
-    memory_copy(buf, buffer, copy_len);
+    uint32 copy_len = ((uint32)len > size) ? size : (uint32)len;
+    memory_copy((const char*)buf, (char*)buffer, copy_len);
     return copy_len;
 }
 
@@ -1064,7 +1064,7 @@ static uint32 procfs_read(vfs_node_t* node, uint32 offset, uint32 size, uint8* b
         }
         uint32 remaining = entry->size - offset;
         uint32 copy = remaining < size ? remaining : size;
-        memory_copy(entry->data + offset, buffer, copy);
+        memory_copy((const char*)(entry->data + offset), (char*)buffer, copy);
         return copy;
     }
     
@@ -1086,7 +1086,7 @@ static uint32 procfs_write(vfs_node_t* node, uint32 offset, uint32 size, uint8* 
     // Parse simple key=value updates (comma/newline/semicolon separated).
     char input[256];
     uint32 copy_size = (size < (uint32)(sizeof(input) - 1)) ? size : (uint32)(sizeof(input) - 1);
-    memory_copy(buffer, input, copy_size);
+    memory_copy((const char*)buffer, (char*)input, copy_size);
     input[copy_size] = '\0';
 
     char* cursor = input;

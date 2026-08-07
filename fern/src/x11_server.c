@@ -87,10 +87,10 @@ static void x11_put32le(uint8 *p, uint32 v) {
 static uint32 ipc_ring_used(const x11_ipc_ring_t *r) {
     return (r->head - r->tail) % X11_IPC_BUF_SIZE;
 }
-static uint32 ipc_ring_free(const x11_ipc_ring_t *r) {
+__attribute__((unused)) static uint32 ipc_ring_free(const x11_ipc_ring_t *r) {
     return X11_IPC_BUF_SIZE - 1 - ipc_ring_used(r);
 }
-static bool ipc_ring_empty(const x11_ipc_ring_t *r) {
+__attribute__((unused)) static bool ipc_ring_empty(const x11_ipc_ring_t *r) {
     return r->head == r->tail;
 }
 

@@ -49,10 +49,10 @@ static uint32 sysfs_read_kernel_release(uint8* buffer, uint32 size, uint32 offse
     if (offset > 0) return 0;
     
     char buf[128];
-    int len = snprintf(buf, sizeof(buf), "3.0.0-forest\n");
+    uint32 len = (uint32)snprintf(buf, sizeof(buf), "3.0.0-forest\n");
     
     uint32 copy_len = len > size ? size : len;
-    memory_copy(buf, buffer, copy_len);
+    memory_copy((const char*)buf, (char*)buffer, copy_len);
     return copy_len;
 }
 
@@ -61,21 +61,22 @@ static uint32 sysfs_read_kernel_version(uint8* buffer, uint32 size, uint32 offse
     if (offset > 0) return 0;
     
     char buf[256];
-    int len = snprintf(buf, sizeof(buf), 
+    uint32 len = (uint32)snprintf(buf, sizeof(buf), 
         "#1 SMP " __DATE__ " " __TIME__ "\n"
         "Fern version 1.0 (thornedge)\n");
     
     uint32 copy_len = len > size ? size : len;
-    memory_copy(buf, buffer, copy_len);
+    memory_copy((const char*)buf, (char*)buffer, copy_len);
     return copy_len;
 }
 
 // OS release info
+static uint32 sysfs_read_os_release(uint8* buffer, uint32 size, uint32 offset) __attribute__((unused));
 static uint32 sysfs_read_os_release(uint8* buffer, uint32 size, uint32 offset) {
     if (offset > 0) return 0;
     
     char buf[256];
-    int len = snprintf(buf, sizeof(buf),
+    uint32 len = (uint32)snprintf(buf, sizeof(buf),
         "NAME=\"Fern\"\n"
         "VERSION=\"1.0 (thornedge)\"\n"
         "ID=forestos\n"
@@ -85,19 +86,20 @@ static uint32 sysfs_read_os_release(uint8* buffer, uint32 size, uint32 offset) {
         "BUG_REPORT_URL=\"https://github.com/bluethefoxofficial/Forest-OS/issues\"\n");
     
     uint32 copy_len = len > size ? size : len;
-    memory_copy(buf, buffer, copy_len);
+    memory_copy((const char*)buf, (char*)buffer, copy_len);
     return copy_len;
 }
 
 // Hardware info
+static uint32 sysfs_read_machine_id(uint8* buffer, uint32 size, uint32 offset) __attribute__((unused));
 static uint32 sysfs_read_machine_id(uint8* buffer, uint32 size, uint32 offset) {
     if (offset > 0) return 0;
     
     char buf[128];
-    int len = snprintf(buf, sizeof(buf), "forestos\n");
+    uint32 len = (uint32)snprintf(buf, sizeof(buf), "forestos\n");
     
     uint32 copy_len = len > size ? size : len;
-    memory_copy(buf, buffer, copy_len);
+    memory_copy((const char*)buf, (char*)buffer, copy_len);
     return copy_len;
 }
 
@@ -114,7 +116,7 @@ static uint32 sysfs_read_uevent_seqnum(uint8* buffer, uint32 size, uint32 offset
     }
 
     uint32 copy_len = ((uint32)len > size) ? size : (uint32)len;
-    memory_copy(buf, buffer, copy_len);
+    memory_copy((const char*)buf, (char*)buffer, copy_len);
     return copy_len;
 }
 
@@ -131,7 +133,7 @@ static uint32 sysfs_read_uevent_pending(uint8* buffer, uint32 size, uint32 offse
     }
 
     uint32 copy_len = ((uint32)len > size) ? size : (uint32)len;
-    memory_copy(buf, buffer, copy_len);
+    memory_copy((const char*)buf, (char*)buffer, copy_len);
     return copy_len;
 }
 
@@ -416,7 +418,7 @@ static uint32 sysfs_read(vfs_node_t* node, uint32 offset, uint32 size, uint8* bu
     
     uint32 remaining = data_len - offset;
     uint32 copy = remaining < size ? remaining : size;
-    memory_copy(entry->data + offset, buffer, copy);
+    memory_copy((const char*)(entry->data + offset), (char*)buffer, copy);
     return copy;
 }
 

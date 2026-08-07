@@ -178,7 +178,7 @@ static void handle_invalid_opcode(interrupt_context_t *context) {
     record_fault(FAULT_TYPE_INVALID_OPCODE, context->rip, context->rsp, 0, false);
     
     if (fault_ctx.config.emulate_invalid_instructions) {
-        uint8_t *instruction = (uint8_t*)context->rip;
+        uint8_t *instruction = (uint8_t*)(uintptr_t)context->rip;
         
         if (instruction[0] == 0x0F && instruction[1] == 0x0B) {
             context->rip += 2;
@@ -519,6 +519,7 @@ void fault_prevention_reset_counters(void) {
 }
 
 void system_emergency_shutdown(const char *reason) {
+    (void)reason;
     __asm__ volatile ("cli");
     
     if (fault_ctx.config.emergency_reboot) {

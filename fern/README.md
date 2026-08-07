@@ -6,7 +6,7 @@ It is composed of two independently-named components:
 - **Fern** — the kernel (analogy: "Linux" is the kernel, not the whole distro).
 - **foreboots** (ForeB) — the bootloader, and the only userspace component.
 
-Together — Fern + foreboots + a POSIX-oriented C library (**forestlibs**) — they
+Together — Fern + foreboots + a consolidated POSIX-oriented C library (**libc**) — they
 build a bootable ISO. Forest-OS is deliberately kernel-oriented: it does **not**
 bundle a graphical desktop or a userspace application suite.
 
@@ -16,9 +16,9 @@ bundle a graphical desktop or a userspace application suite.
 |-----------|------|------|
 | Kernel | **Fern** | The Forest-OS kernel; boot artifact `fern.elf` (`fern.bin` for BIOS). |
 | Bootloader | **foreboots** (ForeB) | BIOS/CSM + native UEFI bootloader; the only userspace. |
-| C library | **forestlibs** | POSIX-oriented libc the OS/ABI targets. |
+| C library | **libc** | POSIX-oriented libc the OS/ABI targets. Consolidated at `libs/libc/`. |
 
-The repository contains the Fern kernel sources, the forestlibs C library, the
+The repository contains the Fern kernel sources, the consolidated libc library, the
 foreboots bootloader, and the build tooling required to produce a bootable
 image.
 

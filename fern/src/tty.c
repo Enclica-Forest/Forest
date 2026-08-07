@@ -16,17 +16,24 @@
 #include "tty_internal.h"
 #include "include/sound_pcspeaker.h"
 
+// Cross-architecture console fallback (used when x86 graphics unavailable)
+#include "arch/console.h"
+
 // Direct framebuffer crash screen functions
 static void crash_draw_char(int x, int y, char c, uint32_t color);
 static void crash_draw_string(int x, int y, const char* str, uint32_t color);
 static void crash_clear_screen(uint32_t color);
 static void crash_draw_hex(int x, int y, uint64_t value, int digits, uint32_t color);
+
+// Cross-architecture console flush (forward declaration)
+static void tty_flush_screen_arch_console(void);
 #include "include/string.h"
 #include "include/memory.h"
 #include "include/mm.h"
 
 typedef enum {
-    TTY_BACKEND_FRAMEBUFFER = 0
+    TTY_BACKEND_FRAMEBUFFER = 0,
+    TTY_BACKEND_ARCH_CONSOLE,   // Cross-arch fallback (framebuffer or serial)
 } tty_backend_t;
 
 typedef struct {
@@ -537,7 +544,7 @@ static graphics_color_t tty_color_from_nibble(uint8_t nibble) {
     return tty_palette_256[nibble & 0x0F];
 }
 
-static graphics_color_t tty_color_from_256(uint8_t index) {
+static graphics_color_t __attribute__((unused)) tty_color_from_256(uint8_t index) {
     if (!palette_initialized) {
         tty_init_256_palette();
     }
@@ -1220,6 +1227,12 @@ static void tty_render_cell_framebuffer(uint16_t x, uint16_t y, char ch, uint8_t
 }
 
 static void tty_render_cell(uint16_t x, uint16_t y, char ch, uint8_t attr) {
+    // Cross-architecture console backend: skip framebuffer rendering entirely.
+    // Output is handled in bulk by tty_flush_screen_arch_console().
+    if (tty_state.backend == TTY_BACKEND_ARCH_CONSOLE) {
+        return;
+    }
+
     // Always use framebuffer rendering with 8x8 font to avoid TrueType corruption
     // The 8x8 bitmap font is more reliable for TTY output
     if (graphics_is_initialized()) {
@@ -1246,6 +1259,12 @@ static void tty_flush_screen(void) {
         return;
     }
 
+    // Cross-architecture console: full redraw (no dirty-cell optimization)
+    if (tty_state.backend == TTY_BACKEND_ARCH_CONSOLE) {
+        tty_flush_screen_arch_console();
+        return;
+    }
+
     // Status bar/scroll indicator repaint is expensive and its content
     // rarely changes between flushes — only repaint when actually dirty.
     if (g_status_bar_chrome_dirty) {
@@ -1268,6 +1287,45 @@ static void tty_flush_screen(void) {
     tty_apply_cursor();
 }
 
+// Render the entire cell buffer through the cross-architecture console.
+// Used when TTY_BACKEND_ARCH_CONSOLE is active (serial or arch-level FB).
+static void tty_flush_screen_arch_console(void) {
+    if (!tty_state.cells || tty_state.cols == 0 || tty_state.rows == 0) {
+        return;
+    }
+
+    arch_console_clear();
+
+    static const uint32_t vga_to_rgb[16] = {
+        0x00000000, 0x000000AA, 0x0000AA00, 0x0000AAAA,
+        0x00AA0000, 0x00AA00AA, 0x00AA5500, 0x00AAAAAA,
+        0x00555555, 0x005555FF, 0x0055FF55, 0x0055FFFF,
+        0x00FF5555, 0x00FF55FF, 0x00FFFF55, 0x00FFFFFF,
+    };
+
+    for (uint16_t y = 0; y < tty_state.rows; y++) {
+        for (uint16_t x = 0; x < tty_state.cols; x++) {
+            size_t idx = tty_cell_index(x, y);
+            tty_cell_t* cell = &tty_state.cells[idx];
+
+            uint8_t fg = cell->attr & 0x0F;
+            uint8_t bg = (cell->attr >> 4) & 0x0F;
+            arch_console_set_color(vga_to_rgb[fg], vga_to_rgb[bg & 0x07]);
+            arch_console_putc(cell->ch ? cell->ch : ' ');
+            cell->dirty = 0;
+        }
+        // Newline at end of each row (arch_console handles scroll)
+        if (y < tty_state.rows - 1) {
+            arch_console_putc('\n');
+        }
+    }
+
+    // Restore default color from current TTY state
+    uint8_t cur_fg = tty_state.fg & 0x0F;
+    uint8_t cur_bg = tty_state.bg & 0x07;
+    arch_console_set_color(vga_to_rgb[cur_fg], vga_to_rgb[cur_bg]);
+}
+
 // Force full screen redraw (used for tty_clear and initial display)
 static void tty_flush_screen_full(void) {
     if (!tty_runtime_mutation_allowed()) {
@@ -1279,6 +1337,12 @@ static void tty_flush_screen_full(void) {
     }
 
     if (!tty_state.cells || tty_state.cols == 0 || tty_state.rows == 0) {
+        return;
+    }
+
+    // Cross-architecture console: bulk-render through arch_console
+    if (tty_state.backend == TTY_BACKEND_ARCH_CONSOLE) {
+        tty_flush_screen_arch_console();
         return;
     }
 
@@ -1301,6 +1365,11 @@ static void tty_flush_screen_full(void) {
 }
 
 static bool tty_scroll_framebuffer_one_row(void) {
+    // No framebuffer scroll in cross-architecture console mode
+    if (tty_state.backend == TTY_BACKEND_ARCH_CONSOLE) {
+        return false;
+    }
+
     if (framebuffer_has_userspace_mapping()) {
         return true;
     }
@@ -1391,6 +1460,11 @@ static bool tty_set_dimensions(uint16_t cols, uint16_t rows) {
  * for the old resolution -- a real out-of-bounds risk on shrink and a wasted/
  * incomplete redraw on grow. */
 void tty_handle_display_mode_change(void) {
+    // Display mode changes are not applicable to the cross-architecture console
+    if (tty_state.backend == TTY_BACKEND_ARCH_CONSOLE) {
+        return;
+    }
+
     uint16_t cols, rows, char_w, char_h;
     if (!tty_compute_dimensions_from_graphics(&cols, &rows, &char_w, &char_h)) {
         debuglog(DEBUG_ERROR, "TTY: could not derive dimensions for new display mode\n");
@@ -1967,13 +2041,13 @@ static void tty_handle_osc_command(void) {
             if (*p == ';') p++;
             if (p[0] == 'r' && p[1] == 'g' && p[2] == 'b' && p[3] == ':') {
                 p += 4;
-                r = 0; while (*p >= '0' && *p <= '9' || (*p >= 'a' && *p <= 'f') || (*p >= 'A' && *p <= 'F')) {
+                r = 0; while ((*p >= '0' && *p <= '9') || (*p >= 'a' && *p <= 'f') || (*p >= 'A' && *p <= 'F')) {
                     r = r * 16 + (*p >= 'a' ? *p - 'a' + 10 : *p >= 'A' ? *p - 'A' + 10 : *p - '0'); p++; }
                 if (*p == '/') p++;
-                g = 0; while (*p >= '0' && *p <= '9' || (*p >= 'a' && *p <= 'f') || (*p >= 'A' && *p <= 'F')) {
+                g = 0; while ((*p >= '0' && *p <= '9') || (*p >= 'a' && *p <= 'f') || (*p >= 'A' && *p <= 'F')) {
                     g = g * 16 + (*p >= 'a' ? *p - 'a' + 10 : *p >= 'A' ? *p - 'A' + 10 : *p - '0'); p++; }
                 if (*p == '/') p++;
-                b = 0; while (*p >= '0' && *p <= '9' || (*p >= 'a' && *p <= 'f') || (*p >= 'A' && *p <= 'F')) {
+                b = 0; while ((*p >= '0' && *p <= '9') || (*p >= 'a' && *p <= 'f') || (*p >= 'A' && *p <= 'F')) {
                     b = b * 16 + (*p >= 'a' ? *p - 'a' + 10 : *p >= 'A' ? *p - 'A' + 10 : *p - '0'); p++; }
                 if (r > 255) r = r >> 8;
                 if (g > 255) g = g >> 8;
@@ -2764,7 +2838,7 @@ bool tty_init(void) {
 
     if (result == GRAPHICS_SUCCESS && fb && fb->virtual_addr) {
         debuglog(DEBUG_INFO, "TTY: Framebuffer mapped at 0x%x, size %u bytes, %ux%u\n",
-                (uint32_t)(uintptr_t)fb->virtual_addr, fb->size, fb->width, fb->height);
+                (uint32_t)(uintptr_t)fb->virtual_addr, (unsigned int)fb->size, fb->width, fb->height);
 
         // Set up basic framebuffer console with 8x8 font
         tty_state.backend = TTY_BACKEND_FRAMEBUFFER;
@@ -2814,8 +2888,47 @@ bool tty_init(void) {
         debuglog(DEBUG_ERROR, "TTY: Failed to map framebuffer\n");
     }
 
-    debuglog(DEBUG_ERROR, "TTY: failed to initialize framebuffer console\n");
-    return false;
+    // ----------------------------------------------------------------
+    // Fallback: cross-architecture console (serial UART or arch-level
+    // framebuffer).  Used when the legacy x86 graphics subsystem is
+    // not available (e.g. ARM, AArch64, RISC-V, or nofb mode).
+    // ----------------------------------------------------------------
+    debuglog(DEBUG_INFO, "TTY: Falling back to cross-architecture console\n");
+
+    if (arch_console_init() != 0) {
+        debuglog(DEBUG_ERROR, "TTY: arch_console_init() failed\n");
+        return false;
+    }
+
+    tty_state.backend = TTY_BACKEND_ARCH_CONSOLE;
+
+    // Derive dimensions from the arch console
+    {
+        uint32_t ac_rows = 0, ac_cols = 0;
+        arch_console_get_size(&ac_rows, &ac_cols);
+        tty_state.cols = (ac_cols > 0) ? (uint16_t)ac_cols : 80;
+        tty_state.rows = (ac_rows > 0) ? (uint16_t)ac_rows : 25;
+    }
+    tty_state.char_width = 8;
+    tty_state.char_height = 16;
+
+    if (!tty_set_dimensions(tty_state.cols, tty_state.rows)) {
+        debuglog(DEBUG_ERROR, "TTY: failed to allocate screen buffer for arch console\n");
+        return false;
+    }
+
+    tty_reset_ansi_parser();
+    tty_state.initialized = true;
+    tty_state.boot_mode = false;
+    tty_state.scroll_top = 0;
+    tty_state.scroll_bottom = tty_state.rows;
+
+    debuglog(DEBUG_INFO, "TTY: arch-console backend ready (%ux%u)\n",
+             tty_state.cols, tty_state.rows);
+
+    tty_init_vt_buffers();
+    tty_clear();
+    return true;
 }
 
 void tty_clear(void) {
@@ -2842,9 +2955,13 @@ void tty_clear(void) {
         }
         tty_flush_screen_full();  // Use full redraw for clear operation
     } else {
-        // Fallback: use graphics subsystem for clearing
-        graphics_color_t bg = tty_color_from_nibble((attr >> 4) & 0x0F);
-        graphics_clear_screen(bg);
+        if (tty_state.backend == TTY_BACKEND_ARCH_CONSOLE) {
+            arch_console_clear();
+        } else {
+            // Fallback: use graphics subsystem for clearing
+            graphics_color_t bg = tty_color_from_nibble((attr >> 4) & 0x0F);
+            graphics_clear_screen(bg);
+        }
     }
 
     // Always apply cursor position after clearing
@@ -2931,6 +3048,10 @@ void tty_write_ansi(const char* text) {
     }
 }
 
+void tty_puts(const char* text) {
+    tty_write(text);
+}
+
 void tty_set_attr(uint8_t attr) {
     if (!tty_runtime_mutation_allowed()) {
         return;
@@ -2942,11 +3063,79 @@ void tty_set_attr(uint8_t attr) {
     tty_state.faint = false;
     tty_state.inverse = false;
     tty_state.underline = false;
-    // No longer needed - graphics subsystem handles all rendering
+
+    // Forward color to cross-architecture console when active
+    if (tty_state.backend == TTY_BACKEND_ARCH_CONSOLE) {
+        // Map 4-bit VGA index to 0x00RRGGBB for arch console
+        static const uint32_t vga_to_rgb[16] = {
+            0x00000000, 0x000000AA, 0x0000AA00, 0x0000AAAA,
+            0x00AA0000, 0x00AA00AA, 0x00AA5500, 0x00AAAAAA,
+            0x00555555, 0x005555FF, 0x0055FF55, 0x0055FFFF,
+            0x00FF5555, 0x00FF55FF, 0x00FFFF55, 0x00FFFFFF,
+        };
+        uint32_t fg_rgb = vga_to_rgb[tty_state.fg & 0x0F];
+        uint32_t bg_rgb = vga_to_rgb[tty_state.bg & 0x07];
+        arch_console_set_color(fg_rgb, bg_rgb);
+    }
 }
 
 uint8_t tty_get_attr(void) {
     return tty_current_attr();
+}
+
+void tty_set_color(uint32_t fg, uint32_t bg) {
+    if (!tty_runtime_mutation_allowed()) {
+        return;
+    }
+
+    // Map 0x00RRGGBB to nearest 4-bit VGA index for internal state
+    static const uint32_t vga_to_rgb[16] = {
+        0x00000000, 0x000000AA, 0x0000AA00, 0x0000AAAA,
+        0x00AA0000, 0x00AA00AA, 0x00AA5500, 0x00AAAAAA,
+        0x00555555, 0x005555FF, 0x0055FF55, 0x0055FFFF,
+        0x00FF5555, 0x00FF55FF, 0x00FFFF55, 0x00FFFFFF,
+    };
+
+    // Find best-match VGA index for fg
+    uint8_t best_fg = 7;  // default light gray
+    uint32_t best_err = UINT32_MAX;
+    for (int i = 0; i < 16; i++) {
+        int32_t dr = (int32_t)((fg >> 16) & 0xFF) - (int32_t)((vga_to_rgb[i] >> 16) & 0xFF);
+        int32_t dg = (int32_t)((fg >> 8) & 0xFF) - (int32_t)((vga_to_rgb[i] >> 8) & 0xFF);
+        int32_t db = (int32_t)(fg & 0xFF) - (int32_t)(vga_to_rgb[i] & 0xFF);
+        uint32_t err = (uint32_t)(dr * dr + dg * dg + db * db);
+        if (err < best_err) {
+            best_err = err;
+            best_fg = (uint8_t)i;
+        }
+    }
+
+    // Find best-match VGA index for bg (lower 8 colors only)
+    uint8_t best_bg = 0;  // default black
+    best_err = UINT32_MAX;
+    for (int i = 0; i < 8; i++) {
+        int32_t dr = (int32_t)((bg >> 16) & 0xFF) - (int32_t)((vga_to_rgb[i] >> 16) & 0xFF);
+        int32_t dg = (int32_t)((bg >> 8) & 0xFF) - (int32_t)((vga_to_rgb[i] >> 8) & 0xFF);
+        int32_t db = (int32_t)(bg & 0xFF) - (int32_t)(vga_to_rgb[i] & 0xFF);
+        uint32_t err = (uint32_t)(dr * dr + dg * dg + db * db);
+        if (err < best_err) {
+            best_err = err;
+            best_bg = (uint8_t)i;
+        }
+    }
+
+    tty_state.fg = best_fg & 0x0F;
+    tty_state.bg = best_bg & 0x07;
+    tty_state.use_true_colors = false;
+
+    // Forward to cross-architecture console when active
+    if (tty_state.backend == TTY_BACKEND_ARCH_CONSOLE) {
+        arch_console_set_color(fg, bg);
+    }
+
+    if (tty_is_ready()) {
+        tty_force_redraw();
+    }
 }
 
 bool tty_uses_graphics_backend(void) {
@@ -2954,10 +3143,16 @@ bool tty_uses_graphics_backend(void) {
      * In nofb / text-only mode the graphics subsystem is never initialized,
      * so callers that check this before writing via the TTY will correctly
      * fall back to the VGA text console at 0xB8000. */
+    if (tty_state.backend == TTY_BACKEND_ARCH_CONSOLE) {
+        return (arch_console_get_mode() == CONSOLE_MODE_FRAMEBUFFER);
+    }
     return tty_state.initialized && graphics_is_initialized();
 }
 
 bool tty_try_enable_graphics_backend(void) {
+    if (tty_state.backend == TTY_BACKEND_ARCH_CONSOLE) {
+        return (arch_console_get_mode() == CONSOLE_MODE_FRAMEBUFFER);
+    }
     // Graphics backend is always enabled in framebuffer-only TTY
     return graphics_is_initialized();
 }
@@ -2968,6 +3163,9 @@ bool tty_is_ready(void) {
     // so the check below is only meaningful before tty_init() succeeds.
     if (tty_state.boot_mode) {
         return false;
+    }
+    if (tty_state.backend == TTY_BACKEND_ARCH_CONSOLE) {
+        return tty_state.initialized;
     }
     return tty_state.initialized && graphics_is_initialized();
 }
@@ -3114,6 +3312,13 @@ bool tty_render_get_scroll_state(uint16_t* rows, uint16_t* char_height, uint16_t
 }
 
 bool tty_get_cell_metrics(uint16_t* char_width, uint16_t* char_height) {
+    // Cross-architecture console uses fixed 8x16 font
+    if (tty_state.backend == TTY_BACKEND_ARCH_CONSOLE) {
+        if (char_width) *char_width = 8;
+        if (char_height) *char_height = 16;
+        return true;
+    }
+
     if (!graphics_is_initialized()) {
         return false;
     }
