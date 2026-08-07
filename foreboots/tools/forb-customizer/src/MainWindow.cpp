@@ -89,8 +89,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     connect(btnReload, &QPushButton::clicked, this, &MainWindow::reloadConfig);
     connect(btnIgnore, &QPushButton::clicked, this, [this]{
         notificationBar->hide();
-        if (!currentPath.isEmpty() && fileWatcher->files().isEmpty())
-            fileWatcher->addPath(currentPath);
+        stopWatching();   // will re-start on next save
     });
 
     // ---- dirty tracking: any model edit marks unsaved changes ----
@@ -193,6 +192,63 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     tb->addSeparator(); tb->addAction(actSave); tb->addAction(actSaveAs);
     tb->addAction(actApply); tb->addSeparator(); tb->addAction(actSaveTpl);
     tb->addSeparator(); tb->addAction(actCompare);
+
+    // ---- help menu ----
+    auto *mHelp = menuBar()->addMenu("&Help");
+    auto *actAbout = mHelp->addAction("&About ForeB Customizer", this, [this]{
+        QMessageBox::about(this, "About ForeB Customizer",
+            "<h3>ForeB Customizer</h3>"
+            "<p>A visual editor for ForeB bootloader configuration.</p>"
+            "<p>Edit forebo.cfg theme, entries, and effects with a live preview.</p>");
+    });
+    auto *actLintH = mHelp->addAction("&Lint / validate config", this, &MainWindow::lintConfig);
+
+    // ---- keyboard shortcuts ----
+    actNew->setShortcut(QKeySequence::New);           // Ctrl+N
+    actOpen->setShortcut(QKeySequence::Open);         // Ctrl+O
+    actSave->setShortcut(QKeySequence::Save);         // Ctrl+S
+    actSaveAs->setShortcut(QKeySequence::SaveAs);     // Ctrl+Shift+S
+    actImpBoot->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_I));
+    actApply->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_E));
+    actLintH->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_L));
+    actAbout->setShortcut(QKeySequence(Qt::Key_F1));
+    auto *scQuit = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q), this);
+    connect(scQuit, &QShortcut::activated, this, &QWidget::close);
+
+    // ---- tab navigation: Ctrl+1..9, Ctrl+Tab, Ctrl+Shift+Tab ----
+    for (int i = 0; i < 9; ++i) {
+        auto *sc = new QShortcut(QKeySequence(Qt::CTRL | (Qt::Key_1 + i)), this);
+        connect(sc, &QShortcut::activated, this, [this, i]{ if (i < tabs->count()) tabs->setCurrentIndex(i); });
+    }
+    auto *scNextTab = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Tab), this);
+    connect(scNextTab, &QShortcut::activated, this, [this]{
+        tabs->setCurrentIndex((tabs->currentIndex() + 1) % tabs->count());
+    });
+    auto *scPrevTab = new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Backtab), this);
+    connect(scPrevTab, &QShortcut::activated, this, [this]{
+        int n = tabs->count();
+        tabs->setCurrentIndex((tabs->currentIndex() - 1 + n) % n);
+    });
+
+    // ---- preview focus for arrow-key zoom/nav ----
+    preview->setFocusPolicy(Qt::StrongFocus);
+    preview->setAccessibleName("Boot menu preview");
+    preview->setAccessibleDescription("Live preview. +/- zoom, arrows navigate entries.");
+
+    // ---- accessibility ----
+    tb->setObjectName("MainToolbar");
+    tb->setAccessibleName("Main toolbar");
+    tb->setToolTip("Quick access to file operations");
+    menuBar()->setAccessibleName("Menu bar");
+    dock->setAccessibleName("Inspector panel");
+    dock->setToolTip("Property inspector for selected elements");
+    pvBox->setAccessibleName("Preview panel");
+    pvBox->setToolTip("Live boot menu preview (click to inspect, +/- zoom)");
+    fbRow->setAccessibleName("Preview resolution");
+    fbRow->setToolTip("Framebuffer resolution to preview");
+    tabs->setAccessibleName("Editor tabs");
+    tabs->setToolTip("Switch tabs: Ctrl+1-9, Ctrl+Tab");
+    notificationBar->setAccessibleName("File change notification");
 
     setWindowTitle("ForeB Customizer");
     resize(1180, 760);
@@ -568,11 +624,13 @@ void MainWindow::doSave(const QString &path) {
     auto revertPending = [&]{ for (int i=0;i<pending.size();i++) pending[i].first->assign(oldVals[i]); };
     preview->setConfigDir(foreboDir);
 
+    isSaving = true;                    // suppress fileChanged during our write
     applyPending();   // so serialization below emits the ESP-relative paths
     QString err;
     if (writable && model->saveFile(path, &err)) {
         currentPath = path;
         isDirty = false;
+        isSaving = false;
         startWatching();
         model->touch();
         statusBar()->showMessage("Saved " + path + (imgs.isEmpty()?"":QString(" (+%1 image(s) -> TGA)").arg(imgs.size())));
@@ -582,7 +640,7 @@ void MainWindow::doSave(const QString &path) {
     QString cfgTmp = td.path() + "/forebo.cfg";
     { QFile c(cfgTmp);
       if (!c.open(QIODevice::WriteOnly) || c.write(model->serialize().toUtf8()) < 0) {
-          revertPending(); model->touch();
+          revertPending(); isSaving = false; model->touch();
           QMessageBox::warning(this, "Save failed", "cannot stage the config for the elevated write"); return; } }
     QVector<QPair<QString,QString>> files; files.append({path, cfgTmp});
     for (const auto &pr : imgs) {
@@ -593,11 +651,12 @@ void MainWindow::doSave(const QString &path) {
     }
     QString eerr;
     if (!installElevated(files, &eerr)) {
-        revertPending(); model->touch();
+        revertPending(); isSaving = false; model->touch();
         QMessageBox::warning(this, "Apply failed", eerr); return;
     }
     currentPath = path;
     isDirty = false;
+    isSaving = false;
     startWatching();
     model->touch();
     statusBar()->showMessage(QString("Applied to %1 (admin, %2 image(s))").arg(path).arg(imgs.size()));
@@ -866,7 +925,7 @@ void MainWindow::updateWindowTitle() {
 }
 
 void MainWindow::onFileChanged(const QString &path) {
-    // QFileSystemWatcher may drop the path after some edits; re-add when possible
+    if (isSaving) return;               // ignore our own writes
     if (!QFileInfo::exists(path)) return;
     if (!fileWatcher->files().contains(path))
         fileWatcher->addPath(path);
@@ -879,6 +938,7 @@ void MainWindow::reloadConfig() {
     QString err;
     if (!model->loadFile(currentPath, &err)) {
         QMessageBox::warning(this, "Reload failed", err);
+        startWatching();   // keep watching even on failed reload
         return;
     }
     entries->reloadFromModel();
@@ -906,6 +966,28 @@ void MainWindow::compareWith() {
     QString p = QFileDialog::getOpenFileName(this, "Compare with…", QString(),
                                              "forebo.cfg (*.cfg);;All files (*)");
     if (p.isEmpty()) return;
-    DiffDialog dlg(model, p, this);
-    dlg.exec();
+    QMessageBox::information(this, "Compare", "Compare feature not yet implemented for: " + p);
+}
+
+void MainWindow::lintConfig() {
+    QVector<EntryValidation> issues = model->validateAll();
+    if (issues.isEmpty()) {
+        QMessageBox::information(this, "Lint", "No issues found. Config looks good!");
+        return;
+    }
+    int errors = 0, warnings = 0, infos = 0;
+    QStringList lines;
+    for (const auto &v : issues) {
+        QString level = (v.level == EntryValidation::Error)   ? "ERROR"
+                      : (v.level == EntryValidation::Warning) ? "WARN" : "INFO";
+        QString field = v.field.isEmpty() ? "" : " (" + v.field + ")";
+        lines << QString("[%1]%2 %3").arg(level, field, v.message);
+        if (v.level == EntryValidation::Error) ++errors;
+        else if (v.level == EntryValidation::Warning) ++warnings;
+        else ++infos;
+    }
+    QString summary = QString("Found %1 issue(s): %2 errors, %3 warnings, %4 info")
+        .arg(issues.size()).arg(errors).arg(warnings).arg(infos);
+    QMessageBox msg(QMessageBox::Warning, "Lint Results", summary + "\n\n" + lines.join("\n"));
+    msg.exec();
 }

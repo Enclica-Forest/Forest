@@ -357,17 +357,9 @@ static int b_exec_stmt(const char *line)
                 con_puts(buf);
                 p = end;
                 while (*p == ' ' || *p == '\t') p++;
-                /* Check for ; or , (no newline / tab stop). */
                 if (*p == ';') { p++; }
                 else if (*p == ',') { con_putc('\t'); p++; }
                 else { con_putc('\n'); }
-                /* Print rest as expressions if any. */
-                while (*p && *p != ':') {
-                    while (*p == ' ' || *p == '\t') p++;
-                    if (*p == ';') { p++; continue; }
-                    if (*p == ',') { con_putc('\t'); p++; continue; }
-                    break;
-                }
                 return 0;
             }
         }
@@ -375,7 +367,7 @@ static int b_exec_stmt(const char *line)
         /* PRINT expr[;|,expr...] */
         ep = p;
         ep_error = 0;
-        int val = eval_cmp();
+        int val = eval_expr();
         p = ep;
         if (!ep_error) { con_puti(val); }
 
@@ -419,12 +411,10 @@ static int b_exec_stmt(const char *line)
     if (b_ci_eq(p, "IF")) {
         p += 2;
         while (*p == ' ' || *p == '\t') p++;
+        /* Use b_eval to parse the condition, then find THEN. */
         int cond = b_eval(p);
-        /* Advance past the expression we just parsed. */
-        /* Actually b_eval used a global ep, so... */
-        /* We need to find THEN ourselves. Let's parse differently. */
-        /* Find "THEN" in the rest of the line. */
-        const char *rest = p;
+        /* b_eval set ep to point past the expression. Scan for THEN from there. */
+        const char *rest = ep;
         while (*rest && !b_ci_eq(rest, "THEN")) rest++;
         if (!*rest) { con_puts("?MISSING THEN\n"); return -1; }
         rest += 4; /* skip THEN */
@@ -570,7 +560,7 @@ static int b_exec_stmt(const char *line)
             return 0;
         }
         /* Loop back. */
-        basic_pc = f->line_idx + 1;  /* will be incremented by main loop */
+        basic_pc = f->line_idx;  /* b_run will increment past this to the first body line */
         return 0;
     }
 

@@ -19,9 +19,11 @@ static void print_help() {
 "  scan       parse the ESP configs and print a report (read-only)\n"
 "  generate   print the translated forebo.cfg (--output FILE)\n"
 "  install    install ForeB alongside the current bootloader (needs root)\n"
+"  lint       validate a forebo.cfg file for correctness\n"
 "  uninstall  remove ForeB from the ESP and NVRAM (needs root)\n"
 "  list       list all bootloaders detected on the ESP and in NVRAM\n"
 "  backup     create a tar.gz backup of the ESP configuration\n"
+"  export     export forebo.cfg to another bootloader format\n"
 "\n"
 "Global:\n"
 "  --selftest            run internal offline tests and exit\n"
@@ -38,6 +40,7 @@ static void print_help() {
 "  --max-entries N       safety cap on translated entries (default "
       << DEFAULT_MAX_ENTRIES << ")\n"
 "  --no-extras           do not append the ForeB utility entries\n"
+"  --strict              treat warnings as errors\n"
 "  -v, --verbose         also print notes\n"
 "\n"
 "generate options:\n"
@@ -58,6 +61,17 @@ static void print_help() {
 "\n"
 "backup options:\n"
 "  --output FILE         save backup to FILE (default: forb-backup-TIMESTAMP.tar.gz)\n"
+"\n"
+"migrate options:\n"
+"  --source PATH         source directory or config to migrate (auto-detect\n"
+"                        ESP if omitted)\n"
+"  --backup              back up original config before overwriting\n"
+"  --output FILE         write forebo.cfg to FILE (default: ESP forebo/forebo.cfg)\n"
+"  --dry-run             show what would be done without doing it\n"
+"\n"
+"export options:\n"
+"  --format FORMAT       target format: grub, limine, systemd-boot, syslinux\n"
+"  --output FILE         write exported config to FILE\n"
 "\n"
 "Environment variables:\n"
 "  FORB_ESP              override default ESP path\n"
@@ -83,7 +97,12 @@ static void print_help() {
 static bool take_value(const std::vector<std::string>& argv, size_t& i,
                        const std::string& flag, std::string& out) {
     if (i + 1 >= argv.size()) {
-        std::cerr << TOOL << ": error: " << flag << " requires a value\n";
+        if (Color::enabled)
+            std::cerr << Color::red << Color::bold << TOOL << ": error: " 
+                      << Color::reset << Color::red << flag 
+                      << " requires a value" << Color::reset << "\n";
+        else
+            std::cerr << TOOL << ": error: " << flag << " requires a value\n";
         return false;
     }
     out = argv[++i];
@@ -111,19 +130,36 @@ int main(int argc, char** argv) {
         if (s == "--selftest") { a.selftest = true; }
     if (a.selftest) return cmd_selftest();
 
+    // Initialize color based on --color/--no-color or TTY detection
+    for (const auto& s : args) {
+        if (s == "--color") a.color = true;
+        if (s == "--no-color") a.no_color = true;
+    }
+    
+    if (a.color) Color::set(true);
+    else if (a.no_color) Color::set(false);
+    else Color::set(Color::detect());
+
     size_t i = 0;
     // subcommand is the first non-option token.
     for (; i < args.size(); ++i) {
         const std::string& s = args[i];
         if (s == "scan" || s == "generate" || s == "install" ||
-            s == "uninstall" || s == "list" || s == "backup" || s == "export") {
+            s == "lint" || s == "uninstall" || s == "migrate" || s == "list" || s == "backup" ||
+            s == "export") {
             a.command = s;
             ++i;
             break;
         }
         if (s == "-h" || s == "--help") { print_help(); return 0; }
-        std::cerr << TOOL << ": error: unknown token before command: " << s
-                  << "\n";
+        if (Color::enabled)
+            std::cerr << Color::red << Color::bold << TOOL << ": error: " 
+                      << Color::reset << Color::red 
+                      << "unknown token before command: " << s 
+                      << Color::reset << "\n";
+        else
+            std::cerr << TOOL << ": error: unknown token before command: " << s
+                      << "\n";
         return 2;
     }
     if (a.command.empty()) { print_help(); return 2; }
@@ -140,22 +176,40 @@ int main(int argc, char** argv) {
             if (!take_value(args, i, s, val)) return 2;
             try { a.default_entry = std::stoi(val); }
             catch (...) {
-                std::cerr << TOOL << ": error: --default-entry expects an "
-                                     "integer\n";
+                if (Color::enabled)
+                    std::cerr << Color::red << Color::bold << TOOL << ": error: " 
+                              << Color::reset << Color::red 
+                              << "--default-entry expects an integer" 
+                              << Color::reset << "\n";
+                else
+                    std::cerr << TOOL << ": error: --default-entry expects an "
+                                         "integer\n";
                 return 2;
             }
         } else if (s == "--max-entries") {
             if (!take_value(args, i, s, val)) return 2;
             try { a.max_entries = std::stoi(val); }
             catch (...) {
-                std::cerr << TOOL << ": error: --max-entries expects an "
-                                     "integer\n";
+                if (Color::enabled)
+                    std::cerr << Color::red << Color::bold << TOOL << ": error: " 
+                              << Color::reset << Color::red 
+                              << "--max-entries expects an integer" 
+                              << Color::reset << "\n";
+                else
+                    std::cerr << TOOL << ": error: --max-entries expects an "
+                                         "integer\n";
                 return 2;
             }
         } else if (s == "--no-extras") {
             a.no_extras = true;
         } else if (s == "--strict") {
             a.strict = true;
+        } else if (s == "--force") {
+            a.force = true;
+        } else if (s == "--color") {
+            // Already handled above
+        } else if (s == "--no-color") {
+            // Already handled above
         } else if (s == "-v" || s == "--verbose") {
             a.verbose = true;
         } else if (s == "-q" || s == "--quiet") {
@@ -164,13 +218,19 @@ int main(int argc, char** argv) {
             if (!take_value(args, i, s, a.manifest)) return 2;
         } else if (s == "--continue-on-error" && a.command == "batch") {
             a.continue_on_error = true;
-        } else if (s == "--output" && (a.command == "generate" || a.command == "backup")) {
+        } else if (s == "--output" && (a.command == "generate" || a.command == "backup" || a.command == "export" || a.command == "migrate")) {
             if (!take_value(args, i, s, a.output)) return 2;
+        } else if (s == "--source" && a.command == "migrate") {
+            if (!take_value(args, i, s, a.source)) return 2;
+        } else if (s == "--backup" && a.command == "migrate") {
+            a.backup = true;
+        } else if (s == "--format" && a.command == "export") {
+            if (!take_value(args, i, s, a.export_format)) return 2;
         } else if (s == "--no-nvram" && a.command == "install") {
             a.no_nvram = true;
         } else if (s == "--make-default" && a.command == "install") {
             a.make_default = true;
-        } else if (s == "--dry-run" && (a.command == "install" || a.command == "uninstall")) {
+        } else if (s == "--dry-run" && (a.command == "install" || a.command == "uninstall" || a.command == "migrate")) {
             a.dry_run = true;
         } else if (s == "--yes" && a.command == "uninstall") {
             a.yes = true;
@@ -182,20 +242,28 @@ int main(int argc, char** argv) {
         } else if (s[0] != '-' && a.command == "lint" && a.config.empty()) {
             a.config = s;
         } else {
-            std::cerr << TOOL << ": error: unrecognized option for "
-                      << a.command << ": " << s << "\n";
+            if (Color::enabled)
+                std::cerr << Color::red << Color::bold << TOOL << ": error: " 
+                          << Color::reset << Color::red 
+                          << "unrecognized option for " << a.command << ": " << s 
+                          << Color::reset << "\n";
+            else
+                std::cerr << TOOL << ": error: unrecognized option for "
+                          << a.command << ": " << s << "\n";
             return 2;
         }
     }
 
-    Reporter rep(a.verbose);
-    rep.quiet = a.quiet;
+    Reporter rep(a.verbose, a.force);
     if (a.command == "scan") return cmd_scan(a, rep);
     if (a.command == "generate") return cmd_generate(a, rep);
     if (a.command == "install") return cmd_install(a, rep);
     if (a.command == "lint") return cmd_lint(a, rep);
-    if (a.command == "batch") return cmd_batch(a, rep);
+    if (a.command == "uninstall") return cmd_uninstall(a, rep);
     if (a.command == "migrate") return cmd_migrate(a, rep);
+    if (a.command == "list") return cmd_list(a, rep);
+    if (a.command == "backup") return cmd_backup(a, rep);
+    if (a.command == "export") return cmd_export(a, rep);
     print_help();
     return 2;
 }

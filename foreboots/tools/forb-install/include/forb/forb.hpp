@@ -77,6 +77,7 @@ class Reporter {
 public:
     bool verbose = false;
     bool force = false;
+    bool quiet = false;
     std::vector<std::string> warnings;
     std::vector<std::string> notes;
     explicit Reporter(bool v = false, bool f = false) : verbose(v), force(f) {}
@@ -338,6 +339,10 @@ struct Args {
     int max_entries = DEFAULT_MAX_ENTRIES;
     bool no_extras = false;
     bool verbose = false;
+    bool quiet = false;
+    bool force = false;
+    bool color = false;
+    bool no_color = false;
     bool strict = false;          // fail on warnings
     std::string output;           // generate, export
     bool no_nvram = false;        // install
@@ -348,6 +353,8 @@ struct Args {
     std::string export_format;    // export: grub|limine|systemd-boot|syslinux
     bool yes = false;             // uninstall: skip confirmation
     bool keep_nvram = false;      // uninstall: keep NVRAM entry
+    std::string manifest;         // batch: manifest file
+    bool continue_on_error = false; // batch: continue on error
 };
 
 std::vector<std::pair<std::string, std::string>> autodetect_config(
@@ -362,7 +369,9 @@ int cmd_lint(const Args& args, Reporter& rep);
 int cmd_uninstall(const Args& args, Reporter& rep);
 int cmd_list(const Args& args, Reporter& rep);
 int cmd_backup(const Args& args, Reporter& rep);
+int cmd_migrate(const Args& args, Reporter& rep);
 int cmd_batch(const Args& args, Reporter& rep);
+int cmd_export(const Args& args, Reporter& rep);
 std::string safe_rel_path(const std::string& rel);  // throws std::runtime_error
 
 // ---------------------------------------------------------------------------

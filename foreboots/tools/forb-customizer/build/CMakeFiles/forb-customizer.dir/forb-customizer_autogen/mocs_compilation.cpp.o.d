@@ -336,6 +336,9 @@ CMakeFiles/forb-customizer.dir/forb-customizer_autogen/mocs_compilation.cpp.o: \
  /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/ConfigModel.h \
  /usr/include/qt6/QtCore/QObject /usr/include/qt6/QtCore/QString \
  /usr/include/qt6/QtCore/QVector /usr/include/qt6/QtCore/qvector.h \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_DiffDialog.cpp \
+ /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/DiffDialog.h \
+ /usr/include/qt6/QtWidgets/QDialog /usr/include/qt6/QtWidgets/qdialog.h \
  /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_EntriesTab.cpp \
  /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/../../../src/EntriesTab.h \
  /home/bluet/forest/foreboots/tools/forb-customizer/build/forb-customizer_autogen/UVLADIE3JM/moc_Inspector.cpp \

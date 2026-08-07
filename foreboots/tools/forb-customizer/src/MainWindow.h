@@ -89,6 +89,7 @@ private:
     QFileSystemWatcher *fileWatcher = nullptr;
     QFrame             *notificationBar = nullptr;
     bool               isDirty = false;
+    bool               isSaving = false;
 };
 
 #endif // FORB_MAINWINDOW_H

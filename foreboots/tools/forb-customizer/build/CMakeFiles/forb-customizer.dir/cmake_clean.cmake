@@ -11,6 +11,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/forb-customizer.dir/src/Bound.cpp.o.d"
   "CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.o"
   "CMakeFiles/forb-customizer.dir/src/ConfigModel.cpp.o.d"
+  "CMakeFiles/forb-customizer.dir/src/DiffDialog.cpp.o"
+  "CMakeFiles/forb-customizer.dir/src/DiffDialog.cpp.o.d"
   "CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o"
   "CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o.d"
   "CMakeFiles/forb-customizer.dir/src/Inspector.cpp.o"

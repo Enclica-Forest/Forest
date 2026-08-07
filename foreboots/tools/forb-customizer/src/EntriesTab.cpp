@@ -15,6 +15,9 @@
 #include <QGroupBox>
 #include <QShortcut>
 #include <QKeySequence>
+#include <functional>
+#include <QShortcut>
+#include <QKeySequence>
 
 // per-item payload
 static const int RoleMap = Qt::UserRole + 1;
@@ -97,9 +100,9 @@ EntriesTab::EntriesTab(ConfigModel *m, QWidget *parent) : QWidget(parent), model
     // drag reorder finishes with a model change signal
     connect(tree->model(),&QAbstractItemModel::rowsMoved,this,[this]{ if(!syncing) rebuildModel(); });
 
-    auto onEdit = [this]{ if(!syncing){ saveEditor(); } };
+    auto onEdit = [this]{ if(!syncing){ saveEditor(); validateCurrentEntry(); } };
     connect(title,&QLineEdit::textEdited,this,onEdit);
-    connect(type,qOverload<int>(&QComboBox::currentIndexChanged),this,[this]{ if(!syncing){ updateTypeFields(); saveEditor(); } });
+    connect(type,qOverload<int>(&QComboBox::currentIndexChanged),this,[this]{ if(!syncing){ updateTypeFields(); saveEditor(); validateCurrentEntry(); } });
     for (QLineEdit *e : {kernel,vmlinuz,initrd,chain,icon,background,modules})
         connect(e,&QLineEdit::textEdited,this,onEdit);
     connect(cmdline,&QPlainTextEdit::textChanged,this,onEdit);
@@ -187,6 +190,7 @@ void EntriesTab::reloadFromModel() {
     syncing = false;
     if (tree->topLevelItemCount() > 0) tree->setCurrentItem(tree->topLevelItem(0));
     else loadEditor(nullptr);
+    highlightDuplicates();
     int rows = model->flatten().size();
     banner->setText(rows > 64 ? QString("Warning: %1 rows exceeds the firmware cap of 64.").arg(rows) : QString());
 }
@@ -203,6 +207,7 @@ void EntriesTab::rebuildModel() {
     for (int i=0;i<tree->topLevelItemCount();++i)
         model->roots.append(buildNode(tree->topLevelItem(i)));
     model->touchStructure();
+    highlightDuplicates();
     int rows = model->flatten().size();
     banner->setText(rows > 64 ? QString("Warning: %1 rows exceeds the firmware cap of 64.").arg(rows) : QString());
 }
@@ -253,6 +258,7 @@ void EntriesTab::loadEditor(QTreeWidgetItem *it) {
     cmdline->setPlainText(n.cmdline);
     updateTypeFields();
     syncing = false;
+    validateCurrentEntry();
 }
 
 void EntriesTab::saveEditor() {
@@ -319,4 +325,103 @@ void EntriesTab::moveDown() {
     }
     tree->setCurrentItem(cur);
     rebuildModel();
+}
+
+// ---------------------------------------------------------------------------
+//  Inline entry validation
+// ---------------------------------------------------------------------------
+void EntriesTab::validateCurrentEntry() {
+    QTreeWidgetItem *it = tree->currentItem();
+    if (!it || syncing) return;
+
+    QVariantMap m = it->data(0, RoleMap).toMap();
+    EntryNode n = mapToNode(it->text(0), m);
+
+    // Build an EntryNode from current editor state (unsaved title)
+    n.title = title->text();
+    if (!m.value("isSubmenu").toBool()) n.type = type->currentText();
+    n.kernel = kernel->text(); n.vmlinuz = vmlinuz->text();
+    n.initrd = initrd->text(); n.chain = chain->text();
+    n.icon = icon->text(); n.background = background->text();
+    QStringList mods; for (const QString &s : modules->text().split(',', Qt::SkipEmptyParts)) mods << s.trimmed();
+    n.modules = mods;
+    n.cmdline = cmdline->toPlainText();
+
+    QVector<EntryValidation> issues = ConfigModel::validateEntry(n);
+
+    // 1. Title field: red border if > 63 chars
+    bool titleLong = n.title.size() > 63;
+    title->setStyleSheet(titleLong ? "border: 2px solid red;" : QString());
+
+    // 2. Kernel field: warning background if empty for forest/linux
+    bool kernelMissing = (n.type == "forest" && n.kernel.isEmpty()) ||
+                         (n.type == "linux" && n.vmlinuz.isEmpty());
+    kernel->setStyleSheet((n.type == "forest" && kernelMissing) ? "background: #fff0f0;" : QString());
+    vmlinuz->setStyleSheet((n.type == "linux" && kernelMissing) ? "background: #fff0f0;" : QString());
+
+    // 3. Cmdline: warning background if > 255 chars
+    bool cmdlineLong = n.cmdline.size() > 255;
+    cmdline->setStyleSheet(cmdlineLong ? "background: #fff0f0;" : QString());
+
+    // 4. Build status text for banner
+    int errors = 0, warnings = 0, infos = 0;
+    for (const auto &v : issues) {
+        if (v.level == EntryValidation::Error) ++errors;
+        else if (v.level == EntryValidation::Warning) ++warnings;
+        else ++infos;
+    }
+
+    // Also run full model validation for duplicate check
+    QVector<EntryValidation> allIssues = model->validateAll();
+    int dupCount = 0;
+    for (const auto &v : allIssues)
+        if (v.message.contains("duplicate")) ++dupCount;
+
+    QStringList parts;
+    if (errors)   parts << QString("%1 error(s)").arg(errors);
+    if (warnings) parts << QString("%1 warning(s)").arg(warnings);
+    if (dupCount) parts << QString("%1 duplicate(s)").arg(dupCount);
+    if (infos)    parts << QString("%1 info(s)").arg(infos);
+
+    banner->setText(parts.isEmpty() ? QString() : "Validation: " + parts.join(", "));
+
+    // Highlight duplicates in tree
+    highlightDuplicates();
+}
+
+void EntriesTab::highlightDuplicates() {
+    // Collect all entries with their (title, kernel) keys
+    struct DupKey { QString title, kernel;
+        bool operator<(const DupKey &o) const { return title < o.title || (title == o.title && kernel < o.kernel); }
+    };
+    auto getKey = [](QTreeWidgetItem *it) -> DupKey {
+        QVariantMap m = it->data(0, RoleMap).toMap();
+        bool sub = m.value("isSubmenu").toBool();
+        QString k = sub ? QString() : (m.value("type").toString() == "linux"
+                      ? m.value("vmlinuz").toString()
+                      : m.value("kernel").toString());
+        return {it->text(0), k};
+    };
+
+    // Count occurrences
+    QMap<DupKey, int> counts;
+    std::function<void(QTreeWidgetItem*)> countAll = [&](QTreeWidgetItem *it) {
+        DupKey key = getKey(it);
+        if (!it->data(0, RoleMap).toMap().value("isSubmenu").toBool())
+            counts[key]++;
+        for (int i = 0; i < it->childCount(); ++i) countAll(it->child(i));
+    };
+    for (int i = 0; i < tree->topLevelItemCount(); ++i)
+        countAll(tree->topLevelItem(i));
+
+    // Apply yellow background to duplicates
+    std::function<void(QTreeWidgetItem*)> markDups = [&](QTreeWidgetItem *it) {
+        DupKey key = getKey(it);
+        bool isDup = !it->data(0, RoleMap).toMap().value("isSubmenu").toBool() &&
+                     counts.value(key, 0) > 1;
+        it->setBackground(0, isDup ? QBrush(QColor(255, 255, 180)) : QBrush());
+        for (int i = 0; i < it->childCount(); ++i) markDups(it->child(i));
+    };
+    for (int i = 0; i < tree->topLevelItemCount(); ++i)
+        markDups(tree->topLevelItem(i));
 }

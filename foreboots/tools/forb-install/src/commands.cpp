@@ -391,7 +391,7 @@ static std::string shell_join(const std::vector<std::string>& cmd) {
 }
 
 static void nvram_install(const std::string& esp, bool make_default, bool dry,
-                          Reporter& rep) {
+                          bool force, Reporter& rep) {
     std::string prefix = dry ? "[dry-run] " : "";
     if (!which("efibootmgr")) {
         rep.warn("efibootmgr not found; skipping NVRAM registration (create "
@@ -426,10 +426,14 @@ static void nvram_install(const std::string& esp, bool make_default, bool dry,
         std::cout << prefix
                   << "+ efibootmgr -v   # check for an existing ForeB entry\n";
     auto num = foreb_entry(text);
-    if (num.has_value()) {
+    if (num.has_value() && !force) {
         std::cout << prefix << "UEFI boot entry for ForeB already exists (Boot"
-                  << *num << "); skipping creation\n";
+                  << *num << "); skipping creation (use --force to re-register)\n";
     } else {
+        if (num.has_value() && force) {
+            rep.verbose_out("Re-registering NVRAM entry (Boot" + *num + 
+                           ") due to --force flag");
+        }
         auto out = run_cmd({"findmnt", "-no", "SOURCE", esp});
         std::string dev;
         if (out && !strip(*out).empty()) {
@@ -506,6 +510,14 @@ int cmd_install(const Args& args, Reporter& rep) {
     const std::string& esp = result->esp;
     const std::string& repo = args.repo;
 
+    // Verbose output: show detected bootloader info
+    rep.verbose_out("Detected " + result->parsed.kind + " at " + 
+                    result->parsed.source_path + " (" + 
+                    std::to_string(result->n_entries) + " entries, " + 
+                    std::to_string(result->n_submenus) + " submenus)");
+    rep.verbose_out("Translated " + std::to_string(result->n_entries) + 
+                    " entries to ForeB format");
+
     auto do_action = [&](const std::string& desc, const std::function<void()>& fn) {
         std::cout << (dry ? "[dry-run] " : "") << desc << "\n";
         if (!dry) fn();
@@ -521,6 +533,7 @@ int cmd_install(const Args& args, Reporter& rep) {
     auto write_file = [&](const std::string& rel_in, const std::string& data) {
         std::string rel = safe_rel_path(rel_in);
         std::string dest = (fs::path(esp) / rel).string();
+        rep.verbose_out("Writing " + dest + " (" + std::to_string(data.size()) + " bytes)");
         do_action("write " + dest + " (" + std::to_string(data.size()) +
                       " bytes)",
                   [&, dest]() {
@@ -581,10 +594,14 @@ int cmd_install(const Args& args, Reporter& rep) {
         std::cout << (dry ? "[dry-run] " : "")
                   << "skipping efibootmgr (--no-nvram)\n";
     else
-        nvram_install(esp, args.make_default, dry, rep);
+        nvram_install(esp, args.make_default, dry, args.force, rep);
 
     // summary
-    std::cout << "\nForeB install summary:\n";
+    if (Color::enabled)
+        std::cout << "\n" << Color::green << Color::bold 
+                  << "ForeB install complete!" << Color::reset << "\n";
+    else
+        std::cout << "\nForeB install complete!\n";
     std::cout << "  ESP:      " << esp << "\n";
     std::cout << "  Loader:   "
               << (fs::path(esp) / "EFI/forb/BOOTX64.EFI").string() << "\n";
@@ -1354,21 +1371,20 @@ std::vector<BootloaderInfo> detect_bootloader(const std::string& dir) {
 // ===========================================================================
 //  list
 // ===========================================================================
-struct BootloaderInfo {
+struct EspBootloaderInfo {
     std::string name;
     std::string config_path;
     std::string efi_path;
-    int entries = 0;
 };
 
 static void scan_esp_bootloaders(const std::string& esp,
-                                 std::vector<BootloaderInfo>& found) {
+                                 std::vector<EspBootloaderInfo>& found) {
     fs::path esp_root(esp);
     auto check = [&](const std::string& name, const std::string& cfg_rel,
-                     const std::string& efi_rel, int count) {
+                     const std::string& efi_rel) {
         std::error_code ec;
         if (fs::is_regular_file(esp_root / cfg_rel, ec)) {
-            found.push_back({name, cfg_rel, efi_rel, count});
+            found.push_back({name, cfg_rel, efi_rel});
         }
     };
 
@@ -1379,22 +1395,17 @@ static void scan_esp_bootloaders(const std::string& esp,
         bool has_cfg = fs::is_regular_file(esp_root / "forebo" / "forebo.cfg", ec);
         if (has_forb && has_cfg)
             found.push_back({"ForeB", "forebo/forebo.cfg",
-                             "EFI/forb/BOOTX64.EFI", 0});
+                             "EFI/forb/BOOTX64.EFI"});
     }
 
     // GRUB
-    {
-        std::string cfg = "grub/grub.cfg";
-        std::error_code ec;
-        if (fs::is_regular_file(esp_root / cfg, ec))
-            found.push_back({"GRUB", cfg, "EFI/grub/grubx64.efi", 0});
-    }
+    check("GRUB", "grub/grub.cfg", "EFI/grub/grubx64.efi");
 
     // Limine
     for (const auto& name : {"limine.cfg", "limine.conf"}) {
         std::error_code ec;
         if (fs::is_regular_file(esp_root / name, ec)) {
-            found.push_back({"Limine", name, "EFI/limine/limine-x86_64.efi", 0});
+            found.push_back({"Limine", name, "EFI/limine/limine-x86_64.efi"});
             break;
         }
     }
@@ -1403,20 +1414,20 @@ static void scan_esp_bootloaders(const std::string& esp,
         if (fs::is_regular_file(esp_root / "limine" / "limine.cfg", ec) ||
             fs::is_regular_file(esp_root / "limine" / "limine.conf", ec)) {
             found.push_back({"Limine", "limine/limine.cfg",
-                             "EFI/limine/limine-x86_64.efi", 0});
+                             "EFI/limine/limine-x86_64.efi"});
         }
     }
 
     // systemd-boot
     check("systemd-boot", "loader/loader.conf",
-          "EFI/systemd/systemd-bootx64.efi", 0);
+          "EFI/systemd/systemd-bootx64.efi");
 
     // rEFInd
     {
         std::error_code ec;
         if (fs::is_regular_file(esp_root / "EFI" / "refind" / "refind.conf", ec))
             found.push_back({"rEFInd", "EFI/refind/refind.conf",
-                             "EFI/refind/refind_x64.efi", 0});
+                             "EFI/refind/refind_x64.efi"});
     }
 
     // Clover
@@ -1424,16 +1435,12 @@ static void scan_esp_bootloaders(const std::string& esp,
         std::error_code ec;
         if (fs::is_regular_file(esp_root / "EFI" / "CLOVER" / "config.plist", ec))
             found.push_back({"Clover", "EFI/CLOVER/config.plist",
-                             "EFI/CLOVER/CLOVERX64.efi", 0});
+                             "EFI/CLOVER/CLOVERX64.efi"});
     }
 
     // syslinux
-    {
-        std::error_code ec;
-        if (fs::is_regular_file(esp_root / "syslinux" / "syslinux.cfg", ec))
-            found.push_back({"syslinux", "syslinux/syslinux.cfg",
-                             "EFI/syslinux/syslinuxx64.efi", 0});
-    }
+    check("syslinux", "syslinux/syslinux.cfg",
+          "EFI/syslinux/syslinuxx64.efi");
 
     // Windows Boot Manager
     {
@@ -1441,7 +1448,7 @@ static void scan_esp_bootloaders(const std::string& esp,
         if (fs::is_regular_file(esp_root / "EFI" / "Microsoft" / "Boot" /
                                 "bootmgfw.efi", ec))
             found.push_back({"Windows Boot Manager", "(BCD store)",
-                             "EFI/Microsoft/Boot/bootmgfw.efi", 0});
+                             "EFI/Microsoft/Boot/bootmgfw.efi"});
     }
 }
 
@@ -1455,7 +1462,7 @@ int cmd_list(const Args& args, Reporter& rep) {
     }
 
     // ESP bootloaders
-    std::vector<BootloaderInfo> found;
+    std::vector<EspBootloaderInfo> found;
     scan_esp_bootloaders(esp, found);
 
     std::cout << "ESP: " << esp << "\n\n";
@@ -1542,9 +1549,9 @@ int cmd_backup(const Args& args, Reporter& rep) {
             if (ec) rep.warn("failed to copy " + label + ": " + ec.message());
             else std::cout << "  backed up " << label << "\n";
         } else if (fs::is_directory(src, ec)) {
-            fs::copy_directory(src, dst,
-                               fs::copy_options::overwrite_existing |
-                               fs::copy_options::recursive, ec);
+            fs::copy(src, dst,
+                     fs::copy_options::overwrite_existing |
+                     fs::copy_options::recursive, ec);
             if (ec) rep.warn("failed to copy " + label + ": " + ec.message());
             else std::cout << "  backed up " << label << "\n";
         }
@@ -1837,6 +1844,202 @@ int cmd_export(const Args& args, Reporter& rep) {
         std::cout << "wrote " << args.output << " (" << fmt << " format)\n";
     }
 
+    return 0;
+}
+
+// ===========================================================================
+//  migrate
+// ===========================================================================
+int cmd_migrate(const Args& args, Reporter& rep) {
+    bool dry = args.dry_run;
+
+    // Determine scan directory
+    std::string scan_dir = args.source;
+    if (scan_dir.empty()) {
+        auto d = detect_esp();
+        if (!d) {
+            die("no ESP found: none of /boot, /boot/efi, /efi is a vfat mount "
+                "(use --source PATH or --esp PATH)");
+            return 1;
+        }
+        scan_dir = *d;
+        rep.note("auto-detected ESP at " + scan_dir);
+    }
+
+    std::error_code ec;
+    if (!fs::is_directory(scan_dir, ec)) {
+        die("source directory not found: " + scan_dir);
+        return 1;
+    }
+
+    // Detect bootloaders
+    auto detected = detect_bootloader(scan_dir);
+
+    if (detected.empty()) {
+        std::cout << "No bootloader configs found in " << scan_dir << "\n";
+        std::cout << "Searched for: GRUB, Limine, systemd-boot, rEFInd, "
+                     "Clover, syslinux, ZBM\n";
+        return 1;
+    }
+
+    // Display detection results
+    std::cout << "Detected " << detected.size() << " bootloader(s) in "
+              << scan_dir << ":\n\n";
+    for (size_t i = 0; i < detected.size(); ++i) {
+        const auto& b = detected[i];
+        int pct = static_cast<int>(b.confidence * 100);
+        std::cout << "  [" << (i + 1) << "] " << b.name;
+        if (i == 0) std::cout << " (best match)";
+        std::cout << " - confidence " << pct << "%\n";
+        std::cout << "      config: " << b.config_path << "\n";
+        if (!b.features.empty()) {
+            std::cout << "      migratable: " << join(", ", b.features) << "\n";
+        }
+        if (!b.warnings.empty()) {
+            std::cout << "      warnings:\n";
+            for (const auto& w : b.warnings)
+                std::cout << "        - " << w << "\n";
+        }
+        std::cout << "      migration: " << b.migration_path << "\n\n";
+    }
+
+    // Pick the best non-foreb source
+    const BootloaderInfo* source = nullptr;
+    for (const auto& b : detected) {
+        if (b.name != "foreb") {
+            source = &b;
+            break;
+        }
+    }
+
+    if (!source) {
+        std::cout << "ForeB is already the only bootloader; nothing to "
+                     "migrate.\n";
+        return 0;
+    }
+
+    if (source->features.empty()) {
+        std::cout << "Cannot migrate from " << source->name
+                  << ": no migratable features.\n";
+        return 1;
+    }
+
+    // If the source parser is not yet implemented, inform and exit
+    if (source->name == "refind" || source->name == "clover" ||
+        source->name == "zbm") {
+        std::cout << "Migration from " << source->name
+                  << " is not yet implemented.\n";
+        std::cout << "You can manually create forebo.cfg or use:\n";
+        std::cout << "  forb-install install --config <your-config>\n";
+        return 1;
+    }
+
+    // Determine the ESP for parsing
+    std::string esp = args.esp;
+    if (esp.empty()) {
+        auto d = detect_esp();
+        if (d) esp = *d;
+    }
+    if (esp.empty()) esp = scan_dir;
+
+    // Attempt to parse and translate
+    std::cout << "Migrating from " << source->name << "...\n\n";
+
+    EspContext ctx(esp, rep);
+    ParsedConfig parsed;
+    try {
+        parsed = parse_source(source->name, source->config_path, esp, ctx, rep);
+    } catch (const std::exception& e) {
+        die("cannot parse " + source->config_path + ": " + e.what());
+        return 1;
+    }
+
+    // Build the config
+    std::vector<OutNode> roots =
+        cap_entries(parsed.roots, args.max_entries, rep);
+    for (auto& [e, path] : flatten_entries(roots)) {
+        (void)path;
+        validate_entry(*e, rep);
+    }
+    std::string default_str =
+        resolve_default(parsed, roots, args.default_entry, rep);
+    auto [background, wallpaper_job] = prepare_wallpaper(parsed, ctx, rep);
+    std::string cfg_text = emit_config(parsed, roots, default_str, background,
+                                       !args.no_extras);
+
+    int n_entries = static_cast<int>(flatten_entries(roots).size());
+    int n_submenus = count_submenus(roots);
+
+    // Determine output path
+    std::string outpath = args.output;
+    if (outpath.empty()) {
+        // Default: write to ESP forebo/forebo.cfg
+        if (!esp.empty()) {
+            outpath = (fs::path(esp) / "forebo" / "forebo.cfg").string();
+        } else {
+            outpath = "forebo.cfg";
+        }
+    }
+
+    // Backup if requested
+    if (args.backup && !dry) {
+        std::error_code bec;
+        if (fs::is_regular_file(outpath, bec)) {
+            std::string bak = outpath + ".bak";
+            std::cout << "backing up " << outpath << " -> " << bak << "\n";
+            fs::copy_file(outpath, bak, fs::copy_options::overwrite_existing,
+                          bec);
+            if (bec) {
+                rep.warn("backup failed: " + bec.message());
+            }
+        }
+    }
+
+    // Write or print
+    if (dry) {
+        std::cout << "[dry-run] would write forebo.cfg to " << outpath << "\n";
+        std::cout << "\n--- forebo.cfg ---\n";
+        std::cout << cfg_text;
+        std::cout << "--- end ---\n";
+    } else {
+        try {
+            fs::create_directories(fs::path(outpath).parent_path(), ec);
+            atomic_write(outpath, cfg_text);
+        } catch (const std::exception& e) {
+            die("cannot write " + outpath + ": " + e.what());
+            return 1;
+        }
+    }
+
+    // Summary
+    std::cout << "\nMigration summary:\n";
+    std::cout << "  source:      " << source->name << " (" << source->config_path
+              << ")\n";
+    std::cout << "  confidence:  " << static_cast<int>(source->confidence * 100)
+              << "%\n";
+    std::cout << "  output:      " << outpath;
+    if (dry) std::cout << " (dry-run)";
+    std::cout << "\n";
+    std::cout << "  entries:     " << n_entries << " (+"
+              << (args.no_extras ? 0 : static_cast<int>(EXTRAS.size()))
+              << " utility)\n";
+    std::cout << "  submenus:    " << n_submenus << "\n";
+    if (parsed.timeout.has_value())
+        std::cout << "  timeout:     " << *parsed.timeout << "s\n";
+    if (parsed.remember_last)
+        std::cout << "  remember_last: yes\n";
+    if (background)
+        std::cout << "  wallpaper:   migrated\n";
+
+    if (!source->warnings.empty()) {
+        std::cout << "\n  Review the generated config - some features from "
+                     << source->name << " may need manual adjustment.\n";
+    }
+
+    std::cout << "\nNext steps:\n";
+    std::cout << "  1. Review " << outpath << "\n";
+    std::cout << "  2. Run: forb-install install --dry-run\n";
+    std::cout << "  3. Run: forb-install install\n";
     return 0;
 }
 

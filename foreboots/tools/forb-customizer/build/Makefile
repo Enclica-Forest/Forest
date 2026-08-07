@@ -303,6 +303,30 @@ src/ConfigModel.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tst_roundtrip.dir/build.make CMakeFiles/tst_roundtrip.dir/src/ConfigModel.cpp.s
 .PHONY : src/ConfigModel.cpp.s
 
+src/DiffDialog.o: src/DiffDialog.cpp.o
+.PHONY : src/DiffDialog.o
+
+# target to build an object file
+src/DiffDialog.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/forb-customizer.dir/build.make CMakeFiles/forb-customizer.dir/src/DiffDialog.cpp.o
+.PHONY : src/DiffDialog.cpp.o
+
+src/DiffDialog.i: src/DiffDialog.cpp.i
+.PHONY : src/DiffDialog.i
+
+# target to preprocess a source file
+src/DiffDialog.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/forb-customizer.dir/build.make CMakeFiles/forb-customizer.dir/src/DiffDialog.cpp.i
+.PHONY : src/DiffDialog.cpp.i
+
+src/DiffDialog.s: src/DiffDialog.cpp.s
+.PHONY : src/DiffDialog.s
+
+# target to generate assembly for a file
+src/DiffDialog.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/forb-customizer.dir/build.make CMakeFiles/forb-customizer.dir/src/DiffDialog.cpp.s
+.PHONY : src/DiffDialog.cpp.s
+
 src/EntriesTab.o: src/EntriesTab.cpp.o
 .PHONY : src/EntriesTab.o
 
@@ -498,6 +522,9 @@ help:
 	@echo "... src/ConfigModel.o"
 	@echo "... src/ConfigModel.i"
 	@echo "... src/ConfigModel.s"
+	@echo "... src/DiffDialog.o"
+	@echo "... src/DiffDialog.i"
+	@echo "... src/DiffDialog.s"
 	@echo "... src/EntriesTab.o"
 	@echo "... src/EntriesTab.i"
 	@echo "... src/EntriesTab.s"

@@ -10,6 +10,7 @@ forb-customizer: \
   CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o \
   CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.o \
   CMakeFiles/forb-customizer.dir/src/Inspector.cpp.o \
+  CMakeFiles/forb-customizer.dir/src/DiffDialog.cpp.o \
   CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o \
   /usr/lib/libQt6Widgets.so.6.11.1 \
   /usr/lib/libQt6Gui.so.6.11.1 \
@@ -112,6 +113,8 @@ CMakeFiles/forb-customizer.dir/src/EntriesTab.cpp.o:
 CMakeFiles/forb-customizer.dir/src/PresetGallery.cpp.o:
 
 CMakeFiles/forb-customizer.dir/src/Inspector.cpp.o:
+
+CMakeFiles/forb-customizer.dir/src/DiffDialog.cpp.o:
 
 CMakeFiles/forb-customizer.dir/src/MainWindow.cpp.o:
 

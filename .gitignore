@@ -7,3 +7,8 @@ build-dist/
 *.elf
 OVMF_VARS*
 esp.img
+forestos-toolchain/
+.claude/
+/.fern-*.wf.js
+/*.wf.js
+.DS_Store

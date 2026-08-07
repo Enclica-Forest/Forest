@@ -587,7 +587,7 @@ ParsedConfig parse_grub(const std::string& path, EspContext& /*ctx*/,
                          : !entry->kernel.empty()  ? entry->kernel
                                                    : entry->chain;
         // Use --id if available, else title + classes for icon hint
-        std::string id_hint = frame.id.empty() ? frame.id : frame.id + " ";
+        std::string id_hint = frame.id.empty() ? "" : frame.id + " ";
         std::string hint = id_hint + frame.title + " " + join(" ", frame.classes) + " " +
                            base_name(base);
         entry->icon = guess_icon(hint, entry->type);

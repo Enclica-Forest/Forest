@@ -21,6 +21,7 @@
 #include "../efi_ext.h"     /* EFI_DISK_IO (optional byte reads) + device-path bits    */
 #include "../recovery/fwsetup.h"     /* fw_boot_to_setup / fw_setup_supported ('setup' command) */
 #include "tools.h"       /* tools_launcher_open ('tools' command)                   */
+#include "basic.h"       /* basic_repl ('basic' command)                            */
 
 /* -----------------------------------------------------------------------------
  * Optional read-only filesystem back-ends (ext2/3/4, btrfs). These are provided
@@ -255,7 +256,7 @@ static void con_init(void)
 
 static void con_setcol(UINT32 c) { g_curcol = c; }
 
-static void con_flush(void)       /* push active line into scrollback */
+void con_flush(void)       /* push active line into scrollback */
 {
     int idx = (g_sb_head + g_sb_count) & (SB_MAX - 1);
     s_strcpy(g_sb[idx], g_cur, COLW);
@@ -265,7 +266,7 @@ static void con_flush(void)       /* push active line into scrollback */
     g_curlen = 0; g_cur[0] = 0; g_curcol = FOREB_TEXT;
 }
 
-static void con_putc(char c)
+void con_putc(char c)
 {
     if (c == '\n') { con_flush(); return; }
     if (c == '\r') return;
@@ -275,9 +276,9 @@ static void con_putc(char c)
     g_cur[g_curlen++] = c; g_cur[g_curlen] = 0;
 }
 
-static void con_puts(const char *s) { while (s && *s) con_putc(*s++); }
+void con_puts(const char *s) { while (s && *s) con_putc(*s++); }
 
-static void con_putu(UINT64 v)
+void con_putu(UINT64 v)
 {
     char t[24]; int i = 0;
     if (!v) { con_putc('0'); return; }
@@ -285,14 +286,14 @@ static void con_putu(UINT64 v)
     while (i) con_putc(t[--i]);
 }
 
-static void con_puthex(UINT64 v, int digits)
+void con_puthex(UINT64 v, int digits)
 {
     static const char hx[] = "0123456789ABCDEF";
     con_puts("0x");
     for (int i = (digits - 1) * 4; i >= 0; i -= 4) con_putc(hx[(v >> i) & 0xF]);
 }
 
-static void con_puti(int v)
+void con_puti(int v)
 {
     if (v < 0) { con_putc('-'); con_putu((UINT64)(-v)); }
     else con_putu((UINT64)v);
@@ -367,7 +368,7 @@ static void con_render_all(void)
  * Line editor. Returns typed length (>=0), or -1 if Esc was pressed.
  * The finalized "prompt+input" line is pushed to the scrollback on Enter.
  * ==========================================================================*/
-static int read_line(const char *prompt, char *out, int outcap)
+int read_line(const char *prompt, char *out, int outcap)
 {
     char in[COLW];
     int  len = 0, cur = 0, pl = (int)s_strlen(prompt);
@@ -1232,6 +1233,7 @@ static void cmd_help(int argc, char **argv)
         else if (s_ci_eq(c, "ext-ls"))   con_puts("ext-ls <dev> [p] - list an ext2/3/4 directory (read-only)");
         else if (s_ci_eq(c, "ext-cat"))  con_puts("ext-cat <dev> <p>- print an ext2/3/4 file (read-only)");
         else if (s_ci_eq(c, "btrfs-snaps")) con_puts("btrfs-snaps <dev>- list btrfs subvolumes/snapshots");
+        else if (s_ci_eq(c, "basic"))      con_puts("basic            - interactive BASIC interpreter");
         else                             { con_setcol(FOREB_TIMER); con_puts("no help for '"); con_puts(c); con_puts("'"); }
         con_putc('\n');
         con_setcol(FOREB_TEXT);
@@ -1248,6 +1250,7 @@ static void cmd_help(int argc, char **argv)
     con_puts("  background <file>        memmap        config"); con_putc('\n');
     con_puts("  boot [idx|title]         reboot        exit"); con_putc('\n');
     con_puts("  setup / firmware  (enter UEFI setup)   tools  (GUI tools)"); con_putc('\n');
+    con_puts("  basic           (interactive BASIC)"); con_putc('\n');
     con_setcol(FOREB_TITLE); con_puts("Recovery / disk-fix:"); con_putc('\n'); con_setcol(FOREB_TEXT);
     con_puts("  gpt <dev>   parts   fsprobe <dev>   scan <dev>"); con_putc('\n');
     con_puts("  rescue <srcdev> <dstfile|dstdev> [skip-bad]   (DESTRUCTIVE)"); con_putc('\n');
@@ -2029,6 +2032,7 @@ static int dispatch(int argc, char **argv, int *ret)
         if (e < 0) { con_setcol(FOREB_TIMER); con_puts("boot: no such entry\n"); con_setcol(FOREB_TEXT); }
         else { *ret = e; return 1; }
     }
+    else if (s_ci_eq(c, "basic"))                     basic_repl();
     else if (s_ci_eq(c, "setup") || s_ci_eq(c, "firmware")) cmd_setup();
     else if (s_ci_eq(c, "tools"))                   cmd_tools();
     else if (s_ci_eq(c, "reboot") || s_ci_eq(c, "reset")) { *ret = FOREB_SHELL_REBOOT; return 1; }
