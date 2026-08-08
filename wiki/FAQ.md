@@ -62,7 +62,7 @@ sudo apt install nasm clang lld xorriso mtools python3 \
 
 ```bash
 # 1. Clone the repo
-git clone <repo-url> forest
+git clone https://github.com/Enclica-Forest/Forest forest
 cd forest
 
 # 2. Set the forest root
